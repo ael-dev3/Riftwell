@@ -219,6 +219,11 @@ export function createChain(config: ChainOptions = {}): ChainReader {
   ): Promise<BlockSnapshot> {
     if (numeric(await rpc('eth_chainId', [])) !== KITTEN_CHAIN.chainId)
       throw unavailable();
+    const head = validateBlock(
+      await rpc('eth_getBlockByNumber', ['latest', false]),
+    );
+    const safe = head.number - confirmations;
+    if (safe < 1 || (cursor && cursor.blockNumber > safe)) throw unavailable();
     let block;
     if (cursor) {
       block = validateBlock(
@@ -233,11 +238,6 @@ export function createChain(config: ChainOptions = {}): ChainReader {
       )
         throw unavailable();
     } else {
-      const head = validateBlock(
-        await rpc('eth_getBlockByNumber', ['latest', false]),
-      );
-      const safe = head.number - confirmations;
-      if (safe < 1) throw unavailable();
       block = validateBlock(
         await rpc('eth_getBlockByNumber', [`0x${safe.toString(16)}`, false]),
       );

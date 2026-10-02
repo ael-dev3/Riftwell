@@ -59,7 +59,8 @@ export function ConnectedAccount({
         {account?.historyTruncated && (
           <p className="form-hint" role="status">
             This account view shows the latest 500 records of each type. Earlier
-            history is retained by the service.
+            history is retained by the service. Manage all active listings in
+            Marketplace → My listings.
           </p>
         )}
         <div

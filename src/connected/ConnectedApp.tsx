@@ -226,6 +226,30 @@ export default function ConnectedApp() {
     }
   }, []);
 
+  const ownLists = usePages(
+    async (cursor, signal) => {
+      if (!session) return { items: [], nextCursor: null };
+      const epoch = authEpoch.current;
+      try {
+        return await api.ownListings(
+          market.id,
+          session.address,
+          cursor,
+          signal,
+        );
+      } catch (failure) {
+        if (
+          !signal.aborted &&
+          epoch === authEpoch.current &&
+          sessionRef.current?.csrfToken === session.csrfToken
+        )
+          handleError(failure);
+        throw failure;
+      }
+    },
+    `${market.id}:${session?.csrfToken ?? 'signed-out'}`,
+  );
+
   const refreshAccount = useCallback(
     async (more = false, signal?: AbortSignal) => {
       if (!sessionRef.current) return;
@@ -431,6 +455,7 @@ export default function ConnectedApp() {
     closeModal();
     setMessage(text);
     lists.refresh();
+    ownLists.refresh();
     void refreshAccount();
   }
 
@@ -446,6 +471,7 @@ export default function ConnectedApp() {
         await api.cancelLoanRequest(record.id, session.csrfToken);
       else await api.cancelOffer(record.id, session.csrfToken);
       lists.refresh();
+      ownLists.refresh();
       await refreshAccount();
       closeModal();
       setMessage('The listing was cancelled.');
@@ -459,6 +485,7 @@ export default function ConnectedApp() {
   const retry = () => {
     setServiceRevision((value) => value + 1);
     lists.refresh();
+    ownLists.refresh();
     void refreshAccount();
   };
 
@@ -570,13 +597,20 @@ export default function ConnectedApp() {
               items={lists.items}
               loading={lists.loading}
               error={publicError}
+              ownItems={ownLists.items}
+              ownLoading={ownLists.loading}
+              ownError={ownLists.error}
+              ownHasMore={!!ownLists.nextCursor}
+              onOwnMore={ownLists.loadMore}
               account={account}
               signedIn={!!session}
+              signedAddress={session?.address ?? null}
               accountLoading={accountBusy}
               hasMore={!!lists.nextCursor}
               onMore={lists.loadMore}
               onRefresh={() => {
                 lists.refresh();
+                ownLists.refresh();
                 if (session) void refreshAccount();
               }}
               onList={() => {

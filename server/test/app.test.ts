@@ -15,6 +15,7 @@ import type {
   LoanRequest,
   Offer,
   OwnershipOptions,
+  Page,
   Position,
   ServerConfig,
   Session,
@@ -1256,6 +1257,220 @@ test('account history is bounded to 500 records and declares truncation', async 
   assert.equal(account.statusCode, 200, account.body);
   assert.equal(account.json<TestAccount>().listings.length, 500);
   assert.equal(account.json().historyTruncated, true);
+});
+
+test('creator pagination retrieves older active listings beyond capped history and allows outage cancellation', async (t) => {
+  const f = await fixture(t);
+  const session = await login(f);
+  const outsider = await login(f, f.outsider);
+  const old = (
+    await send(f, 'POST', '/listings', listing(f, '1'), session)
+  ).json<Listing>();
+  f.advance(1000);
+  const insert = f.app.store.prepare(
+    "INSERT INTO listings(id,market,token_id,owner,price_micros,expires_at,created_at,updated_at,status,position_json) VALUES (?,'kittenswap','1',?,'1000000',?,?,?,'cancelled',?)",
+  );
+  f.app.store.transaction(() => {
+    for (let index = 0; index < 501; index++)
+      insert.run(
+        randomUUID(),
+        f.owner.address,
+        f.time + 86400000,
+        f.time,
+        f.time,
+        JSON.stringify(f.position('1')),
+      );
+  })();
+  const recent = (
+    await send(f, 'POST', '/listings', listing(f, '2'), session)
+  ).json<Listing>();
+  f.unavailable(true);
+  const account = (
+    await send(f, 'GET', '/account', undefined, session)
+  ).json<TestAccount>();
+  assert.equal(account.positionsUnavailable, true);
+  assert.equal(account.historyTruncated, true);
+  assert.equal(account.listings.length, 500);
+  assert.ok(account.listings.every((item) => item.id !== old.id));
+  error(await send(f, 'GET', '/listings'), 503, 'CHAIN_UNAVAILABLE');
+  const reads = f.reads;
+  const first = await send(
+    f,
+    'GET',
+    '/account/listings?market=kittenswap&limit=1',
+    undefined,
+    session,
+  );
+  assert.equal(first.statusCode, 200, first.body);
+  assert.equal(first.headers['cache-control'], 'no-store');
+  const firstPage = first.json<Page<Listing>>();
+  assert.deepEqual(
+    firstPage.items.map((item) => item.id),
+    [recent.id],
+  );
+  assert.ok(firstPage.nextCursor);
+  const second = await send(
+    f,
+    'GET',
+    `/account/listings?limit=1&cursor=${encodeURIComponent(firstPage.nextCursor)}`,
+    undefined,
+    session,
+  );
+  assert.equal(second.statusCode, 200, second.body);
+  const secondPage = second.json<Page<Listing>>();
+  assert.deepEqual(
+    secondPage.items.map((item) => item.id),
+    [old.id],
+  );
+  assert.deepEqual(secondPage.items[0].position, old.position);
+  assert.equal(secondPage.nextCursor, null);
+  assert.deepEqual(
+    (await send(f, 'GET', '/account/listings', undefined, outsider)).json(),
+    { items: [], nextCursor: null },
+  );
+  error(
+    await send(f, 'DELETE', `/listings/${old.id}`, undefined, outsider),
+    403,
+    'FORBIDDEN',
+  );
+  error(
+    await send(f, 'DELETE', `/listings/${old.id}`, undefined, session, {
+      'x-csrf-token': '0'.repeat(64),
+    }),
+    403,
+    'CSRF_REJECTED',
+  );
+  const cancelled = await send(
+    f,
+    'DELETE',
+    `/listings/${old.id}`,
+    undefined,
+    session,
+  );
+  assert.equal(cancelled.statusCode, 200, cancelled.body);
+  assert.equal(cancelled.json<Listing>().status, 'cancelled');
+  const remaining = await send(
+    f,
+    'GET',
+    '/account/listings',
+    undefined,
+    session,
+  );
+  assert.deepEqual(
+    remaining.json<Page<Listing>>().items.map((item) => item.id),
+    [recent.id],
+  );
+  assert.equal(f.reads, reads);
+});
+
+test('creator listing pagination bounds pages and binds signed cursors to owner and route scope', async (t) => {
+  const f = await fixture(t);
+  const session = await login(f);
+  const outsider = await login(f, f.outsider);
+  for (const id of ['1', '2', '3']) {
+    const created = await send(f, 'POST', '/listings', listing(f, id), session);
+    assert.equal(created.statusCode, 200, created.body);
+  }
+  const publicPage = (await send(f, 'GET', '/listings?limit=1')).json<
+    Page<Listing>
+  >();
+  assert.ok(publicPage.nextCursor);
+  f.unavailable(true);
+  const reads = f.reads;
+  error(await send(f, 'GET', '/account/listings'), 401, 'AUTH_REQUIRED');
+  for (const query of [
+    'limit=51',
+    'limit=0',
+    'owner=other',
+    'status=cancelled',
+  ])
+    assert.equal(
+      (await send(f, 'GET', `/account/listings?${query}`, undefined, session))
+        .statusCode,
+      400,
+    );
+  error(
+    await send(f, 'GET', '/account/listings?market=other', undefined, session),
+    400,
+    'INVALID_MARKET',
+  );
+  const first = (
+    await send(f, 'GET', '/account/listings?limit=1', undefined, session)
+  ).json<Page<Listing>>();
+  assert.ok(first.nextCursor);
+  const cursorPath = `/account/listings?limit=1&cursor=${encodeURIComponent(first.nextCursor)}`;
+  error(
+    await send(f, 'GET', cursorPath, undefined, outsider),
+    400,
+    'INVALID_PAGINATION',
+  );
+  error(
+    await send(
+      f,
+      'GET',
+      `/account/listings?cursor=${encodeURIComponent(publicPage.nextCursor ?? '')}`,
+      undefined,
+      session,
+    ),
+    400,
+    'INVALID_PAGINATION',
+  );
+  error(
+    await send(
+      f,
+      'GET',
+      `/listings?cursor=${encodeURIComponent(first.nextCursor)}`,
+    ),
+    400,
+    'INVALID_PAGINATION',
+  );
+  const [payload, signature] = first.nextCursor.split('.');
+  const decoded: unknown = JSON.parse(
+    Buffer.from(payload, 'base64url').toString(),
+  );
+  assert.ok(
+    typeof decoded === 'object' && decoded !== null && !Array.isArray(decoded),
+  );
+  const forged = Buffer.from(JSON.stringify({ ...decoded, time: 0 })).toString(
+    'base64url',
+  );
+  error(
+    await send(
+      f,
+      'GET',
+      `/account/listings?cursor=${forged}.${signature}`,
+      undefined,
+      session,
+    ),
+    400,
+    'INVALID_PAGINATION',
+  );
+  const seen = first.items.map((item) => item.id);
+  let cursor: string | null = first.nextCursor;
+  while (cursor) {
+    const response = await send(
+      f,
+      'GET',
+      `/account/listings?limit=1&cursor=${encodeURIComponent(cursor)}`,
+      undefined,
+      session,
+    );
+    assert.equal(response.statusCode, 200, response.body);
+    const page = response.json<Page<Listing>>();
+    seen.push(...page.items.map((item) => item.id));
+    cursor = page.nextCursor;
+  }
+  assert.equal(seen.length, 3);
+  assert.equal(new Set(seen).size, 3);
+  f.app.store
+    .prepare("UPDATE listings SET expires_at = ? WHERE status = 'active'")
+    .run(f.time + 1);
+  f.advance(2);
+  assert.deepEqual(
+    (await send(f, 'GET', '/account/listings', undefined, session)).json(),
+    { items: [], nextCursor: null },
+  );
+  assert.equal(f.reads, reads);
 });
 
 test('a hanging adapter is bounded by the service timeout and returns a safe unavailable response', async (t) => {

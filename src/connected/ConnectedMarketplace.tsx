@@ -15,8 +15,14 @@ export type ConnectedMarketplaceProps = {
   items: Listing[];
   loading: boolean;
   error: string;
+  ownItems: Listing[];
+  ownLoading: boolean;
+  ownError: string;
+  ownHasMore: boolean;
+  onOwnMore: () => void;
   account: Account | null;
   signedIn: boolean;
+  signedAddress: string | null;
   accountLoading: boolean;
   hasMore: boolean;
   onMore: () => void;
@@ -71,8 +77,14 @@ export default function ConnectedMarketplace({
   items,
   loading,
   error,
+  ownItems,
+  ownLoading,
+  ownError,
+  ownHasMore,
+  onOwnMore,
   account,
   signedIn,
+  signedAddress,
   accountLoading,
   hasMore,
   onMore,
@@ -89,10 +101,11 @@ export default function ConnectedMarketplace({
   const [order, setOrder] = useState<Order>('newest');
   const [selected, setSelected] = useState<Selection[]>([]);
   const [now, setNow] = useState(Date.now());
-  const address = signedIn ? account?.address.toLowerCase() : undefined;
+  const address = signedIn ? signedAddress?.toLowerCase() : undefined;
   const identityPending = signedIn && (accountLoading || !account);
   const own = (listing: Listing) => listing.owner.toLowerCase() === address;
-  const busy = tab === 'all' ? loading : accountLoading;
+  const busy =
+    tab === 'all' ? loading : tab === 'mine' ? ownLoading : accountLoading;
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -143,16 +156,24 @@ export default function ConnectedMarketplace({
     const source =
       tab === 'all'
         ? publicListings
-        : signedIn && account
-          ? account.listings.filter(
-              (listing) =>
-                listing.marketId === market.id &&
-                listing.owner.toLowerCase() === account.address.toLowerCase() &&
-                (tab === 'mine'
-                  ? activeAt(listing, now)
-                  : !activeAt(listing, now)),
-            )
-          : [];
+        : tab === 'mine'
+          ? signedIn && !ownError
+            ? ownItems.filter(
+                (listing) =>
+                  listing.marketId === market.id &&
+                  listing.owner.toLowerCase() === address &&
+                  activeAt(listing, now),
+              )
+            : []
+          : signedIn && account
+            ? account.listings.filter(
+                (listing) =>
+                  listing.marketId === market.id &&
+                  listing.owner.toLowerCase() ===
+                    account.address.toLowerCase() &&
+                  !activeAt(listing, now),
+              )
+            : [];
     const search = query.trim().toLowerCase();
     return source
       .filter((listing) =>
@@ -175,6 +196,9 @@ export default function ConnectedMarketplace({
   }, [
     tab,
     publicListings,
+    ownItems,
+    ownError,
+    address,
     signedIn,
     account,
     market.id,
@@ -325,13 +349,13 @@ export default function ConnectedMarketplace({
           {rows.length} loaded {rows.length === 1 ? 'record' : 'records'}
         </span>
       </div>
-      {tab === 'all' && error ? (
+      {(tab === 'all' && error) || (tab === 'mine' && signedIn && ownError) ? (
         <div className="empty-state" role="alert">
           <h3>Listings unavailable.</h3>
-          <p>{error}</p>
+          <p>{tab === 'mine' ? ownError : error}</p>
           <button
             className="button secondary"
-            disabled={loading}
+            disabled={busy}
             onClick={onRefresh}
           >
             Retry
@@ -350,7 +374,7 @@ export default function ConnectedMarketplace({
         <div className="empty-state" role="status">
           <h3>Loading listings…</h3>
         </div>
-      ) : tab !== 'all' && !account ? (
+      ) : tab === 'history' && !account ? (
         <div className="empty-state">
           <h3>Account unavailable.</h3>
           <button className="button secondary" onClick={onRefresh}>
@@ -358,7 +382,18 @@ export default function ConnectedMarketplace({
           </button>
         </div>
       ) : rows.length ? (
-        <div className="market-table-wrap">
+        <div
+          className="market-table-wrap"
+          role="region"
+          aria-label={
+            tab === 'all'
+              ? 'Marketplace listings'
+              : tab === 'mine'
+                ? 'Your active listings'
+                : 'Your listing history'
+          }
+          tabIndex={0}
+        >
           <table
             className={`market-table${tab === 'history' ? ' market-history-table' : ''}`}
             aria-busy={busy}
@@ -553,16 +588,24 @@ export default function ConnectedMarketplace({
           ) : null}
         </div>
       )}
-      {tab === 'all' && !error && hasMore && (
+      {((tab === 'all' && !error && hasMore) ||
+        (tab === 'mine' && signedIn && !ownError && ownHasMore)) && (
         <button
           className="button secondary load-more"
-          disabled={loading}
-          onClick={onMore}
+          disabled={busy}
+          onClick={tab === 'mine' ? onOwnMore : onMore}
         >
-          {loading ? 'Loading…' : 'Load more listings'}
+          {busy ? 'Loading…' : 'Load more listings'}
         </button>
       )}
-      {tab !== 'all' && account?.historyTruncated && (
+      {tab === 'mine' && signedIn && (
+        <p className="form-hint">
+          These are your saved off-chain listings. Position details reflect
+          their last observed block. Edits require fresh ownership verification;
+          cancellation remains available during chain outages.
+        </p>
+      )}
+      {tab === 'history' && account?.historyTruncated && (
         <p className="form-hint">
           History is limited to 500 records per category. Earlier records are
           retained.

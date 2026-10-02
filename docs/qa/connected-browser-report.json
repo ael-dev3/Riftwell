@@ -1,44 +1,100 @@
 {
   "status": "passed",
-  "checkedAt": "2026-10-02T17:16:55.485Z",
+  "checkedAt": "2026-10-02T19:19:43.731Z",
   "browser": "isolated headless Chrome",
+  "suiteVersion": "listing-table-v2-pooled-lending-v1",
   "scope": "Built connected frontend + real HTTP/SQLite, simulated read-only chain and ephemeral EOA providers; no real funds, wallets or transactions",
   "checks": [
     "Liveness and security headers",
     "Connected mode without demo records",
-    "KittenSwap remains sole selected market",
+    "KittenSwap remains the sole selected market",
+    "Supplied market logo and root accent are applied",
+    "Lending API reports an undeployed pool without invented accounting or terms",
+    "Connected lending and settlement capabilities are disabled",
     "Accessibility: connected marketplace empty",
     "Confirmed ownership positions",
     "Session secret stays HttpOnly",
+    "Dialog mounts in body with selected market accent: connected account positions",
     "Accessibility: connected account positions",
     "Owned-position dialog fits at 320px",
+    "Dialog mounts in body with selected market accent: connected account mobile",
     "Accessibility: connected account mobile",
+    "Listing picker shows verified unlisted NFTs",
     "Nonexistent NFT rejected",
+    "Malformed marketplace money is rejected before a server mutation",
+    "Dialog mounts in body with selected market accent: verified listing form",
     "Accessibility: verified listing form",
-    "Exact listing price retained",
-    "Purchase cannot settle or transfer assets",
+    "Fixed listing stores exact integer price and explicit public fixed terms",
+    "Listing-first marketplace retains the exact ask and shows owner controls",
+    "Picker excludes an already active listing",
+    "Dutch floor above its start is rejected before an API mutation",
+    "A seller cannot reserve their listing for their own address",
+    "Dialog mounts in body with selected market accent: reserved Dutch listing form",
+    "Accessibility: reserved Dutch listing form",
+    "Reserved Dutch creation stores exact start/floor, time bounds and recipient",
+    "Table shows Dutch and reserved terms without invented reference prices",
+    "Token search filters only the loaded listing records",
+    "Exact ask sorting applies to the loaded rows",
+    "USDC per locked KITTEN sorting uses the actual balance",
+    "Accessibility: connected listing table with fixed and Dutch rows",
+    "Loaded marketplace rows fit at 320px",
+    "Accessibility: connected loaded marketplace mobile",
+    "An unsigned visitor cannot select or buy a reserved listing",
+    "Purchase review fetches authoritative terms and cannot settle or transfer assets",
+    "Marketplace review retains the exact seller-paid 0.5% fee",
+    "Dialog mounts in body with selected market accent: purchase blocked review",
     "Accessibility: purchase blocked review",
-    "Malformed money rejected before mutation",
-    "Accessibility: borrowing request form",
-    "Empty lender ownership state",
-    "Lender cannot change requested principal or duration",
-    "Accessibility: lender offer form",
-    "Borrower receives lender offer with agreed terms",
-    "Borrower cannot cancel another lender offer",
-    "Accessibility: received lending offers",
-    "Offer acceptance remains disabled",
-    "Accessibility: borrower offer review",
+    "A lender account does not inherit borrower collateral ownership",
+    "The original lender retains a cancellation control for their historical unfunded offer",
+    "The authenticated named recipient can select the reserved Dutch listing",
+    "My listings contains the authenticated creator records and no Buy controls",
+    "Owner repricing checks the prior revision and retains exact money",
+    "Buyer still has the deliberately stale ask before review",
+    "Stale review reads the new revision, ask and seller fee without execution",
+    "Dialog mounts in body with selected market accent: changed authoritative purchase review",
+    "Accessibility: changed authoritative purchase review",
+    "Refreshing a changed revision clears the stale sweep selection",
+    "Dutch table ask decreases during its price window without a list refetch",
+    "Dutch ask reaches the exact floor and updates USDC per locked token without polling",
+    "Sweep selection sums exact current fixed and reserved Dutch asks",
+    "Sweep revalidates each record, names the reservation and keeps payment disabled",
+    "Dialog mounts in body with selected market accent: blocked fixed and reserved Dutch sweep",
+    "Accessibility: blocked fixed and reserved Dutch sweep",
+    "Owner cancels their reserved Dutch intent without moving assets",
+    "Cancelled Dutch terms remain in creator history without actionable controls",
+    "A stale cancelled listing fails authoritative review without retaining a payable quote",
+    "Cancellation removes the public row and stale sweep selection",
+    "Borrowing credit, debt and available cash remain unknown before launch",
+    "Wallet ownership is shown without claiming collateral was deposited",
+    "Collateral review cannot deposit or transfer the NFT",
+    "Dialog mounts in body with selected market accent: connected collateral review",
+    "Accessibility: connected collateral review",
+    "Connected vault has no fabricated liquidity, shares, withdrawals or APR",
+    "Lending has no APR, maturity, proposal or execution form",
+    "Accessibility: connected vault not launched",
+    "Connected undeployed vault fits at 320px",
+    "Accessibility: connected vault mobile",
+    "Legacy records remain clearly separated from pool balances and credit lines",
+    "Borrower can cancel their request but cannot cancel the received offer",
+    "Dialog mounts in body with selected market accent: legacy lending history",
+    "Accessibility: legacy lending history",
     "Session and listing persist across service restart",
     "RPC outage never substitutes demo data",
     "Creator can cancel off-chain intent during RPC outage",
+    "Declining cancellation keeps the legacy request active",
+    "Legacy request cancellation remains available during RPC outage and invalidates its old offer",
     "No horizontal overflow at 320px",
     "No horizontal overflow at 390px",
     "No horizontal overflow at 768px",
     "No horizontal overflow at 1440px",
     "No horizontal overflow at 1920px",
     "Accessibility: connected mobile marketplace",
+    "Cancelled marketplace listing stays absent after a second service restart",
+    "Cancelled legacy history persists without becoming a pool position",
     "Wallet disconnect clears authenticated UI",
     "Only account reads and personal sign reached test wallet",
+    "No retired lending creation or financial execution endpoint was requested",
+    "No external service or chain RPC reached the browser",
     "No browser runtime exceptions"
   ],
   "accessibility": [
@@ -59,23 +115,43 @@
       "violations": []
     },
     {
+      "view": "reserved Dutch listing form",
+      "violations": []
+    },
+    {
+      "view": "connected listing table with fixed and Dutch rows",
+      "violations": []
+    },
+    {
+      "view": "connected loaded marketplace mobile",
+      "violations": []
+    },
+    {
       "view": "purchase blocked review",
       "violations": []
     },
     {
-      "view": "borrowing request form",
+      "view": "changed authoritative purchase review",
       "violations": []
     },
     {
-      "view": "lender offer form",
+      "view": "blocked fixed and reserved Dutch sweep",
       "violations": []
     },
     {
-      "view": "received lending offers",
+      "view": "connected collateral review",
       "violations": []
     },
     {
-      "view": "borrower offer review",
+      "view": "connected vault not launched",
+      "violations": []
+    },
+    {
+      "view": "connected vault mobile",
+      "violations": []
+    },
+    {
+      "view": "legacy lending history",
       "violations": []
     },
     {
@@ -83,5 +159,378 @@
       "violations": []
     }
   ],
-  "errors": []
+  "errors": [],
+  "apiMutations": [
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/challenge"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/verify"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/listings"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/listings"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/challenge"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/verify"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/listings/9c66ce08-8630-405b-9281-af921e6ad704"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/listings/73fb7b0a-4718-4d44-8b67-23cc90ae1698"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/listings/9c66ce08-8630-405b-9281-af921e6ad704"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/loan-requests/6ff8c3a9-bcad-4c5a-8787-666a28effdd0"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/logout"
+    }
+  ],
+  "apiReads": [
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/listings"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/status"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/markets"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/lending"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account/listings"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/positions/999"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/positions/101"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/listings"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account/listings"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/listings"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account/listings"
+    },
+    {
+      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "path": "/api/v1/listings"
+    },
+    {
+      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "path": "/api/v1/status"
+    },
+    {
+      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "path": "/api/v1/markets"
+    },
+    {
+      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "path": "/api/v1/lending"
+    },
+    {
+      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "path": "/api/v1/listings/9c66ce08-8630-405b-9281-af921e6ad704"
+    },
+    {
+      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "path": "/api/v1/account/listings"
+    },
+    {
+      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/listings"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account/listings"
+    },
+    {
+      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "path": "/api/v1/listings/9c66ce08-8630-405b-9281-af921e6ad704"
+    },
+    {
+      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "path": "/api/v1/listings"
+    },
+    {
+      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "path": "/api/v1/account/listings"
+    },
+    {
+      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "path": "/api/v1/listings/73fb7b0a-4718-4d44-8b67-23cc90ae1698"
+    },
+    {
+      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "path": "/api/v1/listings/9c66ce08-8630-405b-9281-af921e6ad704"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/listings"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account/listings"
+    },
+    {
+      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "path": "/api/v1/listings/73fb7b0a-4718-4d44-8b67-23cc90ae1698"
+    },
+    {
+      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "path": "/api/v1/listings"
+    },
+    {
+      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "path": "/api/v1/account/listings"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/listings"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/status"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/markets"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/lending"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account/listings"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/listings"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/status"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/markets"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/lending"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account/listings"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/listings"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account/listings"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/listings"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account/listings"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/listings"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/status"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/markets"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/lending"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account/listings"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/listings"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/status"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/markets"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/lending"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account/listings"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "path": "/api/v1/account"
+    }
+  ],
+  "externalRequests": []
 }

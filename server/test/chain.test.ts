@@ -21,6 +21,8 @@ type Overrides = Partial<
     | 'wrongChain'
     | 'reorg'
     | 'stale'
+    | 'staleHead'
+    | 'malformedHead'
     | 'ignoredBlock'
     | 'noCode'
     | 'unsupportedPin'
@@ -43,6 +45,7 @@ interface RpcFixtureRequest {
 }
 function fixture(overrides: Overrides = {}) {
   const requests: RpcFixtureRequest[] = [];
+  let head = 100;
   let safeReads = 0;
   const fetcher: typeof fetch = async (_url, options) => {
     assert.ok(options && typeof options.body === 'string');
@@ -54,13 +57,15 @@ function fixture(overrides: Overrides = {}) {
       result = overrides.wrongChain ? '0x1' : '0x3e7';
     else if (request.method === 'eth_getBlockByNumber') {
       const latest = request.params[0] === 'latest';
+      assert.equal(typeof request.params[0], 'string');
       if (!latest) safeReads += 1;
       result = {
-        number: latest ? '0x64' : '0x62',
+        number: latest ? `0x${head.toString(16)}` : request.params[0],
         hash:
           overrides.reorg && safeReads > 1 ? `0x${'cd'.repeat(32)}` : blockHash,
-        timestamp: `0x${(BigInt(now / 1000) - BigInt(overrides.stale ? 600 : 3)).toString(16)}`,
+        timestamp: `0x${(BigInt(now / 1000) - BigInt(overrides.stale || (latest && overrides.staleHead) ? 600 : 3)).toString(16)}`,
       };
+      if (overrides.malformedHead && latest) result.number = 'not-a-block';
       if (overrides.ignoredBlock && !latest) result.number = '0x64';
     } else if (request.method === 'eth_getCode')
       result = overrides.noCode ? '0x' : '0x6000';
@@ -110,7 +115,13 @@ function fixture(overrides: Overrides = {}) {
       result,
     });
   };
-  return { chain: createChain({ fetch: fetcher, now: () => now }), requests };
+  return {
+    chain: createChain({ fetch: fetcher, now: () => now }),
+    requests,
+    advanceHead: (number: number) => {
+      head = number;
+    },
+  };
 }
 
 test('reads exact lock/owner/voting power at a canonical block without transaction RPC', async () => {
@@ -156,6 +167,89 @@ test('ownership pages retain their block and owner, with an explicit empty accou
     { items: [], nextCursor: null },
   );
 });
+
+for (const blockNumber of [99, 100, 101]) {
+  test(`rejects a caller-crafted cursor at unconfirmed block ${blockNumber}`, async () => {
+    const { chain, requests } = fixture();
+    const cursor = Buffer.from(
+      JSON.stringify({
+        address: owner,
+        offset: 2,
+        blockNumber,
+        blockHash,
+        issuedAt: now,
+      }),
+    ).toString('base64url');
+    await assert.rejects(chain.getOwnedPositions(owner, { cursor }), {
+      code: 'CHAIN_UNAVAILABLE',
+    });
+    assert.ok(
+      requests.every(
+        (request) =>
+          request.method !== 'eth_call' && request.method !== 'eth_getCode',
+      ),
+    );
+  });
+}
+
+test('a valid ownership cursor retains its historical snapshot as the head advances', async () => {
+  const { chain, requests, advanceHead } = fixture();
+  const first = await chain.getOwnedPositions(owner, { limit: 2 });
+  assert.equal(first.items[0]?.blockNumber, 98);
+  assert.equal(typeof first.nextCursor, 'string');
+  advanceHead(106);
+  const second = await chain.getOwnedPositions(owner, {
+    limit: 2,
+    cursor: first.nextCursor,
+  });
+  assert.deepEqual(
+    second.items.map((position) => position.tokenId),
+    ['3'],
+  );
+  assert.equal(second.items[0]?.blockNumber, 98);
+  assert.equal(second.items[0]?.blockHash, first.items[0]?.blockHash);
+  assert.equal(second.nextCursor, null);
+  assert.equal(
+    requests.filter(
+      (request) =>
+        request.method === 'eth_getBlockByNumber' &&
+        request.params[0] === 'latest',
+    ).length,
+    2,
+  );
+  assert.ok(
+    requests
+      .filter(
+        (request) =>
+          request.method === 'eth_getBlockByNumber' &&
+          request.params[0] !== 'latest',
+      )
+      .every((request) => request.params[0] === '0x62'),
+  );
+});
+
+test('rejects a formerly confirmed cursor if the current head no longer gives it sufficient depth', async () => {
+  const { chain, advanceHead } = fixture();
+  const first = await chain.getOwnedPositions(owner, { limit: 2 });
+  advanceHead(99);
+  await assert.rejects(
+    chain.getOwnedPositions(owner, { cursor: first.nextCursor }),
+    { code: 'CHAIN_UNAVAILABLE' },
+  );
+});
+
+for (const failure of ['staleHead', 'malformedHead'] as const) {
+  test(`a valid cursor fails closed when its fresh head is ${failure}`, async () => {
+    const overrides: Overrides = {};
+    const { chain } = fixture(overrides);
+    const first = await chain.getOwnedPositions(owner, { limit: 2 });
+    overrides[failure] = true;
+    await assert.rejects(
+      chain.getOwnedPositions(owner, { cursor: first.nextCursor }),
+      { code: 'CHAIN_UNAVAILABLE' },
+    );
+  });
+}
 
 for (const [name, overrides] of Object.entries({
   'wrong chain': { wrongChain: true },

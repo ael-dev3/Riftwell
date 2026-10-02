@@ -507,7 +507,12 @@ export function SweepReview({
           <PositionSummary position={fresh[0].position} />
         )}
         {!busy && !error && fresh.length > 1 && (
-          <div className="market-table-wrap">
+          <div
+            className="market-table-wrap"
+            role="region"
+            aria-label="Purchase review listings"
+            tabIndex={0}
+          >
             <table className="market-table">
               <caption className="sr-only">Current sweep terms</caption>
               <thead>
@@ -627,7 +632,12 @@ export function ListingPicker({
           </p>
         )}
         {positions.length > 0 ? (
-          <div className="market-table-wrap">
+          <div
+            className="market-table-wrap"
+            role="region"
+            aria-label="Available positions"
+            tabIndex={0}
+          >
             <table className="market-table">
               <caption className="sr-only">Your available positions</caption>
               <thead>

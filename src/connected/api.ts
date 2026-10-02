@@ -711,6 +711,28 @@ export class ApiClient {
     return this.request<Account>(`/account?${query}`, account, { signal });
   }
 
+  ownListings(
+    market: MarketId,
+    owner: string,
+    cursor?: string | null,
+    signal?: AbortSignal,
+  ) {
+    const query = new URLSearchParams({ market, limit: '24' });
+    if (cursor) query.set('cursor', cursor);
+    const validate: Validator<Page<Listing>> = (
+      value,
+    ): value is Page<Listing> =>
+      page(listing)(value) &&
+      value.items.every(
+        (item) =>
+          item.status === 'active' &&
+          item.owner.toLowerCase() === owner.toLowerCase(),
+      );
+    return this.request<Page<Listing>>(`/account/listings?${query}`, validate, {
+      signal,
+    });
+  }
+
   position(tokenId: string, signal?: AbortSignal) {
     return this.request<Position>(
       `/positions/${encodeURIComponent(tokenId)}`,

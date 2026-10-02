@@ -3256,6 +3256,9 @@ div.field-label {
   border-radius: 12px;
   background: #101612;
 }
+.market-table-wrap:focus-visible {
+  outline-offset: -3px;
+}
 .market-table {
   border-collapse: collapse;
   width: 100%;
@@ -3373,15 +3376,19 @@ div.field-label {
 .market-sweep-bar strong {
   font-size: 14px;
 }
-.market-form-advanced {
+.market-form-advanced,
+.market-advanced {
   border-top: 1px solid var(--line);
   padding-top: 16px;
 }
-.market-form-advanced summary {
+.market-form-advanced summary,
+.market-advanced summary {
   cursor: pointer;
   color: var(--muted);
   font-size: 12px;
   margin-bottom: 14px;
+  min-height: 44px;
+  padding-block: 12px;
 }
 @media (max-width: 760px) {
   .market-table-heading {

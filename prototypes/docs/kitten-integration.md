@@ -33,10 +33,13 @@ ABIs. Independently written public declarations are in
 `contracts/interfaces/IKittenVoting.sol`; no competitor implementation was used
 to write them.
 
-Bundle evidence is saved outside this project at
-`../../output/kitten-alternative-research-2026-10-02/economics/kitten-current-app.js`.
-Its SHA-256 is
+Retained [ABI extraction evidence](evidence/reward-settlement/app-abi-evidence.json)
+records the [official application bundle](https://app.kittenswap.finance/assets/index-DTVlrAoN.js)
+observed on 2 October 2026. Its recorded SHA-256 is
 `52c6fba413ff9c0163fab80d49783a2d145072711b449ec6758a254ba9e2312a`.
+The [Voter ABI evidence](evidence/rebase/app-voter-abi.json) separately records
+its extraction from that official bundle. These are historical observations,
+not a claim that the currently served bundle or deployed interfaces are unchanged.
 The escrow ABI is bound to `_p`, the Voter ABI to `uC`, and the pool voting reward
 ABI to `Due`. `Rzt` is a separate rebase reward ABI; do not confuse rebases with
 liquid voting revenue.

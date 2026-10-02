@@ -168,6 +168,28 @@ describe('application API transport', () => {
     );
   });
 
+  it('loads creator listings from the authenticated route with bounded encoded pagination', async () => {
+    const response = { items: [listingRecord], nextCursor: 'opaque-next' };
+    const { client, fetcher } = mockApi(response);
+    const controller = new AbortController();
+    expect(
+      await client.ownListings(
+        'kittenswap',
+        fixtureAddress,
+        'a&owner=other',
+        controller.signal,
+      ),
+    ).toEqual(response);
+    const [url, request] = fixtureAt(fetcher.mock.calls, 0);
+    const parsed = new URL(String(url), 'https://application.example');
+    expect(parsed.pathname).toBe('/api/v1/account/listings');
+    expect(parsed.searchParams.get('market')).toBe('kittenswap');
+    expect(parsed.searchParams.get('limit')).toBe('24');
+    expect(parsed.searchParams.get('cursor')).toBe('a&owner=other');
+    expect(parsed.searchParams.has('owner')).toBe(false);
+    expect(request?.credentials).toBe('include');
+  });
+
   it('preserves server error codes, details, messages and request IDs', async () => {
     const error = {
       code: 'SMART_CONTRACTS_DISABLED',
@@ -403,6 +425,27 @@ describe('application API transport', () => {
 });
 
 describe('successful API response validation', () => {
+  it('rejects another creator, inactive records and malformed creator listing pages', async () => {
+    for (const response of [
+      {
+        items: [
+          {
+            ...listingRecord,
+            owner: '0x' + 'd'.repeat(40),
+            position: { ...positionRecord, owner: '0x' + 'd'.repeat(40) },
+          },
+        ],
+        nextCursor: null,
+      },
+      { items: [{ ...listingRecord, status: 'cancelled' }], nextCursor: null },
+      { items: Array(51).fill(listingRecord), nextCursor: null },
+      { items: [listingRecord], nextCursor: 'a'.repeat(513) },
+    ])
+      await expect(
+        mockApi(response).client.ownListings('kittenswap', fixtureAddress),
+      ).rejects.toMatchObject({ code: 'INVALID_RESPONSE' });
+  });
+
   it('accepts historical account activity when current positions are unavailable', async () => {
     const unavailable = {
       ...accountRecord,

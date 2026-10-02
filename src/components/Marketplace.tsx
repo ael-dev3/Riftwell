@@ -239,7 +239,12 @@ export default function Marketplace({ market, state, onAction }: Props) {
         </div>
       )}
       {tab === 'history' ? (
-        <div className="market-table-wrap">
+        <div
+          className="market-table-wrap"
+          role="region"
+          aria-label="Marketplace history"
+          tabIndex={0}
+        >
           <table className="market-table market-history-table">
             <caption className="sr-only">
               Your local marketplace history
@@ -289,7 +294,14 @@ export default function Marketplace({ market, state, onAction }: Props) {
           )}
         </div>
       ) : rows.length ? (
-        <div className="market-table-wrap">
+        <div
+          className="market-table-wrap"
+          role="region"
+          aria-label={
+            tab === 'all' ? 'Marketplace listings' : 'Your active listings'
+          }
+          tabIndex={0}
+        >
           <table className="market-table">
             <caption className="sr-only">
               {tab === 'all'

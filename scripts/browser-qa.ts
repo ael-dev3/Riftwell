@@ -1132,23 +1132,29 @@ try {
   await close();
   await page.goto(`${base}/#lending`, { waitUntil: 'networkidle' });
   check(
-    'Direct lending route loads',
+    'Same-document lending navigation preserves the selected supplier tab',
     await page
-      .getByRole('heading', { name: 'Borrow against your positions.' })
+      .getByRole('heading', { name: 'Supply to the USDC vault.' })
       .isVisible(),
   );
+  // Hash navigation keeps React state; reload to exercise a fresh direct visit.
+  await page.reload({ waitUntil: 'networkidle' });
+  const borrowHeading = page.getByRole('heading', {
+    name: 'Borrow against your positions.',
+  });
+  await borrowHeading.waitFor({ state: 'visible' });
+  check('Direct lending route loads', await borrowHeading.isVisible());
   await page
     .getByRole('navigation')
     .getByRole('button', { name: 'Marketplace', exact: true })
     .click();
   await page.goBack();
-  check(
-    'Browser back updates route',
-    await page
-      .getByRole('heading', { name: 'Borrow against your positions.' })
-      .isVisible(),
-  );
+  await borrowHeading.waitFor({ state: 'visible' });
+  check('Browser back updates route', await borrowHeading.isVisible());
   await page.goForward();
+  await page
+    .getByRole('heading', { name: 'veKITTEN marketplace' })
+    .waitFor({ state: 'visible' });
   check(
     'Browser forward updates route',
     await page

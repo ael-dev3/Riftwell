@@ -42,6 +42,7 @@ Position {
 
 ## Marketplace
 
+- `GET /account/listings?market=kittenswap&limit=24&cursor=...` requires a session and returns the creator's active, unexpired saved listings independently of the capped account history. Default limit is 24, maximum 50; signed keyset cursors are bound to the creator, market and this route's scope. It makes no chain read and remains available during RPC outages. Position metadata reflects its last observed block, not fresh ownership verification. This is a private management view; public listings and edits retain their fresh ownership checks.
 - `GET /listings?market=kittenswap&limit=24&cursor=...` → active, unexpired, freshly ownership-verified `Listing` records. Ownership movement invalidates an off-chain listing. An RPC failure is an unavailable response, not a false claim that there are no listings.
 - `GET /listings/:id` → a fresh active listing; expired or invalidated records return 409, and chain outages return 503.
 - `POST /listings`: `{ tokenId, priceMicros, expiresAt, idempotencyKey, kind?, endPriceMicros?, auctionEndsAt?, recipient? }` → `Listing`.

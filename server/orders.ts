@@ -993,6 +993,39 @@ export function registerOrders(app: App, ctx: AppContext): void {
     },
   );
 
+  app.get(
+    '/api/v1/account/listings',
+    async (request): Promise<Page<Listing>> => {
+      const session = ctx.requireSession(request);
+      const query = valid.fields(request.query, ['market', 'limit', 'cursor']);
+      if (query.market !== undefined && query.market !== 'kittenswap')
+        fail(400, 'INVALID_MARKET', 'KittenSwap is the only available market.');
+      const limit = valid.limit(query.limit);
+      const filters = payloadHash({
+        scope: 'creator-active-listings',
+        market: 'kittenswap',
+        owner: session.address.toLowerCase(),
+      });
+      const cursor = decodeCursor(query.cursor, filters);
+      expireRecords(db, now());
+      const rows = db
+        .prepare<unknown[], ListingRow>(
+          "SELECT * FROM listings WHERE owner = ? AND market = 'kittenswap' AND status = 'active' AND (created_at < ? OR (created_at = ? AND id < ?)) ORDER BY created_at DESC, id DESC LIMIT ?",
+        )
+        .all(session.address, cursor.time, cursor.time, cursor.id, limit + 1);
+      const pageRows = rows.slice(0, limit);
+      // Creator management uses saved metadata, never a public ownership proof.
+      // Harmless cancellation must remain reachable during chain outages.
+      return {
+        items: pageRows.map((row) => orderResponse(row)),
+        nextCursor:
+          rows.length > limit
+            ? encodeCursor(pageRows[limit - 1], filters)
+            : null,
+      };
+    },
+  );
+
   app.get('/api/v1/account', async (request): Promise<Account> => {
     const session = ctx.requireSession(request);
     const query = valid.fields(request.query, ['positionsCursor', 'limit']);
