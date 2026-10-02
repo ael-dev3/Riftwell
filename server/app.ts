@@ -1,11 +1,11 @@
 import Fastify from 'fastify';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { createHmac, randomUUID } from 'node:crypto';
-import { openDatabase, expireRecords, pruneAuth } from './database.ts';
+import { openStore, expireRecords, pruneAuth } from './database.ts';
 import { registerAuth } from './auth.ts';
 import { registerOrders } from './orders.ts';
 import { registerStatic } from './static.ts';
-import { RateLimiter } from './rate-limit.ts';
+import { PersistentRateLimiter, RateLimiter } from './rate-limit.ts';
 import { ApiError, fail, errorCode } from './errors.ts';
 import { fields, tokenId, address, isRecord } from './validation.ts';
 import type {
@@ -46,7 +46,7 @@ export async function createApp({
     )
   )
     throw new Error('A read-only chain adapter is required');
-  const db = openDatabase(config.dbPath);
+  const db = await openStore(config);
   const app = Fastify({
     bodyLimit: 16384,
     requestTimeout: 30000,
@@ -74,16 +74,29 @@ export async function createApp({
         }
       : false,
   });
-  app.decorate('store', db);
-  const limiter = new RateLimiter(now);
+  app.decorate('database', db);
+  app.decorate('store', {
+    getter: () => {
+      if (!db.sqlite)
+        throw new Error(
+          'Native SQLite tooling is unavailable with PostgreSQL; use app.database',
+        );
+      return db.sqlite;
+    },
+  });
+  const hash = (value: string): string =>
+    createHmac('sha256', config.sessionSecret).update(value).digest('hex');
+  const limiter =
+    db.dialect === 'postgres'
+      ? new PersistentRateLimiter(db, now, hash)
+      : new RateLimiter(now);
   const baseContext = {
     db,
     config,
     chain,
     now,
     limiter,
-    hash: (value: string): string =>
-      createHmac('sha256', config.sessionSecret).update(value).digest('hex'),
+    hash,
   };
   const chainCall = async <T>(operation: () => Promise<T>): Promise<T> => {
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -250,24 +263,70 @@ export async function createApp({
     )
       fail(400, 'NON_CANONICAL_PATH', 'Use a canonical application path.');
     if (path === '/health/ready')
-      limiter.take(`readiness:${request.ip}`, 30, 60000);
+      await limiter.take(`readiness:${request.ip}`, 30, 60000);
     if (path.startsWith('/api/')) {
       reply.header('cache-control', 'no-store');
+      // The default Firebase host and Deno API are different sites. Only our
+      // exact frontend origin can read API responses, including error responses.
+      if (config.sessionTransport === 'bearer') {
+        reply.header('vary', 'Origin');
+        if (request.headers.origin === config.origin)
+          reply.header('access-control-allow-origin', config.origin);
+        if (request.method === 'OPTIONS') {
+          if (request.headers.origin !== config.origin)
+            fail(403, 'ORIGIN_REJECTED', 'The request origin is not allowed.');
+          const method = request.headers['access-control-request-method'];
+          const headers = request.headers['access-control-request-headers'];
+          if (
+            typeof method !== 'string' ||
+            !['GET', 'HEAD', 'POST', 'PATCH', 'DELETE'].includes(method) ||
+            (headers !== undefined &&
+              (typeof headers !== 'string' ||
+                headers
+                  .split(',')
+                  .some(
+                    (name) =>
+                      ![
+                        'authorization',
+                        'content-type',
+                        'x-csrf-token',
+                        'accept',
+                      ].includes(name.trim().toLowerCase()),
+                  )))
+          )
+            fail(
+              403,
+              'PREFLIGHT_REJECTED',
+              'The request could not be verified.',
+            );
+          await limiter.take(`api:${request.ip}`, 180, 60000);
+          reply.header(
+            'access-control-allow-methods',
+            'GET, HEAD, POST, PATCH, DELETE',
+          );
+          reply.header(
+            'access-control-allow-headers',
+            'Authorization, Content-Type, X-CSRF-Token, Accept',
+          );
+          reply.header('access-control-max-age', '300');
+          return reply.code(204).send();
+        }
+      }
       if (path === '/api/v1/settlement' && request.method === 'POST')
         fail(
           503,
           'SMART_CONTRACTS_DISABLED',
           'Smart-contract settlement is disabled. No funds or tokens have moved.',
         );
-      limiter.take(`api:${request.ip}`, 180, 60000);
+      await limiter.take(`api:${request.ip}`, 180, 60000);
       if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
         if (request.headers.origin !== config.origin)
           fail(403, 'ORIGIN_REJECTED', 'The request origin is not allowed.');
-        limiter.take(`mutation:${request.ip}`, 60, 60000);
+        await limiter.take(`mutation:${request.ip}`, 60, 60000);
         fields(request.query, []);
       }
       if (path.startsWith('/api/v1/auth/') && request.method === 'POST')
-        limiter.take(`auth:${request.ip}`, 20, 300000);
+        await limiter.take(`auth:${request.ip}`, 20, 300000);
     }
   });
   app.setErrorHandler((error, request, reply) => {
@@ -287,7 +346,10 @@ export async function createApp({
       status = 400;
       code = 'INVALID_REQUEST';
       message = 'The request is invalid.';
-    } else if (errorCode(error)?.startsWith('SQLITE_CONSTRAINT')) {
+    } else if (
+      errorCode(error)?.startsWith('SQLITE_CONSTRAINT') ||
+      errorCode(error) === '23505'
+    ) {
       status = 409;
       code = 'ACTIVE_ORDER_EXISTS';
       message = 'An active order conflicts with this request.';
@@ -338,7 +400,7 @@ export async function createApp({
     };
   });
   app.post('/api/v1/lending/actions', async (request) => {
-    ctx.requireSession(request, true);
+    await ctx.requireSession(request, true);
     fail(
       503,
       'SMART_CONTRACTS_DISABLED',
@@ -352,8 +414,7 @@ export async function createApp({
   const probeReadiness = async () => {
     let database = false;
     try {
-      database =
-        db.prepare<unknown[], { ok: number }>('SELECT 1 AS ok').get()?.ok === 1;
+      database = (await db.get<{ ok: number }>('SELECT 1 AS ok'))?.ok === 1;
     } catch {
       /* Redact storage errors. */
     }
@@ -415,31 +476,34 @@ export async function createApp({
     return reply.code(result.ready ? 200 : 503).send(result);
   });
   registerOrders(app, ctx);
-  registerStatic(app, config);
+  if (config.sessionTransport === 'bearer')
+    app.options('/api/*', async (_request, reply) => reply.code(204).send());
+  if (!config.apiOnly) registerStatic(app, config);
   let interval: ReturnType<typeof setInterval> | undefined;
+  let cleanupFlight: Promise<void> | undefined;
   app.addHook('onReady', async () => {
-    const cleanup = () => {
-      expireRecords(db, now());
-      pruneAuth(db, now());
-      limiter.prune();
+    const cleanup = async () => {
+      await expireRecords(db, now());
+      await pruneAuth(db, now());
+      await limiter.prune();
     };
-    cleanup();
+    await cleanup();
     interval = setInterval(() => {
-      try {
-        cleanup();
-      } catch {
-        app.log.error({ code: 'MAINTENANCE_FAILED' }, 'Maintenance failed');
-      }
+      if (cleanupFlight) return;
+      cleanupFlight = cleanup()
+        .catch(() => {
+          app.log.error({ code: 'MAINTENANCE_FAILED' }, 'Maintenance failed');
+        })
+        .finally(() => {
+          cleanupFlight = undefined;
+        });
     }, 60000);
     interval.unref();
   });
   app.addHook('onClose', async () => {
     clearInterval(interval);
-    try {
-      db.pragma('wal_checkpoint(TRUNCATE)');
-    } finally {
-      db.close();
-    }
+    await cleanupFlight;
+    await db.close();
   });
   try {
     await app.ready();

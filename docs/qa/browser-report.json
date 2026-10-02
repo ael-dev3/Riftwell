@@ -1,10 +1,10 @@
 {
   "status": "passed",
-  "baseURL": "http://127.0.0.1:5193",
+  "baseURL": "http://127.0.0.1:5192",
   "browser": "isolated headless Chrome",
   "suiteVersion": "table-marketplace-pooled-lending-v2",
   "scope": "Local table marketplace listing/purchase/sweep lifecycle and synthetic pooled lending balances; no live ownership, liquidity, wallet or settlement",
-  "checkedAt": "2026-10-02T19:23:09.276Z",
+  "checkedAt": "2026-10-02T20:39:36.591Z",
   "checks": [
     "Six sample seller listings in a table",
     "Exactly two primary sections",

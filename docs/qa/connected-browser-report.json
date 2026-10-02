@@ -1,6 +1,6 @@
 {
   "status": "passed",
-  "checkedAt": "2026-10-02T19:19:43.731Z",
+  "checkedAt": "2026-10-02T20:29:09.049Z",
   "browser": "isolated headless Chrome",
   "suiteVersion": "listing-table-v2-pooled-lending-v1",
   "scope": "Built connected frontend + real HTTP/SQLite, simulated read-only chain and ephemeral EOA providers; no real funds, wallets or transactions",
@@ -187,19 +187,19 @@
     },
     {
       "method": "PATCH",
-      "path": "/api/v1/listings/9c66ce08-8630-405b-9281-af921e6ad704"
+      "path": "/api/v1/listings/183d1f15-deb0-43ae-a705-b3da4d2205d6"
     },
     {
       "method": "DELETE",
-      "path": "/api/v1/listings/73fb7b0a-4718-4d44-8b67-23cc90ae1698"
+      "path": "/api/v1/listings/a7ab5471-044b-4b4a-9ca0-3ef605d80fb5"
     },
     {
       "method": "DELETE",
-      "path": "/api/v1/listings/9c66ce08-8630-405b-9281-af921e6ad704"
+      "path": "/api/v1/listings/183d1f15-deb0-43ae-a705-b3da4d2205d6"
     },
     {
       "method": "DELETE",
-      "path": "/api/v1/loan-requests/6ff8c3a9-bcad-4c5a-8787-666a28effdd0"
+      "path": "/api/v1/loan-requests/3694667d-dc75-4625-b098-ebe1ab865b8c"
     },
     {
       "method": "POST",
@@ -208,327 +208,327 @@
   ],
   "apiReads": [
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/status"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/markets"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/lending"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/auth/session"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/positions/999"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/positions/101"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "actor": "0x85fd3E16D36a6ea573cc74c10cE262661130c46B",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "actor": "0x85fd3E16D36a6ea573cc74c10cE262661130c46B",
       "path": "/api/v1/status"
     },
     {
-      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "actor": "0x85fd3E16D36a6ea573cc74c10cE262661130c46B",
       "path": "/api/v1/markets"
     },
     {
-      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "actor": "0x85fd3E16D36a6ea573cc74c10cE262661130c46B",
       "path": "/api/v1/lending"
     },
     {
-      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "actor": "0x85fd3E16D36a6ea573cc74c10cE262661130c46B",
       "path": "/api/v1/auth/session"
     },
     {
-      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
-      "path": "/api/v1/listings/9c66ce08-8630-405b-9281-af921e6ad704"
+      "actor": "0x85fd3E16D36a6ea573cc74c10cE262661130c46B",
+      "path": "/api/v1/listings/183d1f15-deb0-43ae-a705-b3da4d2205d6"
     },
     {
-      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "actor": "0x85fd3E16D36a6ea573cc74c10cE262661130c46B",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "actor": "0x85fd3E16D36a6ea573cc74c10cE262661130c46B",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
-      "path": "/api/v1/listings/9c66ce08-8630-405b-9281-af921e6ad704"
+      "actor": "0x85fd3E16D36a6ea573cc74c10cE262661130c46B",
+      "path": "/api/v1/listings/183d1f15-deb0-43ae-a705-b3da4d2205d6"
     },
     {
-      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "actor": "0x85fd3E16D36a6ea573cc74c10cE262661130c46B",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "actor": "0x85fd3E16D36a6ea573cc74c10cE262661130c46B",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "actor": "0x85fd3E16D36a6ea573cc74c10cE262661130c46B",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
-      "path": "/api/v1/listings/73fb7b0a-4718-4d44-8b67-23cc90ae1698"
+      "actor": "0x85fd3E16D36a6ea573cc74c10cE262661130c46B",
+      "path": "/api/v1/listings/a7ab5471-044b-4b4a-9ca0-3ef605d80fb5"
     },
     {
-      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
-      "path": "/api/v1/listings/9c66ce08-8630-405b-9281-af921e6ad704"
+      "actor": "0x85fd3E16D36a6ea573cc74c10cE262661130c46B",
+      "path": "/api/v1/listings/183d1f15-deb0-43ae-a705-b3da4d2205d6"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
-      "path": "/api/v1/listings/73fb7b0a-4718-4d44-8b67-23cc90ae1698"
+      "actor": "0x85fd3E16D36a6ea573cc74c10cE262661130c46B",
+      "path": "/api/v1/listings/a7ab5471-044b-4b4a-9ca0-3ef605d80fb5"
     },
     {
-      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "actor": "0x85fd3E16D36a6ea573cc74c10cE262661130c46B",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "actor": "0x85fd3E16D36a6ea573cc74c10cE262661130c46B",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x420F1Eb3B69C3A3aC911e5a48EAEA323868724B6",
+      "actor": "0x85fd3E16D36a6ea573cc74c10cE262661130c46B",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/status"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/markets"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/lending"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/auth/session"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/status"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/markets"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/lending"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/auth/session"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/status"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/markets"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/lending"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/auth/session"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/status"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/markets"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/lending"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/auth/session"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x3395e1c7D853d5C1c81A09a2202ded2701d11506",
+      "actor": "0xBf7432DAC474b562370912A8322F798D7F615D45",
       "path": "/api/v1/account"
     }
   ],

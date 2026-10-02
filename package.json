@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:ui": "node scripts/browser-qa.ts",
     "test:connected": "node scripts/connected-browser-qa.ts",
+    "test:bearer": "node scripts/bearer-browser-qa.ts",
     "format:check": "prettier --check src scripts server/*.ts server/test server/package.json server/tsconfig.json deploy docs/API.md docs/OPERATIONS.md docs/MARKETPLACE.md index.html vite.config.ts tsconfig.json",
     "check": "npm run test && npm run typecheck && npm run build",
     "contracts:compile": "npm --prefix prototypes run compile",

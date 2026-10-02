@@ -829,7 +829,7 @@ test('Origin and CSRF protect mutations; logout revokes cookies and expired sess
     401,
     'AUTH_REQUIRED',
   );
-  pruneAuth(f.app.store, f.time);
+  await pruneAuth(f.app.database, f.time);
   assert.equal(
     f.app.store
       .prepare<unknown[], { n: number }>('SELECT count(*) AS n FROM sessions')

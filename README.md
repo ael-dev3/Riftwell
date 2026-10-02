@@ -1,6 +1,6 @@
 # Riftwell
 
-[Live preview → ael-dev3.github.io/Riftwell](https://ael-dev3.github.io/Riftwell/)
+[Live preview → riftwell-ael.web.app](https://riftwell-ael.web.app)
 
 Collateral credit lines, pooled USDC lending and a focused marketplace, starting with KittenSwap on HyperEVM. Dark surfaces, a light-green accent and a quiet portal theme.
 
@@ -10,8 +10,8 @@ Collateral credit lines, pooled USDC lending and a focused marketplace, starting
 
 Two build modes share the interface:
 
-- **Preview:** GitHub Pages uses a listings table with sample NFTs, fixed-price and Dutch listings, seller management, purchase and sweep reviews, and a separate pooled lending simulation. All preview balances and ownership are local examples.
-- **Connected:** the Node service supports wallet sign-in, confirmed veKITTEN ownership reads and persistent marketplace listings. The lending view reports its undeployed status without inventing liquidity, credit or yield.
+- **Preview:** Firebase Hosting serves a listings table with sample NFTs, fixed-price and Dutch listings, seller management, purchase and sweep reviews, and a separate pooled lending simulation. All preview balances and ownership are local examples.
+- **Connected:** the service supports wallet sign-in, confirmed veKITTEN ownership reads and persistent marketplace listings. It can run as a combined Node/SQLite application or a Deno/PostgreSQL API behind Firebase Hosting. The lending view reports its undeployed status without inventing liquidity, credit or yield.
 
 Marketplace listings are off-chain expressions of interest. Funded purchases and lending are unavailable until compatible contracts are separately released. No application route requests token approvals, transfers NFTs or sends transactions. Earlier unfunded lending requests/offers are retained only for history and cancellation.
 
@@ -49,12 +49,12 @@ npm ci --prefix prototypes --ignore-scripts
 npm run typecheck:all
 ```
 
-Read [deployment and operations](docs/OPERATIONS.md), the [API contract](docs/API.md), [hosting modes](docs/HOSTING.md) and [validation scope](docs/VALIDATION.md). The Docker deployment supplies HTTPS configuration, persistent storage and health checks. A production host, domain and suitable RPC endpoint must still be configured and verified.
+Read [deployment and operations](docs/OPERATIONS.md), the [API contract](docs/API.md), [hosting modes](docs/HOSTING.md) and [validation scope](docs/VALIDATION.md). Docker supplies a same-origin HTTPS deployment with persistent SQLite. [Firebase and Deno setup](docs/FIREBASE_DENO.md) uses the default Firebase domain, PostgreSQL and wallet sessions held only in browser memory; a page refresh requires signing in again. The Firebase preview is published and verified. The Deno application and live connected release still need provider verification.
 
 ## Source
 
 - `src/` — React interface, preview logic and connected API/wallet client.
-- `server/` — authentication, SQLite persistence, order APIs and read-only chain adapter.
+- `server/` — authentication, SQLite/PostgreSQL persistence, migrations, order APIs and read-only chain adapter.
 - `deploy/` — single-instance Docker Compose and HTTPS reverse proxy.
 - `public/` — original artwork and supplied KittenSwap logo.
 - `prototypes/` — experimental Solidity and local integration tooling.

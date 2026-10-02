@@ -20,6 +20,7 @@ export function registerAuth(app: App, ctx: AuthContext): RequireSession {
   const cookieName = config.production
     ? '__Host-riftwell_session'
     : 'riftwell_session';
+  const bearer = config.sessionTransport === 'bearer';
   const cookieToken = (request: FastifyRequest): string | null => {
     const cookies = request.headers.cookie;
     if (!cookies || cookies.length > 4096) return null;
@@ -30,6 +31,14 @@ export function registerAuth(app: App, ctx: AuthContext): RequireSession {
     return matches[0][1];
   };
   const csrfFor = (token: string): string => hash(`csrf-token:${token}`);
+  // Exactly one configured transport. Cookies never authenticate the separate
+  // Firebase frontend; Authorization never changes same-origin cookie behavior.
+  const sessionToken = (request: FastifyRequest): string | null => {
+    if (!bearer) return cookieToken(request);
+    const authorization = request.headers.authorization;
+    if (typeof authorization !== 'string') return null;
+    return /^Bearer ([0-9a-f]{64})$/.exec(authorization)?.[1] ?? null;
+  };
   const cookie = (token: string, expiresAt: number, clear = false): string =>
     `${cookieName}=${clear ? '' : token}; Path=/; HttpOnly; SameSite=Strict${config.production ? '; Secure' : ''}; Max-Age=${clear ? 0 : Math.max(0, Math.floor((expiresAt - now()) / 1000))}; Expires=${new Date(clear ? 0 : expiresAt).toUTCString()}`;
   const sessionResponse = (
@@ -41,16 +50,16 @@ export function registerAuth(app: App, ctx: AuthContext): RequireSession {
     csrfToken: csrfFor(token),
     expiresAt: iso(row.expires_at),
   });
-  const requireSession: RequireSession = (request, mutation = false) => {
-    const token = cookieToken(request);
+  const requireSession: RequireSession = async (request, mutation = false) => {
+    const token = sessionToken(request);
     if (!token)
       fail(401, 'AUTH_REQUIRED', 'Sign in with your wallet to continue.');
-    const row = db
-      .prepare<unknown[], SessionRow>(
-        'SELECT * FROM sessions WHERE token_hash = ? AND expires_at > ?',
-      )
-      .get(hash(token), now());
-    if (!row)
+    const row = await db.get<SessionRow>(
+      'SELECT * FROM sessions WHERE token_hash = ? AND expires_at > ?',
+      hash(token),
+      now(),
+    );
+    if (!row || row.expires_at <= now())
       fail(401, 'AUTH_REQUIRED', 'Sign in with your wallet to continue.');
     if (mutation) {
       const csrf = request.headers['x-csrf-token'];
@@ -69,17 +78,23 @@ export function registerAuth(app: App, ctx: AuthContext): RequireSession {
     const account = address(body.address);
     if (body.chainId !== 999)
       fail(400, 'WRONG_CHAIN', 'Use HyperEVM, chain 999.');
-    limiter.take(`auth-address:${account}`, 10, 15 * 60_000);
+    await limiter.take(`auth-address:${account}`, 10, 15 * 60_000);
     const issuedAt = now();
     const expiresAt = issuedAt + 5 * 60_000;
     const challengeId = randomUUID();
     const nonce = randomBytes(16).toString('hex');
     const message = `${new URL(config.origin).host} wants you to sign in with your Ethereum account:\n${account}\n\nSign in to Riftwell to manage off-chain marketplace listings and cancel historical lending intents. This does not authorize transactions or move funds.\n\nURI: ${config.origin}\nVersion: 1\nChain ID: 999\nNonce: ${nonce}\nIssued At: ${iso(issuedAt)}\nExpiration Time: ${iso(expiresAt)}\nRequest ID: ${challengeId}`;
-    db.transaction(() => {
-      db.prepare(
+    await db.transaction(async () => {
+      await db.run(
         'INSERT INTO challenges(id,address,chain_id,nonce,message,created_at,expires_at) VALUES (?,?,999,?,?,?,?)',
-      ).run(challengeId, account, nonce, message, issuedAt, expiresAt);
-      appendAudit(
+        challengeId,
+        account,
+        nonce,
+        message,
+        issuedAt,
+        expiresAt,
+      );
+      await appendAudit(
         db,
         issuedAt,
         account,
@@ -87,7 +102,7 @@ export function registerAuth(app: App, ctx: AuthContext): RequireSession {
         'auth',
         challengeId,
       );
-    })();
+    });
     return { challengeId, message, expiresAt: iso(expiresAt) };
   });
 
@@ -103,9 +118,10 @@ export function registerAuth(app: App, ctx: AuthContext): RequireSession {
         'INVALID_SIGNATURE',
         'A valid EOA personal-sign signature is required.',
       );
-    const challenge = db
-      .prepare<unknown[], ChallengeRow>('SELECT * FROM challenges WHERE id = ?')
-      .get(challengeId);
+    const challenge = await db.get<ChallengeRow>(
+      'SELECT * FROM challenges WHERE id = ?',
+      challengeId,
+    );
     if (
       !challenge ||
       challenge.consumed_at !== null ||
@@ -133,32 +149,36 @@ export function registerAuth(app: App, ctx: AuthContext): RequireSession {
         'The wallet signature could not be verified.',
       );
     const token = randomBytes(32).toString('hex');
-    const createdAt = now();
-    const expiresAt = createdAt + config.sessionTtlSeconds * 1000;
-    const session = {
-      address: challenge.address,
-      chain_id: 999,
-      expires_at: expiresAt,
-    };
-    db.transaction(() => {
-      const consumed = db
-        .prepare(
+    let expiresAt = 0;
+    await db.transaction(async () => {
+      // The distributed write lock can wait behind another instance. Evaluate
+      // challenge expiry and session lifetime after acquiring it.
+      const createdAt = now();
+      expiresAt = createdAt + config.sessionTtlSeconds * 1000;
+      const consumed = (
+        await db.run(
           'UPDATE challenges SET consumed_at = ? WHERE id = ? AND consumed_at IS NULL AND expires_at > ?',
+          createdAt,
+          challengeId,
+          createdAt,
         )
-        .run(createdAt, challengeId, createdAt).changes;
+      ).changes;
       if (consumed !== 1)
         fail(
           401,
           'CHALLENGE_INVALID',
           'The sign-in challenge is expired or already used.',
         );
-      const previous = cookieToken(request);
+      const previous = sessionToken(request);
       if (previous) {
-        const removed = db
-          .prepare('DELETE FROM sessions WHERE token_hash = ?')
-          .run(hash(previous)).changes;
+        const removed = (
+          await db.run(
+            'DELETE FROM sessions WHERE token_hash = ?',
+            hash(previous),
+          )
+        ).changes;
         if (removed)
-          appendAudit(
+          await appendAudit(
             db,
             createdAt,
             challenge.address,
@@ -167,16 +187,15 @@ export function registerAuth(app: App, ctx: AuthContext): RequireSession {
             null,
           );
       }
-      db.prepare(
+      await db.run(
         'INSERT INTO sessions(token_hash,address,chain_id,csrf_hash,created_at,expires_at) VALUES (?,?,999,?,?,?)',
-      ).run(
         hash(token),
         challenge.address,
         hash(`csrf:${csrfFor(token)}`),
         createdAt,
         expiresAt,
       );
-      appendAudit(
+      await appendAudit(
         db,
         createdAt,
         challenge.address,
@@ -184,7 +203,7 @@ export function registerAuth(app: App, ctx: AuthContext): RequireSession {
         'auth',
         challengeId,
       );
-      appendAudit(
+      await appendAudit(
         db,
         createdAt,
         challenge.address,
@@ -192,24 +211,30 @@ export function registerAuth(app: App, ctx: AuthContext): RequireSession {
         'auth',
         null,
       );
-    })();
-    reply.header('set-cookie', cookie(token, expiresAt));
-    return sessionResponse(session, token);
+    });
+    if (!bearer) reply.header('set-cookie', cookie(token, expiresAt));
+    const session = sessionResponse(
+      { address: challenge.address, chain_id: 999, expires_at: expiresAt },
+      token,
+    );
+    return bearer ? { ...session, accessToken: token } : session;
   });
 
   app.get('/api/v1/auth/session', async (request) => {
     fields(request.query, []);
-    const session = requireSession(request);
+    const session = await requireSession(request);
     return sessionResponse(session, session.token);
   });
   app.post('/api/v1/auth/logout', async (request, reply) => {
     fields(request.body, [], true);
-    const session = requireSession(request, true);
-    db.transaction(() => {
-      db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(
+    const session = await requireSession(request, true);
+    await db.transaction(async () => {
+      await requireSession(request, true);
+      await db.run(
+        'DELETE FROM sessions WHERE token_hash = ?',
         hash(session.token),
       );
-      appendAudit(
+      await appendAudit(
         db,
         now(),
         session.address,
@@ -217,8 +242,8 @@ export function registerAuth(app: App, ctx: AuthContext): RequireSession {
         'auth',
         null,
       );
-    })();
-    reply.header('set-cookie', cookie('', 0, true));
+    });
+    if (!bearer) reply.header('set-cookie', cookie('', 0, true));
     return { ok: true };
   });
   return requireSession;

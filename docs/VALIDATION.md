@@ -1,6 +1,18 @@
 # Validation scope
 
-The frontend, Node service and contract prototypes have separate dependency trees. Frontend production dependencies are React, React DOM and Lucide; the server uses Fastify, ethers and better-sqlite3. Contract/compiler tooling is not shipped with the application. Captured application audits are in `production-dependency-audit.json` and `server-production-dependency-audit.json`.
+The frontend, service and contract prototypes have separate dependency trees. Frontend production dependencies are React, React DOM and Lucide; the server uses Fastify, ethers, Postgres.js and optional native SQLite. Contract/compiler tooling is not shipped with the application. Captured application audits are in `production-dependency-audit.json` and `server-production-dependency-audit.json`; those historical captures precede the PostgreSQL dependency.
+
+## Firebase and Deno migration — 2 October 2026
+
+- 160 frontend tests and 107 Node backend tests pass. Backend validation uses real temporary SQLite and PostgreSQL databases. It covers schema migrations, transactions and savepoints, concurrent single-use authentication, durable rate limits, exact-origin CORS, bearer/cookie separation, revocation, expiry, exact listing accounting and disabled settlement.
+- Two actual Deno runtime suites pass against temporary PostgreSQL with native SQLite/FFI access denied. They exercise persistence and the real Fastify HTTP service, including signing in, replay rejection, listing creation/cancellation, logging out, readiness and CORS. The production-configured `deno task migrate` also passes locally. Read-only chain data in these suites is simulated.
+- Both frontend modes build. Strict application, server, QA and prototype type checks, formatting and diff checks pass. Solidity prototypes remain unchanged.
+- The backend's locked production dependency audit reports zero known advisories at this check, including Postgres.js. [Audit capture](server-postgres-production-dependency-audit.json). This is an advisory lookup, not an independent security audit.
+- The preview and original same-origin connected browser suites pass their 188 and 91 checks, respectively, with zero automated accessibility violations across 34 audited views. A separate two-origin bearer browser suite passes 14 checks with eight actual preflights and no observed page errors or external requests. It confirms an off-chain listing and cancellation persist, logging out revokes the session, tokens never enter cookies or browser storage, and reload signs out. It uses an ephemeral fixture wallet and local test HTTPS, not a user's wallet or production chain transactions. [Bearer browser report](qa/bearer-browser-report.json).
+- Firebase Hosting emulator checks pass for HTML, SPA fallback and hashed assets. Its full preview CSP also passes an isolated browser smoke check. On the live default domain, the same four responses pass HTTPS, content hashes, cache policies and security-header checks; a Chrome inspection shows the marketplace correctly with no observed console errors. [Live hosting report](qa/firebase-live.json).
+- The preview is published at [riftwell-ael.web.app](https://riftwell-ael.web.app), Hosting version `74a5226cee788f58`. Deno's Frankfurt PostgreSQL database is provisioned but unassigned; Deno app authorization, deployment, actual-provider persistence/backup recovery and final-domain wallet interoperability remain unverified. The live frontend remains explicitly in preview mode.
+
+This migration is retained locally. Direct Firebase publishing did not trigger GitHub Actions or update the source repository. The GitHub billing blocker and historical Pages status below remain unchanged. No funds, NFT transfers, token approvals or live contract deployment occurred.
 
 ## Marketplace and TypeScript migration — 2 October 2026
 

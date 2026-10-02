@@ -140,6 +140,7 @@ export class ApiError extends Error {
 
 export type ApiClientOptions = {
   baseUrl?: string;
+  sessionTransport?: 'cookie' | 'bearer';
   timeoutMs?: number;
   fetch?: typeof globalThis.fetch;
 };
@@ -148,6 +149,7 @@ type RequestOptions = {
   body?: unknown;
   csrf?: string;
   signal?: AbortSignal | undefined;
+  bearerToken?: string | null;
 };
 
 function object(value: unknown): value is Record<string, unknown> {
@@ -406,6 +408,53 @@ function session(value: unknown): value is Session {
   );
 }
 
+type BearerSession = Session & { accessToken: string };
+
+function bearerSession(value: unknown): value is BearerSession {
+  if (
+    !fields(value, [
+      'address',
+      'chainId',
+      'csrfToken',
+      'expiresAt',
+      'accessToken',
+    ])
+  )
+    return false;
+  const { accessToken, ...rest } = value;
+  return (
+    session(rest) &&
+    typeof accessToken === 'string' &&
+    /^[0-9a-f]{64}$/.test(accessToken) &&
+    Date.parse(rest.expiresAt) > Date.now()
+  );
+}
+
+function bearerOrigin(value: string): string {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new RangeError('Bearer sessions require an exact HTTPS API origin.');
+  }
+  const localDevelopment =
+    import.meta.env.DEV &&
+    ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
+  if (
+    !(
+      url.protocol === 'https:' ||
+      (url.protocol === 'http:' && localDevelopment)
+    ) ||
+    url.username ||
+    url.password ||
+    url.pathname !== '/' ||
+    url.search ||
+    url.hash
+  )
+    throw new RangeError('Bearer sessions require an exact HTTPS API origin.');
+  return url.origin;
+}
+
 function challenge(value: unknown): value is Challenge {
   return (
     fields(value, ['challengeId', 'message', 'expiresAt']) &&
@@ -564,18 +613,73 @@ export class ApiClient {
   private readonly baseUrl: string;
   private readonly timeoutMs: number;
   private readonly fetcher: typeof globalThis.fetch;
+  readonly sessionTransport: 'cookie' | 'bearer';
+  readonly #bearerOrigin: string | null;
+  #accessToken: string | null = null;
+  #expiresAt = 0;
+  #sessionGeneration = 0;
+  #expiryTimer: ReturnType<typeof setTimeout> | undefined;
+  #sessionErrors = new WeakMap<ApiError, number>();
 
   constructor(options: ApiClientOptions = {}) {
-    this.baseUrl = (
-      options.baseUrl ??
-      import.meta.env.VITE_API_BASE ??
-      ''
-    ).replace(/\/+$/, '');
+    const transport =
+      options.sessionTransport ??
+      import.meta.env.VITE_SESSION_TRANSPORT ??
+      'cookie';
+    if (transport !== 'cookie' && transport !== 'bearer')
+      throw new RangeError('Unsupported session transport.');
+    this.sessionTransport = transport;
+    const baseUrl = options.baseUrl ?? import.meta.env.VITE_API_BASE ?? '';
+    this.#bearerOrigin = transport === 'bearer' ? bearerOrigin(baseUrl) : null;
+    this.baseUrl = this.#bearerOrigin ?? baseUrl.replace(/\/+$/, '');
     this.timeoutMs = options.timeoutMs ?? 30_000;
     if (!Number.isFinite(this.timeoutMs) || this.timeoutMs <= 0) {
       throw new RangeError('API timeout must be a positive number.');
     }
     this.fetcher = options.fetch ?? ((...args) => globalThis.fetch(...args));
+  }
+
+  clearSession(): void {
+    this.#sessionGeneration++;
+    this.#accessToken = null;
+    this.#expiresAt = 0;
+    clearTimeout(this.#expiryTimer);
+    this.#expiryTimer = undefined;
+  }
+
+  isCurrentSessionError(failure: unknown): boolean {
+    return (
+      failure instanceof ApiError &&
+      failure.status === 401 &&
+      (this.sessionTransport === 'cookie' ||
+        this.#sessionErrors.get(failure) === this.#sessionGeneration)
+    );
+  }
+
+  private currentBearerToken(): string | null {
+    if (this.#accessToken && this.#expiresAt <= Date.now()) this.clearSession();
+    return this.#accessToken;
+  }
+
+  private scheduleExpiry(): void {
+    clearTimeout(this.#expiryTimer);
+    const token = this.#accessToken;
+    const generation = this.#sessionGeneration;
+    if (!token) return;
+    this.#expiryTimer = setTimeout(
+      () => {
+        this.#expiryTimer = undefined;
+        if (
+          token !== this.#accessToken ||
+          generation !== this.#sessionGeneration
+        )
+          return;
+        if (this.#expiresAt <= Date.now()) this.clearSession();
+        else this.scheduleExpiry();
+      },
+      Math.max(0, Math.min(this.#expiresAt - Date.now(), 2_147_483_647)),
+    );
+    this.#expiryTimer.unref?.();
   }
 
   private async request<T>(
@@ -586,6 +690,20 @@ export class ApiClient {
     if (options.signal?.aborted) {
       throw new ApiError(0, 'REQUEST_ABORTED', 'The request was cancelled.');
     }
+    const url = `${this.baseUrl}/api/v1${path}`;
+    if (this.#bearerOrigin && new URL(url).origin !== this.#bearerOrigin)
+      throw new ApiError(
+        0,
+        'API_ORIGIN_REJECTED',
+        'The API origin is not allowed.',
+      );
+    const usedToken =
+      this.sessionTransport === 'bearer'
+        ? options.bearerToken === undefined
+          ? this.currentBearerToken()
+          : options.bearerToken
+        : null;
+    const usedGeneration = this.#sessionGeneration;
     const controller = new AbortController();
     let timedOut = false;
     const cancel = () => controller.abort();
@@ -600,10 +718,14 @@ export class ApiClient {
     if (options.body !== undefined)
       headers.set('Content-Type', 'application/json');
     if (options.csrf) headers.set('X-CSRF-Token', options.csrf);
+    if (usedToken) headers.set('Authorization', `Bearer ${usedToken}`);
     try {
-      const response = await this.fetcher(`${this.baseUrl}/api/v1${path}`, {
+      const response = await this.fetcher(url, {
         method: options.method ?? 'GET',
-        credentials: 'include',
+        credentials: this.sessionTransport === 'bearer' ? 'omit' : 'include',
+        ...(this.sessionTransport === 'bearer'
+          ? { redirect: 'error' as const }
+          : {}),
         headers,
         ...(options.body === undefined
           ? {}
@@ -644,7 +766,19 @@ export class ApiClient {
             )
           : new ApiError(0, 'REQUEST_ABORTED', 'The request was cancelled.');
       }
-      if (error instanceof ApiError) throw error;
+      if (error instanceof ApiError) {
+        if (
+          this.sessionTransport === 'bearer' &&
+          error.status === 401 &&
+          usedToken !== null &&
+          usedToken === this.#accessToken &&
+          usedGeneration === this.#sessionGeneration
+        ) {
+          this.clearSession();
+          this.#sessionErrors.set(error, this.#sessionGeneration);
+        }
+        throw error;
+      }
       throw new ApiError(
         0,
         'API_UNAVAILABLE',
@@ -662,13 +796,19 @@ export class ApiClient {
     csrf: string,
     validate: Validator<T>,
     body?: unknown,
+    bearerToken?: string | null,
   ): Promise<T> {
     if (!csrf) {
       return Promise.reject(
         new ApiError(0, 'CSRF_REQUIRED', 'Sign in again to continue.'),
       );
     }
-    return this.request<T>(path, validate, { method, body, csrf });
+    return this.request<T>(path, validate, {
+      method,
+      body,
+      csrf,
+      ...(bearerToken === undefined ? {} : { bearerToken }),
+    });
   }
 
   status(signal?: AbortSignal) {
@@ -750,15 +890,46 @@ export class ApiClient {
     });
   }
 
-  verify(challengeId: string, signature: string) {
-    return this.request<Session>('/auth/verify', session, {
+  async verify(challengeId: string, signature: string): Promise<Session> {
+    const options: RequestOptions = {
       method: 'POST',
       body: { challengeId, signature },
-    });
+    };
+    if (this.sessionTransport === 'cookie')
+      return this.request<Session>('/auth/verify', session, options);
+    this.clearSession();
+    const generation = this.#sessionGeneration;
+    const verified = await this.request<BearerSession>(
+      '/auth/verify',
+      bearerSession,
+      options,
+    );
+    if (generation !== this.#sessionGeneration)
+      throw new ApiError(
+        0,
+        'AUTH_CHANGED',
+        'Sign-in was cancelled. Please sign in again.',
+      );
+    const { accessToken, ...safeSession } = verified;
+    this.#accessToken = accessToken;
+    this.#expiresAt = Date.parse(safeSession.expiresAt);
+    this.scheduleExpiry();
+    return safeSession;
   }
 
   logout(csrf: string) {
-    return this.mutate<{ ok: true }>('/auth/logout', 'POST', csrf, loggedOut);
+    if (this.sessionTransport === 'cookie')
+      return this.mutate<{ ok: true }>('/auth/logout', 'POST', csrf, loggedOut);
+    const token = this.currentBearerToken();
+    this.clearSession();
+    return this.mutate<{ ok: true }>(
+      '/auth/logout',
+      'POST',
+      csrf,
+      loggedOut,
+      undefined,
+      token,
+    );
   }
 
   createListing(body: CreateListingInput, csrf: string) {

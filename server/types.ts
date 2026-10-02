@@ -1,15 +1,32 @@
 import type Database from 'better-sqlite3';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
-import type { RateLimiter } from './rate-limit.ts';
+import type { RateControl } from './rate-limit.ts';
 
 export type Clock = () => number;
 export type App = FastifyInstance;
-export type Store = Database.Database;
+export type SqliteStore = Database.Database;
+export type SqlParameter = string | number | null;
+export interface Store {
+  readonly dialect: 'sqlite' | 'postgres';
+  readonly sqlite?: SqliteStore;
+  get<T>(query: string, ...parameters: SqlParameter[]): Promise<T | undefined>;
+  all<T>(query: string, ...parameters: SqlParameter[]): Promise<T[]>;
+  run(
+    query: string,
+    ...parameters: SqlParameter[]
+  ): Promise<{ changes: number }>;
+  transaction<T>(operation: () => Promise<T>): Promise<T>;
+  close(): Promise<void>;
+}
 
 export interface ServerConfig {
   production: boolean;
+  sessionTransport?: 'cookie' | 'bearer';
+  apiOnly?: boolean;
   origin: string;
   dbPath: string;
+  databaseUrl?: string;
+  databasePoolSize?: number;
   sessionSecret: string;
   rpcUrl: string | undefined;
   host: string;
@@ -197,12 +214,12 @@ export interface IdempotencyRow {
 export type RequireSession = (
   request: FastifyRequest,
   mutation?: boolean,
-) => SessionActor;
+) => Promise<SessionActor>;
 export interface AuthContext {
   db: Store;
   config: ServerConfig;
   now: Clock;
-  limiter: RateLimiter;
+  limiter: RateControl;
   hash(value: string): string;
 }
 export interface ServiceContext extends AuthContext {
@@ -218,6 +235,8 @@ export interface AppContext extends ServiceContext {
 
 declare module 'fastify' {
   interface FastifyInstance {
-    store: Store;
+    /** Local SQLite tooling only. PostgreSQL callers use database. */
+    store: SqliteStore;
+    database: Store;
   }
 }

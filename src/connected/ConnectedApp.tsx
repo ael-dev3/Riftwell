@@ -103,6 +103,12 @@ export default function ConnectedApp() {
     if (signingRef.current) {
       authEpoch.current++;
       signInAttempt.current++;
+      api.clearSession();
+      if (api.sessionTransport === 'bearer') {
+        walletConnecting.current = false;
+        signInAddress.current = null;
+        setSigning(false);
+      }
     }
     setModal(null);
     requestAnimationFrame(() => {
@@ -213,12 +219,14 @@ export default function ConnectedApp() {
       }
       setMessage('Your wallet changed. Sign in again to manage your records.');
       if (active) void api.logout(active.csrfToken).catch(() => {});
+      else api.clearSession();
     });
   }, [provider]);
 
   const handleError = useCallback((failure: unknown) => {
-    if (failure instanceof ApiError && failure.status === 401) {
+    if (api.isCurrentSessionError(failure)) {
       authEpoch.current++;
+      api.clearSession();
       setSession(null);
       setAccount(null);
       setModal({ type: 'signin' });
@@ -318,6 +326,7 @@ export default function ConnectedApp() {
     const timer = window.setTimeout(
       () => {
         authEpoch.current++;
+        api.clearSession();
         setSession(null);
         setAccount(null);
         setModal(null);
@@ -373,13 +382,14 @@ export default function ConnectedApp() {
     setSignError('');
     const attempt = ++signInAttempt.current;
     const epoch = ++authEpoch.current;
+    api.clearSession();
     walletConnecting.current = true;
     try {
       const address = await connectWallet(wallet);
-      walletConnecting.current = false;
-      signInAddress.current = address;
       if (attempt !== signInAttempt.current || epoch !== authEpoch.current)
         return;
+      walletConnecting.current = false;
+      signInAddress.current = address;
       const challenge = await api.challenge(address);
       if (attempt !== signInAttempt.current || epoch !== authEpoch.current)
         return;
@@ -429,24 +439,41 @@ export default function ConnectedApp() {
             : walletErrorMessage(failure),
         );
     } finally {
-      walletConnecting.current = false;
-      signInAddress.current = null;
-      setSigning(false);
+      if (
+        attempt === signInAttempt.current ||
+        api.sessionTransport === 'cookie'
+      ) {
+        walletConnecting.current = false;
+        signInAddress.current = null;
+        setSigning(false);
+      }
     }
   }
 
   async function signOut() {
     const current = sessionRef.current;
     if (!current) return;
+    const epoch = ++authEpoch.current;
+    const request = api.logout(current.csrfToken);
+    if (api.sessionTransport === 'bearer') {
+      setSession(null);
+      setAccount(null);
+      closeModal();
+    }
     try {
-      await api.logout(current.csrfToken);
-      authEpoch.current++;
+      await request;
+      if (epoch !== authEpoch.current) return;
       setSession(null);
       setAccount(null);
       closeModal();
       setMessage('Signed out. Your off-chain records remain on the server.');
     } catch (failure) {
-      setMessage(apiMessage(failure));
+      if (epoch !== authEpoch.current) return;
+      setMessage(
+        api.sessionTransport === 'bearer'
+          ? `Signed out of this page. ${apiMessage(failure)}`
+          : apiMessage(failure),
+      );
       handleError(failure);
     }
   }
@@ -686,6 +713,9 @@ export default function ConnectedApp() {
               Connect your browser wallet and sign the server’s sign-in message
               to manage your off-chain records.
             </p>
+            {api.sessionTransport === 'bearer' && (
+              <p>Reloading this page signs you out.</p>
+            )}
             <div className="notice">
               <Info size={17} aria-hidden="true" />
               <p>

@@ -1,0 +1,43 @@
+{
+  "status": "passed",
+  "capturedAt": "2026-10-02T20:37:39.052Z",
+  "evidence": "Real headless Chrome + two localhost origins + PostgreSQL; API uses scoped test HTTPS certificate; simulated read-only NFT data and ephemeral wallet, no funds or transactions",
+  "frontend": "http://127.0.0.1:5197",
+  "backend": "https://127.0.0.1:5196",
+  "checks": [
+    "Built frontend loads in connected mode on a different origin from its API",
+    "Browser accepts the API response through exact-origin CORS without cookies",
+    "Cross-origin private account fetch carries the bearer credential",
+    "Access token is absent from cookies, localStorage and sessionStorage",
+    "Browser creates one exact off-chain listing with matching CSRF and bearer headers",
+    "Browser cancellation persists without a transaction or custody transfer",
+    "Browser logout revokes the durable session and clears its signed-in UI",
+    "Logged-out browser cannot read a private session without a bearer token",
+    "Re-authentication also keeps the new token out of persistent browser storage",
+    "Reload signs out because the access token exists only in page memory",
+    "Reloaded browser remains unable to read its private session",
+    "Actual browser CORS preflights reached the separate backend",
+    "Wallet operations contain no approvals or transaction submissions",
+    "Browser completed without page errors or external requests"
+  ],
+  "preflights": 8,
+  "walletMethods": [
+    "eth_requestAccounts",
+    "eth_chainId",
+    "eth_accounts",
+    "eth_chainId",
+    "eth_accounts",
+    "personal_sign",
+    "eth_accounts",
+    "eth_chainId",
+    "eth_requestAccounts",
+    "eth_chainId",
+    "eth_accounts",
+    "eth_chainId",
+    "eth_accounts",
+    "personal_sign",
+    "eth_accounts",
+    "eth_chainId"
+  ],
+  "errors": []
+}

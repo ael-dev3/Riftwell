@@ -1,6 +1,8 @@
 # Application API
 
-The application service serves the production frontend and `/api/v1` on one origin. GitHub Pages remains a separate, clearly labelled interactive preview. Set `VITE_APP_MODE=connected` when building for the application service; `VITE_API_BASE` is empty for same-origin deployment. No service failure may silently substitute demo data.
+The service supports a combined frontend/API on one origin, or an API-only deployment behind a separately hosted frontend. All application routes below are relative to `/api/v1`. Static previews remain explicitly labelled examples; a service failure never substitutes demo data.
+
+Build with `VITE_APP_MODE=connected`. For a combined service, leave `VITE_API_BASE` empty and use the default cookie transport. For Firebase Hosting with Deno Deploy, set `VITE_API_BASE` to the exact verified HTTPS API origin and `VITE_SESSION_TRANSPORT=bearer`; the backend uses `API_ONLY=true` and `SESSION_TRANSPORT=bearer`. See [provider setup](FIREBASE_DENO.md).
 
 ## Scope
 
@@ -19,11 +21,16 @@ Errors use `{ "error": { "code": "...", "message": "...", "requestId": "..." } }
 ## Authentication
 
 - `POST /auth/challenge`: `{ address, chainId: 999 }` → `{ challengeId, message, expiresAt }`. The server constructs an ERC-4361 message for its configured origin, address and chain, with a cryptographic nonce and five-minute expiration.
-- `POST /auth/verify`: `{ challengeId, signature }` → session below. The signature must match the exact issued message and address. A challenge is single-use, including under concurrent verification. EOA wallets are supported; contract-wallet signatures must fail clearly rather than be treated as verified EOAs.
+- `POST /auth/verify`: `{ challengeId, signature }` → `{ address, chainId: 999, csrfToken, expiresAt }`. Bearer mode adds `accessToken`, a 64-character lowercase hex token, only to this response. The signature must match the exact issued message and address. A challenge is single-use, including under concurrent verification. EOA wallets are supported; contract-wallet signatures must fail clearly rather than be treated as verified EOAs.
 - `GET /auth/session` → `{ address, chainId: 999, csrfToken, expiresAt }`, or 401.
-- `POST /auth/logout` → `{ ok: true }`; revoke the session and clear its cookie.
+- `POST /auth/logout` → `{ ok: true }`; revoke the session and, in cookie mode, clear its cookie.
 
-The session is an opaque random token in an HttpOnly, SameSite=Strict cookie, Secure in production. Persist only a hash of the session token. Clients send `credentials: "include"`. All unsafe requests must have the exact configured `Origin`; authenticated mutations also require `X-CSRF-Token` from the session response. Secrets stay out of local storage and logs. Authentication requests are rate limited.
+Session tokens are random and stored only as keyed hashes on the server. Sessions expire after eight hours by default; `SESSION_TTL_SECONDS` can change the lifetime. Select one transport:
+
+- **Cookie (default):** an HttpOnly, SameSite=Strict cookie, Secure in production. The client sends `credentials: "include"`; Authorization headers do not authenticate this mode.
+- **Bearer:** the client keeps the token only in memory and sends `Authorization: Bearer <accessToken>` with `credentials: "omit"` and redirects disabled. Cookies do not authenticate this mode. No token goes into local storage, session storage or IndexedDB; refreshing the frontend requires signing in again. Logout, expiry and wallet changes clear the client session. Only verification returns the raw token; session reads never do.
+
+All unsafe requests require the exact configured `APP_ORIGIN`; authenticated mutations also require `X-CSRF-Token`. Bearer-mode CORS allows only that origin and the supported authorization/content-type/CSRF headers, with no wildcard or credential allowance. These protections also apply to error responses. Authentication requests are rate limited; PostgreSQL-backed instances share persistent rate-limit windows, while the single-instance SQLite deployment uses memory limits. Secrets stay out of logs.
 
 ## Position data
 

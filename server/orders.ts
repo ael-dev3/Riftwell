@@ -175,24 +175,29 @@ export function registerOrders(app: App, ctx: AppContext): void {
       'Lending requests and offers are retired. Historical intents remain available for cancellation.',
     );
   }
-  function responseFor(table: 'listings', id: string): Listing;
-  function responseFor(table: 'loan_requests', id: string): LoanRequest;
-  function responseFor(table: 'offers', id: string): Offer;
-  function responseFor(table: OrderTable, id: string): OrderDTO;
+  function responseFor(table: 'listings', id: string): Promise<Listing>;
   function responseFor(
+    table: 'loan_requests',
+    id: string,
+  ): Promise<LoanRequest>;
+  function responseFor(table: 'offers', id: string): Promise<Offer>;
+  function responseFor(table: OrderTable, id: string): Promise<OrderDTO>;
+  async function responseFor(
     table: OrderTable | 'offers',
     id: string,
-  ): OrderDTO | Offer {
+  ): Promise<OrderDTO | Offer> {
     if (table === 'offers') {
-      const row = db
-        .prepare<unknown[], OfferRow>('SELECT * FROM offers WHERE id = ?')
-        .get(id);
+      const row = await db.get<OfferRow>(
+        'SELECT * FROM offers WHERE id = ?',
+        id,
+      );
       if (!row) fail(500, 'INTERNAL_ERROR', 'The stored order is unavailable.');
       return offerResponse(row);
     }
-    const row = db
-      .prepare<unknown[], OrderRow>(`SELECT * FROM ${table} WHERE id = ?`)
-      .get(id);
+    const row = await db.get<OrderRow>(
+      `SELECT * FROM ${table} WHERE id = ?`,
+      id,
+    );
     if (!row) fail(500, 'INTERNAL_ERROR', 'The stored order is unavailable.');
     return orderResponse(row);
   }
@@ -200,15 +205,17 @@ export function registerOrders(app: App, ctx: AppContext): void {
     definition: Definition,
     row: OrderRow,
     reason: string,
-  ): void =>
-    db.transaction(() => {
-      const changes = db
-        .prepare(
+  ): Promise<void> =>
+    db.transaction(async () => {
+      const changes = (
+        await db.run(
           `UPDATE ${definition.table} SET status = 'invalidated', updated_at = ?${definition.table === 'listings' ? ', revision = revision + 1' : ''} WHERE id = ? AND status = 'active'`,
+          now(),
+          row.id,
         )
-        .run(now(), row.id).changes;
+      ).changes;
       if (changes) {
-        appendAudit(
+        await appendAudit(
           db,
           now(),
           null,
@@ -218,9 +225,9 @@ export function registerOrders(app: App, ctx: AppContext): void {
           { reason },
         );
         if (definition.table === 'loan_requests')
-          invalidateOffers(db, row.id, now());
+          await invalidateOffers(db, row.id, now());
       }
-    })();
+    });
 
   async function verifyRecord(
     definition: Definition,
@@ -246,13 +253,13 @@ export function registerOrders(app: App, ctx: AppContext): void {
     let position: Position;
     try {
       if (suppliedPosition === null) {
-        invalidate(definition, row, 'position_missing');
+        await invalidate(definition, row, 'position_missing');
         return null;
       }
       position = suppliedPosition ?? (await freshPosition(row.token_id));
     } catch (error) {
       if (errorCode(error) !== 'POSITION_NOT_FOUND') throw error;
-      invalidate(definition, row, 'position_missing');
+      await invalidate(definition, row, 'position_missing');
       return null;
     }
     if (
@@ -261,31 +268,31 @@ export function registerOrders(app: App, ctx: AppContext): void {
         'duration_days' in row &&
         !loanEligible(position, row.duration_days, now()))
     ) {
-      invalidate(definition, row, 'ownership_or_lock_changed');
+      await invalidate(definition, row, 'ownership_or_lock_changed');
       return null;
     }
-    expireRecords(db, now());
-    const current = db
-      .prepare<unknown[], OrderRow>(
-        `SELECT * FROM ${definition.table} WHERE id = ?`,
-      )
-      .get(row.id);
+    await expireRecords(db, now());
+    const current = await db.get<OrderRow>(
+      `SELECT * FROM ${definition.table} WHERE id = ?`,
+      row.id,
+    );
     return current?.status === 'active'
       ? orderResponse(current, position)
       : null;
   }
 
-  function cached(
+  async function cached(
     actor: string,
     operation: string,
     key: string,
     payloadHash: string,
-  ): IdempotencyRow | undefined {
-    const row = db
-      .prepare<unknown[], IdempotencyRow>(
-        'SELECT * FROM idempotency WHERE actor = ? AND operation = ? AND key = ?',
-      )
-      .get(actor, operation, key);
+  ): Promise<IdempotencyRow | undefined> {
+    const row = await db.get<IdempotencyRow>(
+      'SELECT * FROM idempotency WHERE actor = ? AND operation = ? AND key = ?',
+      actor,
+      operation,
+      key,
+    );
     if (row && row.payload_hash !== payloadHash)
       fail(
         409,
@@ -294,16 +301,15 @@ export function registerOrders(app: App, ctx: AppContext): void {
       );
     return row;
   }
-  function saveResult(
+  async function saveResult(
     actor: string,
     operation: string,
     key: string,
     payloadHash: string,
     result: OrderDTO | Offer,
-  ): void {
-    db.prepare(
+  ): Promise<void> {
+    await db.run(
       'INSERT INTO idempotency(actor,operation,key,payload_hash,entity_id,response_json,created_at) VALUES (?,?,?,?,?,?,?)',
-    ).run(
       actor,
       operation,
       key,
@@ -569,17 +575,20 @@ export function registerOrders(app: App, ctx: AppContext): void {
       }
       // Dutch current asks depend on server time. Price filters cannot use the
       // persisted starting price; scan a bounded newest-first window instead.
-      expireRecords(db, now());
+      await expireRecords(db, now());
       const items: { row: ListingRow; value: Listing }[] = [];
       let scanned = 0;
       let last: ListingRow | undefined;
       let more = false;
       while (items.length <= limit && scanned < 150) {
-        const rows = db
-          .prepare<unknown[], ListingRow>(
-            `SELECT * FROM ${definition.table} WHERE ${clauses.join(' AND ')} AND (created_at < ? OR (created_at = ? AND id < ?)) ORDER BY created_at DESC, id DESC LIMIT ?`,
-          )
-          .all(...parameters, cursor.time, cursor.time, cursor.id, limit + 1);
+        const rows = await db.all<ListingRow>(
+          `SELECT * FROM ${definition.table} WHERE ${clauses.join(' AND ')} AND (created_at < ? OR (created_at = ? AND id < ?)) ORDER BY created_at DESC, id DESC LIMIT ?`,
+          ...parameters,
+          cursor.time,
+          cursor.time,
+          cursor.id,
+          limit + 1,
+        );
         if (!rows.length) {
           more = false;
           break;
@@ -623,7 +632,7 @@ export function registerOrders(app: App, ctx: AppContext): void {
     });
 
     app.post(`/api/v1/${path}`, async (request) => {
-      const session = ctx.requireSession(request, true);
+      const session = await ctx.requireSession(request, true);
       if (lendingTable(definition)) retireLending();
       const body = valid.fields(request.body, [
         'tokenId',
@@ -653,33 +662,31 @@ export function registerOrders(app: App, ctx: AppContext): void {
           terms,
         ),
       );
-      const existingRetry = cached(session.address, path, key, digest);
+      const existingRetry = await cached(session.address, path, key, digest);
       if (!existingRetry) currentTerms(terms, now());
       const position = await freshPosition(tokenId);
       if (!valid.sameOwner(position.owner, session.address)) {
-        const previous = db
-          .prepare<unknown[], ListingRow>(
-            `SELECT * FROM ${definition.table} WHERE token_id = ? AND status = 'active'`,
-          )
-          .get(tokenId);
+        const previous = await db.get<ListingRow>(
+          `SELECT * FROM ${definition.table} WHERE token_id = ? AND status = 'active'`,
+          tokenId,
+        );
         if (previous && !valid.sameOwner(position.owner, previous.owner))
-          invalidate(definition, previous, 'ownership_changed');
+          await invalidate(definition, previous, 'ownership_changed');
         fail(
           403,
           'NOT_OWNER',
           'The signed-in account must currently own this position.',
         );
       }
-      return db.transaction(() => {
-        ctx.requireSession(request, true);
-        expireRecords(db, now());
-        const retry = cached(session.address, path, key, digest);
+      return db.transaction(async () => {
+        await ctx.requireSession(request, true);
+        await expireRecords(db, now());
+        const retry = await cached(session.address, path, key, digest);
         if (retry) {
-          const current = db
-            .prepare<unknown[], Pick<ListingRow, 'status'>>(
-              `SELECT status FROM ${definition.table} WHERE id = ?`,
-            )
-            .get(retry.entity_id);
+          const current = await db.get<Pick<ListingRow, 'status'>>(
+            `SELECT status FROM ${definition.table} WHERE id = ?`,
+            retry.entity_id,
+          );
           if (current?.status !== 'active')
             fail(
               409,
@@ -688,13 +695,12 @@ export function registerOrders(app: App, ctx: AppContext): void {
             );
           return listingSnapshot(retry.response_json);
         }
-        const prior = db
-          .prepare<unknown[], ListingRow>(
-            `SELECT * FROM ${definition.table} WHERE token_id = ? AND status = 'active'`,
-          )
-          .get(tokenId);
+        const prior = await db.get<ListingRow>(
+          `SELECT * FROM ${definition.table} WHERE token_id = ? AND status = 'active'`,
+          tokenId,
+        );
         if (prior && !valid.sameOwner(prior.owner, position.owner))
-          invalidate(definition, prior, 'ownership_changed');
+          await invalidate(definition, prior, 'ownership_changed');
         else if (prior)
           fail(
             409,
@@ -704,9 +710,8 @@ export function registerOrders(app: App, ctx: AppContext): void {
         const id = randomUUID();
         const createdAt = now();
         currentTerms(terms, createdAt);
-        db.prepare(
+        await db.run(
           'INSERT INTO listings(id,market,token_id,owner,price_micros,expires_at,created_at,updated_at,status,position_json,kind,end_price_micros,starts_at,auction_ends_at,recipient) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-        ).run(
           id,
           'kittenswap',
           tokenId,
@@ -723,9 +728,9 @@ export function registerOrders(app: App, ctx: AppContext): void {
           terms.auctionEndsAt,
           terms.recipient,
         );
-        const result = responseFor(definition.table, id);
-        saveResult(session.address, path, key, digest, result);
-        appendAudit(
+        const result = await responseFor(definition.table, id);
+        await saveResult(session.address, path, key, digest, result);
+        await appendAudit(
           db,
           createdAt,
           session.address,
@@ -735,34 +740,36 @@ export function registerOrders(app: App, ctx: AppContext): void {
           { tokenId, marketId: 'kittenswap' },
         );
         return result;
-      })();
+      });
     });
 
     app.delete<{ Params: { id: string } }>(
       `/api/v1/${path}/:id`,
       async (request) => {
-        const session = ctx.requireSession(request, true);
+        const session = await ctx.requireSession(request, true);
         valid.fields(request.body, [], true);
         const id = valid.uuid(request.params.id);
-        expireRecords(db, now());
-        const row = db
-          .prepare<unknown[], OrderRow>(
-            `SELECT * FROM ${definition.table} WHERE id = ?`,
-          )
-          .get(id);
+        await expireRecords(db, now());
+        const row = await db.get<OrderRow>(
+          `SELECT * FROM ${definition.table} WHERE id = ?`,
+          id,
+        );
         if (!row) fail(404, 'ORDER_NOT_FOUND', 'The order was not found.');
         if (!valid.sameOwner(row.owner, session.address))
           fail(403, 'FORBIDDEN', 'Only the creator can cancel this order.');
         // Withdrawing off-chain intent cannot move funds or custody and must remain
         // available during an RPC outage. Creator authority never follows an NFT.
-        return db.transaction(() => {
-          const changes = db
-            .prepare(
+        return db.transaction(async () => {
+          await ctx.requireSession(request, true);
+          const changes = (
+            await db.run(
               `UPDATE ${definition.table} SET status = 'cancelled', updated_at = ?${definition.table === 'listings' ? ', revision = revision + 1' : ''} WHERE id = ? AND status = 'active'`,
+              now(),
+              id,
             )
-            .run(now(), id).changes;
+          ).changes;
           if (changes) {
-            appendAudit(
+            await appendAudit(
               db,
               now(),
               session.address,
@@ -771,17 +778,16 @@ export function registerOrders(app: App, ctx: AppContext): void {
               id,
             );
             if (lendingTable(definition))
-              invalidateOffers(db, id, now(), session.address);
+              await invalidateOffers(db, id, now(), session.address);
           }
           return orderResponse(
-            db
-              .prepare<unknown[], OrderRow>(
-                `SELECT * FROM ${definition.table} WHERE id = ?`,
-              )
-              .get(id) ??
+            (await db.get<OrderRow>(
+              `SELECT * FROM ${definition.table} WHERE id = ?`,
+              id,
+            )) ??
               fail(500, 'INTERNAL_ERROR', 'The stored order is unavailable.'),
           );
-        })();
+        });
       },
     );
   }
@@ -791,10 +797,11 @@ export function registerOrders(app: App, ctx: AppContext): void {
     async (request) => {
       valid.fields(request.query, []);
       const id = valid.uuid(request.params.id);
-      expireRecords(db, now());
-      const row = db
-        .prepare<unknown[], ListingRow>('SELECT * FROM listings WHERE id = ?')
-        .get(id);
+      await expireRecords(db, now());
+      const row = await db.get<ListingRow>(
+        'SELECT * FROM listings WHERE id = ?',
+        id,
+      );
       if (!row) fail(404, 'ORDER_NOT_FOUND', 'The listing was not found.');
       const result = await verifyRecord(definitions.listings, row);
       if (!result)
@@ -806,7 +813,7 @@ export function registerOrders(app: App, ctx: AppContext): void {
   app.patch<{ Params: { id: string } }>(
     '/api/v1/listings/:id',
     async (request) => {
-      const session = ctx.requireSession(request, true);
+      const session = await ctx.requireSession(request, true);
       valid.fields(request.query, []);
       const id = valid.uuid(request.params.id);
       const body = valid.fields(request.body, [
@@ -847,12 +854,13 @@ export function registerOrders(app: App, ctx: AppContext): void {
           terms,
         ),
       );
-      const retry = cached(session.address, operation, key, digest);
+      const retry = await cached(session.address, operation, key, digest);
       if (!retry) currentTerms(terms, now());
-      expireRecords(db, now());
-      const row = db
-        .prepare<unknown[], ListingRow>('SELECT * FROM listings WHERE id = ?')
-        .get(id);
+      await expireRecords(db, now());
+      const row = await db.get<ListingRow>(
+        'SELECT * FROM listings WHERE id = ?',
+        id,
+      );
       if (!row) fail(404, 'ORDER_NOT_FOUND', 'The listing was not found.');
       if (!valid.sameOwner(row.owner, session.address))
         fail(403, 'NOT_OWNER', 'Only the creator can update this listing.');
@@ -867,18 +875,24 @@ export function registerOrders(app: App, ctx: AppContext): void {
       const verified = await verifyRecord(definitions.listings, row);
       if (!verified)
         fail(409, 'ORDER_INACTIVE', 'The listing is no longer active.');
-      return db.transaction(() => {
+      return db.transaction(async () => {
         // Authentication, expiry and revision may change while ownership is read.
-        ctx.requireSession(request, true);
-        expireRecords(db, now());
-        const current = db
-          .prepare<unknown[], ListingRow>('SELECT * FROM listings WHERE id = ?')
-          .get(id);
+        await ctx.requireSession(request, true);
+        await expireRecords(db, now());
+        const current = await db.get<ListingRow>(
+          'SELECT * FROM listings WHERE id = ?',
+          id,
+        );
         if (!current)
           fail(404, 'ORDER_NOT_FOUND', 'The listing was not found.');
         if (current.status !== 'active')
           fail(409, 'ORDER_INACTIVE', 'The listing is no longer active.');
-        const cachedResult = cached(session.address, operation, key, digest);
+        const cachedResult = await cached(
+          session.address,
+          operation,
+          key,
+          digest,
+        );
         if (cachedResult) return listingSnapshot(cachedResult.response_json);
         if (current.revision !== revision)
           fail(
@@ -888,11 +902,9 @@ export function registerOrders(app: App, ctx: AppContext): void {
           );
         const updatedAt = now();
         currentTerms(terms, updatedAt);
-        const changed = db
-          .prepare(
+        const changed = (
+          await db.run(
             "UPDATE listings SET price_micros = ?, expires_at = ?, position_json = ?, updated_at = ?, kind = ?, end_price_micros = ?, starts_at = ?, auction_ends_at = ?, recipient = ?, revision = revision + 1 WHERE id = ? AND status = 'active' AND revision = ?",
-          )
-          .run(
             priceMicros,
             expiresAt,
             JSON.stringify(verified.position),
@@ -904,16 +916,17 @@ export function registerOrders(app: App, ctx: AppContext): void {
             terms.recipient,
             id,
             revision,
-          ).changes;
+          )
+        ).changes;
         if (!changed)
           fail(
             409,
             'LISTING_CHANGED',
             'The listing changed. Refresh it before editing.',
           );
-        const result = responseFor('listings', id);
-        saveResult(session.address, operation, key, digest, result);
-        appendAudit(
+        const result = await responseFor('listings', id);
+        await saveResult(session.address, operation, key, digest, result);
+        await appendAudit(
           db,
           updatedAt,
           session.address,
@@ -933,46 +946,49 @@ export function registerOrders(app: App, ctx: AppContext): void {
             },
             previousTerms: listingTermsResponse(current),
             nextTerms: listingTermsResponse(
-              db
-                .prepare<unknown[], ListingRow>(
-                  'SELECT * FROM listings WHERE id = ?',
-                )
-                .get(id) ??
+              (await db.get<ListingRow>(
+                'SELECT * FROM listings WHERE id = ?',
+                id,
+              )) ??
                 fail(500, 'INTERNAL_ERROR', 'The stored order is unavailable.'),
             ),
           },
         );
         return result;
-      })();
+      });
     },
   );
 
   app.post('/api/v1/offers', async (request) => {
-    ctx.requireSession(request, true);
+    await ctx.requireSession(request, true);
     retireLending();
   });
 
   app.delete<{ Params: { id: string } }>(
     '/api/v1/offers/:id',
     async (request) => {
-      const session = ctx.requireSession(request, true);
+      const session = await ctx.requireSession(request, true);
       valid.fields(request.body, [], true);
       const id = valid.uuid(request.params.id);
-      expireRecords(db, now());
-      const row = db
-        .prepare<unknown[], OfferRow>('SELECT * FROM offers WHERE id = ?')
-        .get(id);
+      await expireRecords(db, now());
+      const row = await db.get<OfferRow>(
+        'SELECT * FROM offers WHERE id = ?',
+        id,
+      );
       if (!row) fail(404, 'ORDER_NOT_FOUND', 'The proposal was not found.');
       if (!valid.sameOwner(row.lender, session.address))
         fail(403, 'FORBIDDEN', 'Only the lender can cancel this proposal.');
-      return db.transaction(() => {
-        const changed = db
-          .prepare(
+      return db.transaction(async () => {
+        await ctx.requireSession(request, true);
+        const changed = (
+          await db.run(
             "UPDATE offers SET status = 'cancelled', updated_at = ? WHERE id = ? AND status = 'proposed'",
+            now(),
+            id,
           )
-          .run(now(), id).changes;
+        ).changes;
         if (changed)
-          appendAudit(
+          await appendAudit(
             db,
             now(),
             session.address,
@@ -981,7 +997,7 @@ export function registerOrders(app: App, ctx: AppContext): void {
             id,
           );
         return responseFor('offers', id);
-      })();
+      });
     },
   );
 
@@ -996,7 +1012,7 @@ export function registerOrders(app: App, ctx: AppContext): void {
   app.get(
     '/api/v1/account/listings',
     async (request): Promise<Page<Listing>> => {
-      const session = ctx.requireSession(request);
+      const session = await ctx.requireSession(request);
       const query = valid.fields(request.query, ['market', 'limit', 'cursor']);
       if (query.market !== undefined && query.market !== 'kittenswap')
         fail(400, 'INVALID_MARKET', 'KittenSwap is the only available market.');
@@ -1007,12 +1023,15 @@ export function registerOrders(app: App, ctx: AppContext): void {
         owner: session.address.toLowerCase(),
       });
       const cursor = decodeCursor(query.cursor, filters);
-      expireRecords(db, now());
-      const rows = db
-        .prepare<unknown[], ListingRow>(
-          "SELECT * FROM listings WHERE owner = ? AND market = 'kittenswap' AND status = 'active' AND (created_at < ? OR (created_at = ? AND id < ?)) ORDER BY created_at DESC, id DESC LIMIT ?",
-        )
-        .all(session.address, cursor.time, cursor.time, cursor.id, limit + 1);
+      await expireRecords(db, now());
+      const rows = await db.all<ListingRow>(
+        "SELECT * FROM listings WHERE owner = ? AND market = 'kittenswap' AND status = 'active' AND (created_at < ? OR (created_at = ? AND id < ?)) ORDER BY created_at DESC, id DESC LIMIT ?",
+        session.address,
+        cursor.time,
+        cursor.time,
+        cursor.id,
+        limit + 1,
+      );
       const pageRows = rows.slice(0, limit);
       // Creator management uses saved metadata, never a public ownership proof.
       // Harmless cancellation must remain reachable during chain outages.
@@ -1027,7 +1046,7 @@ export function registerOrders(app: App, ctx: AppContext): void {
   );
 
   app.get('/api/v1/account', async (request): Promise<Account> => {
-    const session = ctx.requireSession(request);
+    const session = await ctx.requireSession(request);
     const query = valid.fields(request.query, ['positionsCursor', 'limit']);
     const limit = valid.limit(query.limit);
     const positionsCursor = query.positionsCursor;
@@ -1066,7 +1085,7 @@ export function registerOrders(app: App, ctx: AppContext): void {
       positionsUnavailable = true;
       owned = { items: [], nextCursor: null };
     }
-    expireRecords(db, now());
+    await expireRecords(db, now());
     const results: { listings: Listing[]; 'loan-requests': LoanRequest[] } = {
       listings: [],
       'loan-requests': [],
@@ -1077,11 +1096,10 @@ export function registerOrders(app: App, ctx: AppContext): void {
       keyof typeof definitions,
       Definition,
     ][]) {
-      const allRows = db
-        .prepare<unknown[], OrderRow>(
-          `SELECT * FROM ${definition.table} WHERE owner = ? ORDER BY created_at DESC, id DESC LIMIT 501`,
-        )
-        .all(session.address);
+      const allRows = await db.all<OrderRow>(
+        `SELECT * FROM ${definition.table} WHERE owner = ? ORDER BY created_at DESC, id DESC LIMIT 501`,
+        session.address,
+      );
       historyTruncated ||= allRows.length > 500;
       const rows = allRows.slice(0, 500);
       const activeRows = rows.filter((row) => row.status === 'active');
@@ -1103,7 +1121,7 @@ export function registerOrders(app: App, ctx: AppContext): void {
         if (row.status === 'active' && !positionsUnavailable) {
           items.push(
             (await verifyRecord(definition, row, positions.get(row.id))) ??
-              responseFor(definition.table, row.id),
+              (await responseFor(definition.table, row.id)),
           );
           if (definition.table === 'loan_requests')
             verifiedRequests.add(row.id);
@@ -1122,18 +1140,16 @@ export function registerOrders(app: App, ctx: AppContext): void {
           return item;
         });
     }
-    const allOffers = db
-      .prepare<unknown[], OfferRow>(
-        'SELECT * FROM offers WHERE lender = ? ORDER BY created_at DESC, id DESC LIMIT 501',
-      )
-      .all(session.address);
+    const allOffers = await db.all<OfferRow>(
+      'SELECT * FROM offers WHERE lender = ? ORDER BY created_at DESC, id DESC LIMIT 501',
+      session.address,
+    );
     historyTruncated ||= allOffers.length > 500;
     const offers = allOffers.slice(0, 500);
-    const allReceived = db
-      .prepare<unknown[], OfferRow>(
-        'SELECT o.* FROM offers o JOIN loan_requests r ON r.id = o.request_id WHERE r.owner = ? ORDER BY o.created_at DESC, o.id DESC LIMIT 501',
-      )
-      .all(session.address);
+    const allReceived = await db.all<OfferRow>(
+      'SELECT o.* FROM offers o JOIN loan_requests r ON r.id = o.request_id WHERE r.owner = ? ORDER BY o.created_at DESC, o.id DESC LIMIT 501',
+      session.address,
+    );
     historyTruncated ||= allReceived.length > 500;
     const received = allReceived.slice(0, 500);
     const requestRows: LoanRequestRow[] = [];
@@ -1143,11 +1159,10 @@ export function registerOrders(app: App, ctx: AppContext): void {
         !verifiedRequests.has(offer.request_id)
       ) {
         verifiedRequests.add(offer.request_id);
-        const borrowing = db
-          .prepare<unknown[], LoanRequestRow>(
-            'SELECT * FROM loan_requests WHERE id = ?',
-          )
-          .get(offer.request_id);
+        const borrowing = await db.get<LoanRequestRow>(
+          'SELECT * FROM loan_requests WHERE id = ?',
+          offer.request_id,
+        );
         if (borrowing?.status === 'active') requestRows.push(borrowing);
       }
     if (!positionsUnavailable)
@@ -1169,8 +1184,12 @@ export function registerOrders(app: App, ctx: AppContext): void {
         : (owned.nextCursor ?? null),
       listings: results.listings,
       loanRequests: results['loan-requests'],
-      offers: offers.map((row) => responseFor('offers', row.id)),
-      receivedOffers: received.map((row) => responseFor('offers', row.id)),
+      offers: await Promise.all(
+        offers.map((row) => responseFor('offers', row.id)),
+      ),
+      receivedOffers: await Promise.all(
+        received.map((row) => responseFor('offers', row.id)),
+      ),
       historyTruncated,
       positionsUnavailable,
     };
