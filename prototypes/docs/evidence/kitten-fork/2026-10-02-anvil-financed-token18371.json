@@ -1,0 +1,954 @@
+{
+  "startedAtUtc": "2026-10-02T14:38:13.671Z",
+  "endpointHost": "hyperliquid.drpc.org",
+  "chainId": 999,
+  "engine": "anvil",
+  "nftAddress": "0x29d3a21ff35a519e00cf6d272f2ad897b109bd84",
+  "voterAddress": "0xb7f7053f7e6c210e6777d5ba758e4b3eca6c88a0",
+  "usdcAddress": "0xb88339cb7199b77e23db6e890353e22632ba630f",
+  "pool": "0x12df9913e9e08453440e3c4b1ae73819160b513e",
+  "tokenId": "18371",
+  "status": "local-gates-passed-release-review-required",
+  "productionClaimsVerified": false,
+  "remoteMethods": {
+    "eth_chainId": 1,
+    "eth_getBlockByNumber": 3,
+    "eth_call": 7,
+    "eth_getStorageAt": 68,
+    "eth_getCode": 25,
+    "eth_getBalance": 25,
+    "eth_getTransactionCount": 25,
+    "eth_getTransactionReceipt": 8
+  },
+  "transactions": [
+    {
+      "label": "deploy local loan manager",
+      "hash": "0x38130f2c6fd0de02a9a244c241ccbc2f6487c9d88f5ae95d69f2f6285755a625",
+      "blockNumber": 47471442,
+      "gasUsed": "4327419",
+      "logs": []
+    },
+    {
+      "label": "fund local lender with real USDC",
+      "hash": "0x83f9806430ab400f630c4a994094abb0d5c3f3ff2b469750b8b7d4b46f7d28e3",
+      "blockNumber": 47471443,
+      "gasUsed": "62159",
+      "logs": [
+        {
+          "address": "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x00000000000000000000000068acb2051b73c2342be78cd1a7e5ca44483d10c5",
+            "0x00000000000000000000000070997970c51812dc3a010c7d01b50e0d17dc79c8"
+          ],
+          "data": "0x0000000000000000000000000000000000000000000000000000000001312d00"
+        }
+      ]
+    },
+    {
+      "label": "approve local loan capital",
+      "hash": "0xa5dd69cd89d661ee765ea4b3093f13c603b9bf9f33423f44f88bab722482b680",
+      "blockNumber": 47471444,
+      "gasUsed": "55437",
+      "logs": [
+        {
+          "address": "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+          "topics": [
+            "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925",
+            "0x00000000000000000000000070997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "0x0000000000000000000000008198f5d8f8cffe8f9c413d98a0a55aeb8ab9fbb7"
+          ],
+          "data": "0x00000000000000000000000000000000000000000000000000000000000698b7"
+        }
+      ]
+    },
+    {
+      "label": "approve local NFT collateral transfer",
+      "hash": "0x963a33336b7ddeea68946fecda774995be380675311a557e79d5115f61a34ced",
+      "blockNumber": 47471445,
+      "gasUsed": "36574",
+      "logs": [
+        {
+          "address": "0x29d3A21fF35a519E00cF6d272f2aD897b109BD84",
+          "topics": [
+            "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925",
+            "0x00000000000000000000000057ee32f42dfd116482e389d5cb87a4f20ef53699",
+            "0x0000000000000000000000008198f5d8f8cffe8f9c413d98a0a55aeb8ab9fbb7",
+            "0x00000000000000000000000000000000000000000000000000000000000047c3"
+          ],
+          "data": "0x"
+        }
+      ]
+    },
+    {
+      "label": "fund local loan offer",
+      "hash": "0x6f13eaefb7f2d3046608aa777e40b1bf379a570d81336a701d731b7756b5cbb4",
+      "blockNumber": 47471446,
+      "gasUsed": "251037",
+      "logs": [
+        {
+          "address": "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x00000000000000000000000070997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "0x0000000000000000000000008198f5d8f8cffe8f9c413d98a0a55aeb8ab9fbb7"
+          ],
+          "data": "0x00000000000000000000000000000000000000000000000000000000000698b7"
+        },
+        {
+          "address": "0x8198f5d8F8CfFE8f9C413d98a0A55aEB8ab9FbB7",
+          "topics": [
+            "0x00e34695314b9b27bd53d0673a3e160a40c41de0d1a0a9e74aa5ee21e3dd7298",
+            "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "0x00000000000000000000000070997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "0x00000000000000000000000057ee32f42dfd116482e389d5cb87a4f20ef53699"
+          ],
+          "data": "0x00000000000000000000000000000000000000000000000000000000000047c300000000000000000000000000000000000000000000000000000000000698b700000000000000000000000000000000000000000000000000000000000004b00000000000000000000000000000000000000000000000000000000000093a80"
+        }
+      ]
+    },
+    {
+      "label": "accept local offer and transfer NFT to vault",
+      "hash": "0xede41300ba036272ef2cc80cbab99781aa8cbf9069393245c5995126d3d15c69",
+      "blockNumber": 47471447,
+      "gasUsed": "1711697",
+      "logs": [
+        {
+          "address": "0x29d3A21fF35a519E00cF6d272f2aD897b109BD84",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x00000000000000000000000057ee32f42dfd116482e389d5cb87a4f20ef53699",
+            "0x0000000000000000000000005971b98c0066517bae7d44021f42e50b77cfe1f9",
+            "0x00000000000000000000000000000000000000000000000000000000000047c3"
+          ],
+          "data": "0x"
+        },
+        {
+          "address": "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x0000000000000000000000008198f5d8f8cffe8f9c413d98a0a55aeb8ab9fbb7",
+            "0x00000000000000000000000057ee32f42dfd116482e389d5cb87a4f20ef53699"
+          ],
+          "data": "0x0000000000000000000000000000000000000000000000000000000000069046"
+        },
+        {
+          "address": "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x0000000000000000000000008198f5d8f8cffe8f9c413d98a0a55aeb8ab9fbb7",
+            "0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+          ],
+          "data": "0x0000000000000000000000000000000000000000000000000000000000000871"
+        },
+        {
+          "address": "0x8198f5d8F8CfFE8f9C413d98a0A55aEB8ab9FbB7",
+          "topics": [
+            "0x6e340bc700f00c6a757b0a966838a7b185a7073aa3a4c6fc9b330d6e3b5c380b",
+            "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "0x0000000000000000000000005971b98c0066517bae7d44021f42e50b77cfe1f9"
+          ],
+          "data": "0x00000000000000000000000000000000000000000000000000000000000008710000000000000000000000000000000000000000000000000000000000069046000000000000000000000000000000000000000000000000000000006ac8f3ef"
+        }
+      ]
+    },
+    {
+      "label": "fund local sale buyer with real USDC",
+      "hash": "0x3224415be880b8adbe39779b927f7f8b875d5607821d8b954689c89bf03a88ca",
+      "blockNumber": 47471449,
+      "gasUsed": "62147",
+      "logs": [
+        {
+          "address": "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x00000000000000000000000068acb2051b73c2342be78cd1a7e5ca44483d10c5",
+            "0x0000000000000000000000003c44cdddb6a900fa2b585dd299e03d12fa4293bc"
+          ],
+          "data": "0x0000000000000000000000000000000000000000000000000000000001312d00"
+        }
+      ]
+    },
+    {
+      "label": "approve actual buyer USDC for financed purchase",
+      "hash": "0x56ede811e2b9aa30e87cadd1e55e0cba94f383caba103aef4858651e36223172",
+      "blockNumber": 47471450,
+      "gasUsed": "55437",
+      "logs": [
+        {
+          "address": "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+          "topics": [
+            "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925",
+            "0x0000000000000000000000003c44cdddb6a900fa2b585dd299e03d12fa4293bc",
+            "0x0000000000000000000000008198f5d8f8cffe8f9c413d98a0a55aeb8ab9fbb7"
+          ],
+          "data": "0x00000000000000000000000000000000000000000000000000000000001312d0"
+        }
+      ]
+    },
+    {
+      "label": "seller lists collateral from its live loan vault",
+      "hash": "0x941ff47793668ffd0865a763961341b63c180c09a56e120a0a53b3dc3032799b",
+      "blockNumber": 47471451,
+      "gasUsed": "157867",
+      "logs": [
+        {
+          "address": "0x8198f5d8F8CfFE8f9C413d98a0A55aEB8ab9FbB7",
+          "topics": [
+            "0x2e753b29ef4ab5907f01a4671189b6d012ba00a5082584a6302d9ea0c6996129",
+            "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "0x00000000000000000000000057ee32f42dfd116482e389d5cb87a4f20ef53699"
+          ],
+          "data": "0x00000000000000000000000000000000000000000000000000000000000047c300000000000000000000000000000000000000000000000000000000001312d0000000000000000000000000000000000000000000000000000000006ac10aef"
+        }
+      ]
+    },
+    {
+      "label": "buy financed live NFT directly from custody",
+      "hash": "0x0ef0efbfc2d18d3f2e74ac284295eb43d29835554ff043b2a5fa331b8adf8e94",
+      "blockNumber": 47471452,
+      "gasUsed": "317159",
+      "logs": [
+        {
+          "address": "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x0000000000000000000000003c44cdddb6a900fa2b585dd299e03d12fa4293bc",
+            "0x0000000000000000000000008198f5d8f8cffe8f9c413d98a0a55aeb8ab9fbb7"
+          ],
+          "data": "0x00000000000000000000000000000000000000000000000000000000001312d0"
+        },
+        {
+          "address": "0x8198f5d8F8CfFE8f9C413d98a0A55aEB8ab9FbB7",
+          "topics": [
+            "0xb7245d7a1156fb83f5e8da87a8cf6e6504842dce2a4d6a2946ad7e1067c50d85",
+            "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "0x0000000000000000000000003c44cdddb6a900fa2b585dd299e03d12fa4293bc"
+          ],
+          "data": "0x00000000000000000000000000000000000000000000000000000000000698b7000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000698b7"
+        },
+        {
+          "address": "0x8198f5d8F8CfFE8f9C413d98a0A55aEB8ab9FbB7",
+          "topics": [
+            "0x50d3f9b87161fe68d44f1df9c50ec05198e280f710299688dccdd0dea547266c",
+            "0x0000000000000000000000000000000000000000000000000000000000000001"
+          ],
+          "data": "0x"
+        },
+        {
+          "address": "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x0000000000000000000000008198f5d8f8cffe8f9c413d98a0a55aeb8ab9fbb7",
+            "0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+          ],
+          "data": "0x000000000000000000000000000000000000000000000000000000000000186a"
+        },
+        {
+          "address": "0x29d3A21fF35a519E00cF6d272f2aD897b109BD84",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x0000000000000000000000005971b98c0066517bae7d44021f42e50b77cfe1f9",
+            "0x0000000000000000000000003c44cdddb6a900fa2b585dd299e03d12fa4293bc",
+            "0x00000000000000000000000000000000000000000000000000000000000047c3"
+          ],
+          "data": "0x"
+        },
+        {
+          "address": "0x8198f5d8F8CfFE8f9C413d98a0A55aEB8ab9FbB7",
+          "topics": [
+            "0x2d428178e65c47bfb7d75b43e57e93851220995d8887d6826253c18d9b9fc99f",
+            "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "0x0000000000000000000000003c44cdddb6a900fa2b585dd299e03d12fa4293bc"
+          ],
+          "data": "0x"
+        },
+        {
+          "address": "0x8198f5d8F8CfFE8f9C413d98a0A55aEB8ab9FbB7",
+          "topics": [
+            "0x1974f98d87c7f3e9f3bc02e9ab39e34eb92723d6d91a60c7bd0ef7b71709d2e0",
+            "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "0x0000000000000000000000003c44cdddb6a900fa2b585dd299e03d12fa4293bc"
+          ],
+          "data": "0x0000000000000000000000003c44cdddb6a900fa2b585dd299e03d12fa4293bc00000000000000000000000000000000000000000000000000000000001312d000000000000000000000000000000000000000000000000000000000000698b7000000000000000000000000000000000000000000000000000000000000186a00000000000000000000000000000000000000000000000000000000000c61af"
+        }
+      ]
+    },
+    {
+      "label": "withdraw funded sale lender credit",
+      "hash": "0x41c5a37b011c5e5bc92251daa57ffd68f1922050a70464f7f1ba8e682c161ee0",
+      "blockNumber": 47471453,
+      "gasUsed": "60441",
+      "logs": [
+        {
+          "address": "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x0000000000000000000000008198f5d8f8cffe8f9c413d98a0a55aeb8ab9fbb7",
+            "0x00000000000000000000000070997970c51812dc3a010c7d01b50e0d17dc79c8"
+          ],
+          "data": "0x00000000000000000000000000000000000000000000000000000000000698b7"
+        },
+        {
+          "address": "0x8198f5d8F8CfFE8f9C413d98a0A55aEB8ab9FbB7",
+          "topics": [
+            "0x0882912b2ebe522229e44e3bbf54a81cd9668765a305d63cf2b75ae13c54140f",
+            "0x00000000000000000000000070997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "0x00000000000000000000000070997970c51812dc3a010c7d01b50e0d17dc79c8"
+          ],
+          "data": "0x00000000000000000000000000000000000000000000000000000000000698b7"
+        }
+      ]
+    },
+    {
+      "label": "withdraw separate funded sale borrower credit",
+      "hash": "0x1d517cefc3b915fcbdfca7286d759d777d4eb30f4414e09bbd587c0c437286c7",
+      "blockNumber": 47471454,
+      "gasUsed": "58211",
+      "logs": [
+        {
+          "address": "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x0000000000000000000000008198f5d8f8cffe8f9c413d98a0a55aeb8ab9fbb7",
+            "0x00000000000000000000000057ee32f42dfd116482e389d5cb87a4f20ef53699"
+          ],
+          "data": "0x00000000000000000000000000000000000000000000000000000000000c61af"
+        },
+        {
+          "address": "0x8198f5d8F8CfFE8f9C413d98a0A55aEB8ab9FbB7",
+          "topics": [
+            "0x78d4a3d6671393b30292ca3d954045102f07fc80eb0a89a4e6bb406a186cbeef",
+            "0x00000000000000000000000057ee32f42dfd116482e389d5cb87a4f20ef53699",
+            "0x00000000000000000000000057ee32f42dfd116482e389d5cb87a4f20ef53699"
+          ],
+          "data": "0x00000000000000000000000000000000000000000000000000000000000c61af"
+        }
+      ]
+    },
+    {
+      "label": "financed-sale buyer claims actual prior unclaimed USDC",
+      "hash": "0x7d3978565270365d2f2cae648723033e5bbdde1608cf2861c8da6f619ceab4e1",
+      "blockNumber": 47471456,
+      "gasUsed": "101253",
+      "logs": [
+        {
+          "address": "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x00000000000000000000000075b843855aa873b5bc8f9be04f4ae972b90ee503",
+            "0x0000000000000000000000003c44cdddb6a900fa2b585dd299e03d12fa4293bc"
+          ],
+          "data": "0x00000000000000000000000000000000000000000000000000000000000d316e"
+        },
+        {
+          "address": "0x75B843855aA873b5Bc8F9be04F4AE972b90eE503",
+          "topics": [
+            "0xa9c1f2539c9079ab5e9f50178df0391346677cc9ed69e0b4e12e6e8651c83116"
+          ],
+          "data": "0x0000000000000000000000000000000000000000000000000000000000000b9000000000000000000000000000000000000000000000000000000000000047c3000000000000000000000000b88339cb7199b77e23db6e890353e22632ba630f0000000000000000000000003c44cdddb6a900fa2b585dd299e03d12fa4293bc"
+        }
+      ]
+    },
+    {
+      "label": "typed vote from NFT-owning loan vault",
+      "hash": "0x8e4883f36a4a9b4d4fb419fc8fddff80547d0b1f34040c741d67d01d70ac8b7c",
+      "blockNumber": 47471449,
+      "gasUsed": "284886",
+      "logs": [
+        {
+          "address": "0x75B843855aA873b5Bc8F9be04F4AE972b90eE503",
+          "topics": [
+            "0x33da4f9b82b3e18a281ca2cabbe2f076925692abb593b7ea3f850009e8ec9770"
+          ],
+          "data": "0x0000000000000000000000000000000000000000000000000000000000000b920000000000000000000000000000000000000000000067f321018fbb1a1b0a2200000000000000000000000000000000000000000000000000000000000047c3"
+        },
+        {
+          "address": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+          "topics": [
+            "0x33da4f9b82b3e18a281ca2cabbe2f076925692abb593b7ea3f850009e8ec9770"
+          ],
+          "data": "0x0000000000000000000000000000000000000000000000000000000000000b920000000000000000000000000000000000000000000067f321018fbb1a1b0a2200000000000000000000000000000000000000000000000000000000000047c3"
+        },
+        {
+          "address": "0xb7F7053F7e6c210e6777D5BA758E4b3ECa6C88A0",
+          "topics": [
+            "0x5fe8f1cc066896edbe87bedf2e870c54f6311a7d6668c860949e2e1224a0955e"
+          ],
+          "data": "0x00000000000000000000000000000000000000000000000000000000000047c30000000000000000000000000000000000000000000067f321018fbb1a1b0a220000000000000000000000000000000000000000000000000000000000000b92"
+        },
+        {
+          "address": "0x5971B98C0066517Bae7D44021f42e50B77cfe1F9",
+          "topics": [
+            "0x7f511e347bf51eed3be100b3194247d5207f05f3b33de7d31e3e8ee73199a049",
+            "0x00000000000000000000000000000000000000000000000000000000000047c3"
+          ],
+          "data": "0x"
+        }
+      ]
+    },
+    {
+      "label": "fund local sale buyer with real USDC",
+      "hash": "0x687f802c96c3966303feab7e8ee49ad643f75187e46d0d804eedacb1b1625114",
+      "blockNumber": 47471450,
+      "gasUsed": "62147",
+      "logs": [
+        {
+          "address": "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x00000000000000000000000068acb2051b73c2342be78cd1a7e5ca44483d10c5",
+            "0x0000000000000000000000003c44cdddb6a900fa2b585dd299e03d12fa4293bc"
+          ],
+          "data": "0x0000000000000000000000000000000000000000000000000000000001312d00"
+        }
+      ]
+    },
+    {
+      "label": "approve actual buyer USDC for financed purchase",
+      "hash": "0x9775e99aa00427e0414370c81f26195951e503b133f3c5472028a79c5d68053f",
+      "blockNumber": 47471451,
+      "gasUsed": "55437",
+      "logs": [
+        {
+          "address": "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+          "topics": [
+            "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925",
+            "0x0000000000000000000000003c44cdddb6a900fa2b585dd299e03d12fa4293bc",
+            "0x0000000000000000000000008198f5d8f8cffe8f9c413d98a0a55aeb8ab9fbb7"
+          ],
+          "data": "0x00000000000000000000000000000000000000000000000000000000001312d0"
+        }
+      ]
+    },
+    {
+      "label": "seller lists collateral from its live loan vault",
+      "hash": "0x124f91a164eb2ea65183185073d9474d1c23078aee3bd54d953a66189fa67a1f",
+      "blockNumber": 47471452,
+      "gasUsed": "157867",
+      "logs": [
+        {
+          "address": "0x8198f5d8F8CfFE8f9C413d98a0A55aEB8ab9FbB7",
+          "topics": [
+            "0x2e753b29ef4ab5907f01a4671189b6d012ba00a5082584a6302d9ea0c6996129",
+            "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "0x00000000000000000000000057ee32f42dfd116482e389d5cb87a4f20ef53699"
+          ],
+          "data": "0x00000000000000000000000000000000000000000000000000000000000047c300000000000000000000000000000000000000000000000000000000001312d0000000000000000000000000000000000000000000000000000000006ac10aef"
+        }
+      ]
+    },
+    {
+      "label": "claim actual closed-period reward after NFT transfer",
+      "hash": "0x15c678a063c03c6e9d7afa14c80d01f09f2a3832e7c75e56ae5d31bfd836969f",
+      "blockNumber": 47471454,
+      "gasUsed": "148090",
+      "logs": [
+        {
+          "address": "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x00000000000000000000000075b843855aa873b5bc8f9be04f4ae972b90ee503",
+            "0x0000000000000000000000005971b98c0066517bae7d44021f42e50b77cfe1f9"
+          ],
+          "data": "0x00000000000000000000000000000000000000000000000000000000000d316e"
+        },
+        {
+          "address": "0x75B843855aA873b5Bc8F9be04F4AE972b90eE503",
+          "topics": [
+            "0xa9c1f2539c9079ab5e9f50178df0391346677cc9ed69e0b4e12e6e8651c83116"
+          ],
+          "data": "0x0000000000000000000000000000000000000000000000000000000000000b9000000000000000000000000000000000000000000000000000000000000047c3000000000000000000000000b88339cb7199b77e23db6e890353e22632ba630f0000000000000000000000005971b98c0066517bae7d44021f42e50b77cfe1f9"
+        },
+        {
+          "address": "0x5971B98C0066517Bae7D44021f42e50B77cfe1F9",
+          "topics": [
+            "0x7eb4ce6c933d366ce1925155bbc734acd2b56eeb9cf358160f4dc5c4378cf40d",
+            "0x00000000000000000000000012df9913e9e08453440e3c4b1ae73819160b513e",
+            "0x000000000000000000000000b88339cb7199b77e23db6e890353e22632ba630f",
+            "0x0000000000000000000000000000000000000000000000000000000000000b90"
+          ],
+          "data": "0x"
+        }
+      ]
+    },
+    {
+      "label": "apply realized USDC rewards to debt and lender credit",
+      "hash": "0x7568d12e6ae83e2ea3baa6fcb4619d2acf56dfc6a3f66fa99ab4ea2f550a14ec",
+      "blockNumber": 47471455,
+      "gasUsed": "157394",
+      "logs": [
+        {
+          "address": "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x0000000000000000000000005971b98c0066517bae7d44021f42e50b77cfe1f9",
+            "0x0000000000000000000000008198f5d8f8cffe8f9c413d98a0a55aeb8ab9fbb7"
+          ],
+          "data": "0x00000000000000000000000000000000000000000000000000000000000698b7"
+        },
+        {
+          "address": "0x8198f5d8F8CfFE8f9C413d98a0A55aEB8ab9FbB7",
+          "topics": [
+            "0xb7245d7a1156fb83f5e8da87a8cf6e6504842dce2a4d6a2946ad7e1067c50d85",
+            "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "0x0000000000000000000000005971b98c0066517bae7d44021f42e50b77cfe1f9"
+          ],
+          "data": "0x00000000000000000000000000000000000000000000000000000000000698b7000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000698b7"
+        },
+        {
+          "address": "0x8198f5d8F8CfFE8f9C413d98a0A55aEB8ab9FbB7",
+          "topics": [
+            "0xcb893df8d2c5e418eeead9ca5acfe3ba03e97904febf9535e163907361357901",
+            "0x0000000000000000000000000000000000000000000000000000000000000001"
+          ],
+          "data": "0x"
+        },
+        {
+          "address": "0x8198f5d8F8CfFE8f9C413d98a0A55aEB8ab9FbB7",
+          "topics": [
+            "0x50d3f9b87161fe68d44f1df9c50ec05198e280f710299688dccdd0dea547266c",
+            "0x0000000000000000000000000000000000000000000000000000000000000001"
+          ],
+          "data": "0x"
+        }
+      ]
+    },
+    {
+      "label": "withdraw actual lender repayment credit",
+      "hash": "0x67b54d697a8a9fc71a30a8e2c14e030eaa9e951c7f0f83bdd2ec6f94f2714e77",
+      "blockNumber": 47471456,
+      "gasUsed": "58273",
+      "logs": [
+        {
+          "address": "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x0000000000000000000000008198f5d8f8cffe8f9c413d98a0a55aeb8ab9fbb7",
+            "0x00000000000000000000000070997970c51812dc3a010c7d01b50e0d17dc79c8"
+          ],
+          "data": "0x00000000000000000000000000000000000000000000000000000000000698b7"
+        },
+        {
+          "address": "0x8198f5d8F8CfFE8f9C413d98a0A55aEB8ab9FbB7",
+          "topics": [
+            "0x0882912b2ebe522229e44e3bbf54a81cd9668765a305d63cf2b75ae13c54140f",
+            "0x00000000000000000000000070997970c51812dc3a010c7d01b50e0d17dc79c8",
+            "0x00000000000000000000000070997970c51812dc3a010c7d01b50e0d17dc79c8"
+          ],
+          "data": "0x00000000000000000000000000000000000000000000000000000000000698b7"
+        }
+      ]
+    },
+    {
+      "label": "withdraw actual borrower reward surplus after debt closure",
+      "hash": "0x297b46417eed9de3dd8d4ac815a4615fbf2fd88d960d3ff012082e812b6e2e9d",
+      "blockNumber": 47471457,
+      "gasUsed": "53572",
+      "logs": [
+        {
+          "address": "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x0000000000000000000000005971b98c0066517bae7d44021f42e50b77cfe1f9",
+            "0x00000000000000000000000057ee32f42dfd116482e389d5cb87a4f20ef53699"
+          ],
+          "data": "0x00000000000000000000000000000000000000000000000000000000000698b7"
+        }
+      ]
+    },
+    {
+      "label": "return exact NFT after epoch transfer guard clears",
+      "hash": "0x6f8de90e158f8182b2f6d13514413551265cda98e5681efe61bb18779861728f",
+      "blockNumber": 47471459,
+      "gasUsed": "124894",
+      "logs": [
+        {
+          "address": "0x29d3A21fF35a519E00cF6d272f2aD897b109BD84",
+          "topics": [
+            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "0x0000000000000000000000005971b98c0066517bae7d44021f42e50b77cfe1f9",
+            "0x00000000000000000000000057ee32f42dfd116482e389d5cb87a4f20ef53699",
+            "0x00000000000000000000000000000000000000000000000000000000000047c3"
+          ],
+          "data": "0x"
+        },
+        {
+          "address": "0x8198f5d8F8CfFE8f9C413d98a0A55aEB8ab9FbB7",
+          "topics": [
+            "0x2d428178e65c47bfb7d75b43e57e93851220995d8887d6826253c18d9b9fc99f",
+            "0x0000000000000000000000000000000000000000000000000000000000000001",
+            "0x00000000000000000000000057ee32f42dfd116482e389d5cb87a4f20ef53699"
+          ],
+          "data": "0x"
+        }
+      ]
+    }
+  ],
+  "gates": {
+    "custody": true,
+    "typedVote": true,
+    "epochTransferRestriction": true,
+    "epochRelease": true,
+    "nonzeroClaimAfterOwnershipTransfer": true,
+    "lenderCreditWithdrawal": true
+  },
+  "safety": "Read-only remote RPC; transactions only on disposable local fork; local native gas funding only. No ERC20 balance or protocol storage overrides.",
+  "financedSaleGates": {
+    "fundedBuyer": true,
+    "sellerListing": true,
+    "settlement": true,
+    "exactSaleFee": true,
+    "separateCredits": true,
+    "buyerOwnership": true,
+    "creditWithdrawals": true,
+    "votedPurchaseAtomicRollback": true,
+    "unclaimedClosedPeriodRewardFollowsBuyer": true
+  },
+  "stage": "Advance local time to the next period, freeze revoting, and release the exact collateral.",
+  "block": {
+    "number": 47471441,
+    "hash": "0xdc489fb72c1af10b795dae8337959bedf53b3cda2ee890fa45f0345d483b5205",
+    "timestamp": 1790949743,
+    "timestampUtc": "2026-10-02T14:02:23.000Z",
+    "genesisHash": null
+  },
+  "sourceIdentity": {
+    "compiler": "0.8.37+commit.f401782d.Emscripten.clang",
+    "evmVersion": "shanghai",
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "sourceSha256": {
+      "test/kitten-fork.test.mjs": "a4c9be40ddb47f606f3c538694341f114d9b3f91f86e12e0c8a9d84d4ecd41b4",
+      "scripts/compile.mjs": "cd938f8f91d84287933e7a916debad58a629bb515ca8d914b0bbb1b6ab7502cc",
+      "contracts/LockkeepLoans.sol": "ca4110bb51257dda4590b6651ffa00da5d2f77b5a829cb1c50cfc6ed091a8242",
+      "contracts/LockkeepLoanVault.sol": "6107110d78ecbcd70930ddf9785910795d2b02bc06ddb6fe5382a53307ce53b5",
+      "contracts/interfaces/IKittenVoting.sol": "f2a3a72858cad4dd45155e5404ef1c0f8f88548d4d4e8e82fa12207b2f3b435e",
+      "package.json": "a0732f17c2e2dff18fb166f5210b8a8b228d0e6d162fb029f484c892340b730d",
+      "package-lock.json": "b58f9d820693b796f562220b668e6c7b41d3d012157c8d724accbaa8dcdec69b"
+    },
+    "bytecodes": {
+      "LockkeepLoans": {
+        "creationBytecodeSha256": "ba27c8b700684ae3ec67b2505627bb4a6a665ad5d72317e0777e3e24d4e3aa06",
+        "compiledRuntimeTemplateSha256": "ca5a0befb6fd475df0609f0db1c6d8fc2ac73fde481fc27d36fa60909f868447"
+      },
+      "LockkeepLoanVault": {
+        "creationBytecodeSha256": "4860d228ef44d3c9f7f55b0f8dec0f6d8c82a7164d729170d063a1887070c8eb",
+        "compiledRuntimeTemplateSha256": "3c3dbf5dc204e84f255f080f20f8e507a19937a3ebf654ed125ecf365bbae61e"
+      }
+    }
+  },
+  "sample": {
+    "owner": "0x57Ee32f42dfD116482e389d5cb87a4F20eF53699",
+    "lockedAmount": "540157719850561543735839",
+    "lockEnd": "1848268800",
+    "period": "2961",
+    "closedPeriod": "2960",
+    "votingReward": "0x75B843855aA873b5Bc8F9be04F4AE972b90eE503",
+    "earnedUSDC": "864622",
+    "usdcFunder": "0x68acb2051b73c2342be78cd1a7e5ca44483d10c5",
+    "funderBalance": "9725267765"
+  },
+  "implementations": {
+    "escrow": {
+      "slot": "0x000000000000000000000000d2b6bf91bbbb8d86a72788a37c3886a4f821a873",
+      "implementation": "0xd2b6bf91bbbb8d86a72788a37c3886a4f821a873",
+      "proxyCodeHash": "0x644fa0243b9dba3055c75b3655def18c8a925621b24ff439aa28225fb4bddf9b",
+      "implementationCodeHash": "0x430513fa172eac47f8abb91c69806283f84b0411af466c3d152f47011f440054"
+    },
+    "voter": {
+      "slot": "0x000000000000000000000000957685ab613965edb7e4964e7698f192370e1284",
+      "implementation": "0x957685ab613965edb7e4964e7698f192370e1284",
+      "proxyCodeHash": "0x877e158dbe0b5b7aefac92c57c818abcaae1391e87714c63d5b8897f08b0c870",
+      "implementationCodeHash": "0xd22fcbaf7bdabda9101efe45168d2a1b847c3f53462bdbb0e2ffbce229557574"
+    },
+    "reward": {
+      "slot": "0x000000000000000000000000b390c8c641a1fb3f786b9cabacef14e594ef82f1",
+      "implementation": "0xb390c8c641a1fb3f786b9cabacef14e594ef82f1",
+      "proxyCodeHash": "0x877e158dbe0b5b7aefac92c57c818abcaae1391e87714c63d5b8897f08b0c870",
+      "implementationCodeHash": "0xcabb51425aadfcbd90995b65c287c83748f973142493b68c1f4bd06d65b4df9f"
+    },
+    "settlement": {
+      "slot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "implementation": "0x0000000000000000000000000000000000000000",
+      "proxyCodeHash": "0xa119f674d44072e257f162aee49c7aba9b7a04fe2e8c84fcefddb366ab6d40cd",
+      "implementationCodeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+    }
+  },
+  "remoteCacheHits": 21,
+  "principal": "432311",
+  "local": {
+    "manager": "0x8198f5d8F8CfFE8f9C413d98a0A55aEB8ab9FbB7",
+    "vault": "0x5971B98C0066517Bae7D44021f42e50B77cfe1F9",
+    "lender": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+    "runtimeCodeHashes": {
+      "manager": "0x0ad90a46a5ba17cb2784896328008860192043caf62a7d9007965d020d4140f2",
+      "vault": "0x408c1d258b9597c2b7c8201b56dc9c97dd5b0ce3c4e176d6641c8203000d4b6d"
+    }
+  },
+  "entitlementAfterTransfer": "864622",
+  "financedSale": {
+    "listingId": "1",
+    "buyer": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+    "price": "1250000",
+    "fee": "6250",
+    "debtPaid": "432311",
+    "borrowerProceeds": "811439",
+    "before": {
+      "loan": [
+        "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+        "0x57Ee32f42dfD116482e389d5cb87a4F20eF53699",
+        "0x5971B98C0066517Bae7D44021f42e50B77cfe1F9",
+        "18371",
+        "432311",
+        "1200",
+        "1791554543",
+        "1790949743",
+        "0",
+        "0",
+        true
+      ],
+      "debt": [
+        "432311",
+        "0",
+        "432311"
+      ],
+      "listing": [
+        "1",
+        "1250000",
+        "1791036143",
+        true
+      ],
+      "activeListing": "1",
+      "activeLoan": "1",
+      "nftOwner": "0x5971B98C0066517Bae7D44021f42e50B77cfe1F9",
+      "nextPeriodVoted": false,
+      "balances": {
+        "buyer": "20000000",
+        "borrower": "9585684",
+        "lender": "19567689",
+        "treasury": "17896",
+        "manager": "0",
+        "vault": "0",
+        "funder": "9685267765"
+      },
+      "buyerAllowance": "1250000",
+      "lenderCredit": "0",
+      "borrowerCredit": "0",
+      "totalLenderCredits": "0",
+      "totalBorrowerCredits": "0",
+      "escrowedOfferCapital": "0",
+      "closedPeriodEarnedUSDC": "864622"
+    },
+    "after": {
+      "loan": [
+        "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+        "0x57Ee32f42dfD116482e389d5cb87a4F20eF53699",
+        "0x5971B98C0066517Bae7D44021f42e50B77cfe1F9",
+        "18371",
+        "0",
+        "1200",
+        "1791554543",
+        "1790949743",
+        "0",
+        "0",
+        false
+      ],
+      "debt": [
+        "0",
+        "0",
+        "0"
+      ],
+      "listing": [
+        "1",
+        "1250000",
+        "1791036143",
+        false
+      ],
+      "activeListing": "0",
+      "activeLoan": "0",
+      "nftOwner": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+      "nextPeriodVoted": false,
+      "balances": {
+        "buyer": "18750000",
+        "borrower": "9585684",
+        "lender": "19567689",
+        "treasury": "24146",
+        "manager": "1243750",
+        "vault": "0",
+        "funder": "9685267765"
+      },
+      "buyerAllowance": "0",
+      "lenderCredit": "432311",
+      "borrowerCredit": "811439",
+      "totalLenderCredits": "432311",
+      "totalBorrowerCredits": "811439",
+      "escrowedOfferCapital": "0",
+      "closedPeriodEarnedUSDC": "864622"
+    }
+  },
+  "saleRewardDisposition": {
+    "closedPeriod": "2960",
+    "amount": "864622",
+    "recipient": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+    "previousSellerBlocked": true,
+    "previousVaultBlocked": true,
+    "buyerReceivedExactReward": true,
+    "scope": "One previously unclaimed closed-period USDC reward for this NFT, pool and pinned deployment."
+  },
+  "snapshotBranches": [
+    {
+      "name": "financed-sale-success",
+      "snapshotId": "0x0",
+      "restored": true,
+      "transactionIndexes": [
+        6,
+        12
+      ],
+      "note": "These transactions were mined successfully on a disposable branch and then reverted by snapshot reset."
+    }
+  ],
+  "votedPurchaseRollback": {
+    "listingId": "1",
+    "hash": "0x4a8d9916c5d01d3cf4021fb383b7d6bd0cb586b8e5442523caa8501641e899c0",
+    "blockNumber": 47471453,
+    "gasUsed": "277083",
+    "receiptStatus": 0,
+    "logs": [],
+    "before": {
+      "loan": [
+        "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+        "0x57Ee32f42dfD116482e389d5cb87a4F20eF53699",
+        "0x5971B98C0066517Bae7D44021f42e50B77cfe1F9",
+        "18371",
+        "432311",
+        "1200",
+        "1791554543",
+        "1790949743",
+        "0",
+        "0",
+        true
+      ],
+      "debt": [
+        "432311",
+        "0",
+        "432311"
+      ],
+      "listing": [
+        "1",
+        "1250000",
+        "1791036143",
+        true
+      ],
+      "activeListing": "1",
+      "activeLoan": "1",
+      "nftOwner": "0x5971B98C0066517Bae7D44021f42e50B77cfe1F9",
+      "nextPeriodVoted": true,
+      "balances": {
+        "buyer": "20000000",
+        "borrower": "9585684",
+        "lender": "19567689",
+        "treasury": "17896",
+        "manager": "0",
+        "vault": "0",
+        "funder": "9685267765"
+      },
+      "buyerAllowance": "1250000",
+      "lenderCredit": "0",
+      "borrowerCredit": "0",
+      "totalLenderCredits": "0",
+      "totalBorrowerCredits": "0",
+      "escrowedOfferCapital": "0",
+      "closedPeriodEarnedUSDC": "864622"
+    },
+    "after": {
+      "loan": [
+        "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+        "0x57Ee32f42dfD116482e389d5cb87a4F20eF53699",
+        "0x5971B98C0066517Bae7D44021f42e50B77cfe1F9",
+        "18371",
+        "432311",
+        "1200",
+        "1791554543",
+        "1790949743",
+        "0",
+        "0",
+        true
+      ],
+      "debt": [
+        "432311",
+        "0",
+        "432311"
+      ],
+      "listing": [
+        "1",
+        "1250000",
+        "1791036143",
+        true
+      ],
+      "activeListing": "1",
+      "activeLoan": "1",
+      "nftOwner": "0x5971B98C0066517Bae7D44021f42e50B77cfe1F9",
+      "nextPeriodVoted": true,
+      "balances": {
+        "buyer": "20000000",
+        "borrower": "9585684",
+        "lender": "19567689",
+        "treasury": "17896",
+        "manager": "0",
+        "vault": "0",
+        "funder": "9685267765"
+      },
+      "buyerAllowance": "1250000",
+      "lenderCredit": "0",
+      "borrowerCredit": "0",
+      "totalLenderCredits": "0",
+      "totalBorrowerCredits": "0",
+      "escrowedOfferCapital": "0",
+      "closedPeriodEarnedUSDC": "864622"
+    },
+    "unchanged": [
+      "NFT custody",
+      "buyer USDC and allowance",
+      "treasury fee",
+      "borrower and lender USDC",
+      "manager and vault cash",
+      "individual and total credits",
+      "complete loan and debt",
+      "active loan and sale listing",
+      "reward entitlement"
+    ]
+  },
+  "claimAuthorization": {
+    "previousOwnerBlocked": true,
+    "unrelatedAccountBlocked": true
+  },
+  "claim": {
+    "earnedBeforeTransfer": "864622",
+    "earnedAfterTransfer": "864622",
+    "vaultBefore": "0",
+    "vaultAfter": "864622"
+  },
+  "repayment": {
+    "debt": "432311",
+    "paid": "432311",
+    "surplusInCustody": "432311"
+  },
+  "surplusWithdrawal": {
+    "paidToBorrower": "432311"
+  },
+  "cleanup": {
+    "completed": true,
+    "localForkPid": 20182,
+    "forkExitCode": 0,
+    "forkSignal": null,
+    "proxyClosed": true
+  },
+  "finishedAtUtc": "2026-10-02T14:39:04.406Z"
+}

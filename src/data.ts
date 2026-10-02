@@ -1,0 +1,112 @@
+import type { Asset } from './domain';
+
+// Fictional locked NFT positions. RIFT is a sample underlying token, not a live asset.
+// USDC prices, collateral references and APRs are illustrative, with no price feed.
+export const ASSETS: readonly Asset[] = [
+  {
+    id: 'rift-041',
+    name: 'Rift Position #041',
+    collection: 'Rift Positions',
+    category: 'Short lock',
+    artwork: '/artwork-0.svg',
+    price: 4200,
+    referenceValue: 5000,
+    underlyingBalance: 50000,
+    lockTerm: '12 months',
+    unlockDate: '2027-10-02',
+    apr: 12,
+    positionId: '041',
+    description:
+      'A fictional vote-escrowed NFT position holding 50,000 sample RIFT units. Review its lock and ask price before saving a preview purchase.',
+  },
+  {
+    id: 'rift-018',
+    name: 'Rift Position #018',
+    collection: 'Rift Positions',
+    category: 'Long lock',
+    artwork: '/artwork-1.svg',
+    price: 6800,
+    referenceValue: 8000,
+    underlyingBalance: 80000,
+    lockTerm: '24 months',
+    unlockDate: '2028-10-02',
+    apr: 10,
+    positionId: '018',
+    description:
+      'A fictional vote-escrowed NFT position holding 80,000 sample RIFT units. The displayed reference value is a fixed example, independent of any live market.',
+  },
+  {
+    id: 'rift-009',
+    name: 'Rift Position #009',
+    collection: 'Rift Positions',
+    category: 'Short lock',
+    artwork: '/artwork-2.svg',
+    price: 3100,
+    referenceValue: 4000,
+    underlyingBalance: 40000,
+    lockTerm: '6 months',
+    unlockDate: '2027-04-02',
+    apr: 14,
+    positionId: '009',
+    description:
+      'A fictional vote-escrowed NFT position holding 40,000 sample RIFT units. This shorter sample lock illustrates how positions can carry different terms.',
+  },
+  {
+    id: 'rift-027',
+    name: 'Rift Position #027',
+    collection: 'Rift Positions',
+    category: 'Long lock',
+    artwork: '/artwork-3.svg',
+    price: 5400,
+    referenceValue: 6500,
+    underlyingBalance: 65000,
+    lockTerm: '36 months',
+    unlockDate: '2029-10-02',
+    apr: 11,
+    positionId: '027',
+    description:
+      'A fictional vote-escrowed NFT position holding 65,000 sample RIFT units. Its price and collateral reference are illustrative USDC amounts.',
+  },
+  {
+    id: 'rift-062',
+    name: 'Rift Position #062',
+    collection: 'Rift Positions',
+    category: 'Short lock',
+    artwork: '/artwork-4.svg',
+    price: 2600,
+    referenceValue: 3500,
+    underlyingBalance: 35000,
+    lockTerm: '3 months',
+    unlockDate: '2027-01-02',
+    apr: 15,
+    positionId: '062',
+    description:
+      'A fictional vote-escrowed NFT position holding 35,000 sample RIFT units. Its displayed unlock date is part of the example, not verified chain data.',
+  },
+  {
+    id: 'rift-012',
+    name: 'Rift Position #012',
+    collection: 'Rift Positions',
+    category: 'Max lock',
+    artwork: '/artwork-5.svg',
+    price: 8300,
+    referenceValue: 10000,
+    underlyingBalance: 100000,
+    lockTerm: '48 months',
+    unlockDate: '2030-10-02',
+    apr: 9,
+    positionId: '012',
+    description:
+      'A fictional vote-escrowed NFT position holding 100,000 sample RIFT units. The longest sample lock demonstrates the position details available for review.',
+  },
+];
+
+// The lending preview uses a separate fictional account, not marketplace purchases.
+export const COLLATERAL = [ASSETS[0], ASSETS[1], ASSETS[5]];
+export const LEND_REQUESTS = [ASSETS[2], ASSETS[3], ASSETS[4]];
+export const CATEGORIES = [
+  'All',
+  'Short lock',
+  'Long lock',
+  'Max lock',
+] as const;

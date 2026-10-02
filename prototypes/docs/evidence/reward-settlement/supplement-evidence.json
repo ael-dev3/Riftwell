@@ -1,0 +1,923 @@
+{
+  "observedAtUtc": "2026-10-02T14:18:48.722Z",
+  "endpoint": "https://rpc.hyperliquid.xyz/evm",
+  "block": {
+    "number": 47472185,
+    "hash": "0x943441169fb94d764ce02e361096ab4425821908e2e7f4da0643c72d6f35b36f",
+    "timestamp": 1790950475
+  },
+  "rows": [
+    {
+      "label": "direct KITTEN/USDC token0",
+      "address": "0xdf99bADEEA1C9B81c5d4134E644e939244C1Fb1C",
+      "signature": "token0()",
+      "args": [],
+      "raw": "0x000000000000000000000000618275f8efe54c2afa87bfb9f210a52f0ff89364",
+      "decoded": [
+        "0x618275F8EFE54c2afa87bfB9F210A52F0fF89364"
+      ]
+    },
+    {
+      "label": "direct KITTEN/USDC token1",
+      "address": "0xdf99bADEEA1C9B81c5d4134E644e939244C1Fb1C",
+      "signature": "token1()",
+      "args": [],
+      "raw": "0x000000000000000000000000b88339cb7199b77e23db6e890353e22632ba630f",
+      "decoded": [
+        "0xb88339CB7199b77E23DB6E890353E22632Ba630f"
+      ]
+    },
+    {
+      "label": "direct KITTEN/USDC liquidity",
+      "address": "0xdf99bADEEA1C9B81c5d4134E644e939244C1Fb1C",
+      "signature": "liquidity()",
+      "args": [],
+      "raw": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "decoded": [
+        "0"
+      ]
+    },
+    {
+      "label": "direct KITTEN/USDC plugin",
+      "address": "0xdf99bADEEA1C9B81c5d4134E644e939244C1Fb1C",
+      "signature": "plugin()",
+      "args": [],
+      "raw": "0x00000000000000000000000059d67ae6ba5ab988c07e44d5f6f1a714e8d77fd5",
+      "decoded": [
+        "0x59D67AE6bA5Ab988C07e44D5f6f1A714e8D77Fd5"
+      ]
+    },
+    {
+      "label": "direct KITTEN/USDC globalState",
+      "address": "0xdf99bADEEA1C9B81c5d4134E644e939244C1Fb1C",
+      "signature": "globalState()",
+      "args": [],
+      "raw": "0x00000000000000000000000000000000000000000000c307886081b65bc91b27fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc884500000000000000000000000000000000000000000000000000000000000001f400000000000000000000000000000000000000000000000000000000000000c3000000000000000000000000000000000000000000000000000000000000000f0000000000000000000000000000000000000000000000000000000000000001",
+      "decoded": [
+        "921000418365103929891623",
+        "-227259",
+        "500",
+        "195",
+        "15",
+        true
+      ]
+    },
+    {
+      "label": "rebase getRewardList",
+      "address": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+      "signature": "getRewardList()",
+      "args": [],
+      "raw": "0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001000000000000000000000000618275f8efe54c2afa87bfb9f210a52f0ff89364",
+      "decoded": [
+        [
+          "0x618275F8EFE54c2afa87bfB9F210A52F0fF89364"
+        ]
+      ]
+    },
+    {
+      "label": "rebase getCurrentPeriod",
+      "address": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+      "signature": "getCurrentPeriod()",
+      "args": [],
+      "raw": "0x0000000000000000000000000000000000000000000000000000000000000b91",
+      "decoded": [
+        "2961"
+      ]
+    },
+    {
+      "label": "rebase DURATION",
+      "address": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+      "signature": "DURATION()",
+      "args": [],
+      "raw": "0x0000000000000000000000000000000000000000000000000000000000093a80",
+      "decoded": [
+        "604800"
+      ]
+    },
+    {
+      "label": "rebase owner",
+      "address": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+      "signature": "owner()",
+      "args": [],
+      "raw": "0x000000000000000000000000907438e82802c48d754ea87910feaccbe7ecd063",
+      "decoded": [
+        "0x907438e82802C48d754EA87910feaCCbe7ecd063"
+      ]
+    },
+    {
+      "label": "escrow kitten",
+      "address": "0x29d3A21fF35a519E00cF6d272f2aD897b109BD84",
+      "signature": "kitten()",
+      "args": [],
+      "raw": "0x000000000000000000000000618275f8efe54c2afa87bfb9f210a52f0ff89364",
+      "decoded": [
+        "0x618275F8EFE54c2afa87bfB9F210A52F0fF89364"
+      ]
+    },
+    {
+      "label": "escrow voter",
+      "address": "0x29d3A21fF35a519E00cF6d272f2aD897b109BD84",
+      "signature": "voter()",
+      "args": [],
+      "raw": "0x000000000000000000000000b7f7053f7e6c210e6777d5ba758e4b3eca6c88a0",
+      "decoded": [
+        "0xb7F7053F7e6c210e6777D5BA758E4b3ECa6C88A0"
+      ]
+    },
+    {
+      "label": "sample rebase NFT owner now",
+      "address": "0x29d3A21fF35a519E00cF6d272f2aD897b109BD84",
+      "signature": "ownerOf(uint256)",
+      "args": [
+        "18570"
+      ],
+      "raw": "0x00000000000000000000000077c4ed5187f078be6731e85efcf717069cc43671",
+      "decoded": [
+        "0x77c4Ed5187f078be6731e85EfCF717069cc43671"
+      ]
+    },
+    {
+      "label": "sample rebase NFT locked now",
+      "address": "0x29d3A21fF35a519E00cF6d272f2aD897b109BD84",
+      "signature": "locked(uint256)",
+      "args": [
+        "18570"
+      ],
+      "raw": "0x0000000000000000000000000000000000000000000036e9d593631b09d7e00f000000000000000000000000000000000000000000000000000000006e3ccd00",
+      "decoded": [
+        "259321271197454602592271",
+        "1849478400"
+      ]
+    },
+    {
+      "label": "sample rebase NFT earned now",
+      "address": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+      "signature": "earnedForTokenId(uint256)",
+      "args": [
+        "18570"
+      ],
+      "raw": "0x000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000002ebb70b7f384c9ca80000000000000000000000000000000000000000000000000000000000000001000000000000000000000000618275f8efe54c2afa87bfb9f210a52f0ff89364",
+      "decoded": [
+        [
+          "53878545308103515304"
+        ],
+        [
+          "0x618275F8EFE54c2afa87bfB9F210A52F0fF89364"
+        ]
+      ]
+    }
+  ],
+  "code": {
+    "kittenWhypePool": {
+      "address": "0x71d1FDE797e1810711E4C9abcFcA6Ef04C266196",
+      "runtimeBytes": 22586,
+      "runtimeKeccak256": "0x4c431c3113732125501a69bfaedfd5f7ffd5fa25d7e2fe80bc3e815d97c7b85c"
+    },
+    "directKittenUsdcPool": {
+      "address": "0xdf99bADEEA1C9B81c5d4134E644e939244C1Fb1C",
+      "runtimeBytes": 22586,
+      "runtimeKeccak256": "0x6f2424968d5419d2252382a6b25e3d595995282b2ebde64588773c83da7f800c"
+    },
+    "kittenImplementation": {
+      "address": "0xe9c39eaca6dcd550bb554ef826ae46a27733dcb6",
+      "runtimeBytes": 5376,
+      "runtimeKeccak256": "0x4beea063e106297a6372f41e949b2a2174ce77ab7a611668e4cb2f742eb11227"
+    },
+    "rebaseImplementation": {
+      "address": "0xdcb9efb0339e13c8febe85b13d6270175f770214",
+      "runtimeBytes": 10426,
+      "runtimeKeccak256": "0xee4a6f457f5b78f513200c966acf5da64143ec73b486298c0a1643fba6553040"
+    },
+    "veKittenImplementation": {
+      "address": "0xd2b6bf91bbbb8d86a72788a37c3886a4f821a873",
+      "runtimeBytes": 19835,
+      "runtimeKeccak256": "0x430513fa172eac47f8abb91c69806283f84b0411af466c3d152f47011f440054"
+    },
+    "voterImplementation": {
+      "address": "0x957685ab613965edb7e4964e7698f192370e1284",
+      "runtimeBytes": 18439,
+      "runtimeKeccak256": "0xd22fcbaf7bdabda9101efe45168d2a1b847c3f53462bdbb0e2ffbce229557574"
+    },
+    "whypeUsdcPlugin": {
+      "address": "0x84510Aa9ed5b356f2b223aa10B930cF6a9604943",
+      "runtimeBytes": 16215,
+      "runtimeKeccak256": "0x573bafad7485c464c4c8489dd4f9ab2a56d4124b7662962e1efb10016e058e0b"
+    },
+    "kittenWhypePlugin": {
+      "address": "0x9cC23759073bA914943445BbcA3A2D665F73E7Bb",
+      "runtimeBytes": 16215,
+      "runtimeKeccak256": "0xf32d1da1f517e7ca56b7d761bc4a5f3c208bf127835290621df8f65c3df886da"
+    }
+  },
+  "signatures": {
+    "router": [
+      {
+        "signature": "exactInputSingle((address,address,address,address,uint256,uint256,uint256,uint160))",
+        "selector": "0x1679c792",
+        "abi": {
+          "inputs": [
+            {
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "tokenIn",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "tokenOut",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "deployer",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "recipient",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "deadline",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountOutMinimum",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint160",
+                  "name": "limitSqrtPrice",
+                  "type": "uint160"
+                }
+              ],
+              "internalType": "struct ISwapRouter.ExactInputSingleParams",
+              "name": "params",
+              "type": "tuple"
+            }
+          ],
+          "name": "exactInputSingle",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "amountOut",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "payable",
+          "type": "function"
+        }
+      },
+      {
+        "signature": "exactInput((bytes,address,uint256,uint256,uint256))",
+        "selector": "0xc04b8d59",
+        "abi": {
+          "inputs": [
+            {
+              "components": [
+                {
+                  "internalType": "bytes",
+                  "name": "path",
+                  "type": "bytes"
+                },
+                {
+                  "internalType": "address",
+                  "name": "recipient",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "deadline",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountOutMinimum",
+                  "type": "uint256"
+                }
+              ],
+              "internalType": "struct ISwapRouter.ExactInputParams",
+              "name": "params",
+              "type": "tuple"
+            }
+          ],
+          "name": "exactInput",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "amountOut",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "payable",
+          "type": "function"
+        }
+      }
+    ],
+    "quoter": [
+      {
+        "signature": "quoteExactInputSingle((address,address,address,uint256,uint160))",
+        "selector": "0xe94764c4",
+        "abi": {
+          "inputs": [
+            {
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "tokenIn",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "tokenOut",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "deployer",
+                  "type": "address"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "amountIn",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint160",
+                  "name": "limitSqrtPrice",
+                  "type": "uint160"
+                }
+              ],
+              "internalType": "struct IQuoterV2.QuoteExactInputSingleParams",
+              "name": "params",
+              "type": "tuple"
+            }
+          ],
+          "name": "quoteExactInputSingle",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "amountOut",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountIn",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint160",
+              "name": "sqrtPriceX96After",
+              "type": "uint160"
+            },
+            {
+              "internalType": "uint32",
+              "name": "initializedTicksCrossed",
+              "type": "uint32"
+            },
+            {
+              "internalType": "uint256",
+              "name": "gasEstimate",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint16",
+              "name": "fee",
+              "type": "uint16"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        }
+      },
+      {
+        "signature": "quoteExactInput(bytes,uint256)",
+        "selector": "0xcdca1753",
+        "abi": {
+          "inputs": [
+            {
+              "internalType": "bytes",
+              "name": "path",
+              "type": "bytes"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amountInRequired",
+              "type": "uint256"
+            }
+          ],
+          "name": "quoteExactInput",
+          "outputs": [
+            {
+              "internalType": "uint256[]",
+              "name": "amountOutList",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "amountInList",
+              "type": "uint256[]"
+            },
+            {
+              "internalType": "uint160[]",
+              "name": "sqrtPriceX96AfterList",
+              "type": "uint160[]"
+            },
+            {
+              "internalType": "uint32[]",
+              "name": "initializedTicksCrossedList",
+              "type": "uint32[]"
+            },
+            {
+              "internalType": "uint256",
+              "name": "gasEstimate",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint16[]",
+              "name": "feeList",
+              "type": "uint16[]"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        }
+      }
+    ],
+    "rebase": [
+      {
+        "signature": "getRewardForTokenId(uint256)",
+        "selector": "0x3c8a4ecf",
+        "abi": {
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_tokenId",
+              "internalType": "uint256",
+              "type": "uint256"
+            }
+          ],
+          "name": "getRewardForTokenId",
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        }
+      },
+      {
+        "signature": "getRewardForPeriod(uint256,uint256,address)",
+        "selector": "0xcd8935e9",
+        "abi": {
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_period",
+              "internalType": "uint256",
+              "type": "uint256"
+            },
+            {
+              "name": "_tokenId",
+              "internalType": "uint256",
+              "type": "uint256"
+            },
+            {
+              "name": "_token",
+              "internalType": "address",
+              "type": "address"
+            }
+          ],
+          "name": "getRewardForPeriod",
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        }
+      },
+      {
+        "signature": "getRewardForOwner(uint256)",
+        "selector": "0xc2a8c832",
+        "abi": {
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_tokenId",
+              "internalType": "uint256",
+              "type": "uint256"
+            }
+          ],
+          "name": "getRewardForOwner",
+          "outputs": [],
+          "stateMutability": "nonpayable"
+        }
+      },
+      {
+        "signature": "earnedForTokenId(uint256)",
+        "selector": "0x415f76d7",
+        "abi": {
+          "type": "function",
+          "inputs": [
+            {
+              "name": "_tokenId",
+              "internalType": "uint256",
+              "type": "uint256"
+            }
+          ],
+          "name": "earnedForTokenId",
+          "outputs": [
+            {
+              "name": "rewardList",
+              "internalType": "uint256[]",
+              "type": "uint256[]"
+            },
+            {
+              "name": "tokenList",
+              "internalType": "address[]",
+              "type": "address[]"
+            }
+          ],
+          "stateMutability": "view"
+        }
+      }
+    ]
+  },
+  "historical": [
+    {
+      "transactionHash": "0xba122414959a8baf89c2a760726066c3f8a703c3ddcfc16528a7d9799cd4073e",
+      "block": 44807830,
+      "status": "0x1",
+      "from": "0xdf74e9d80e998c00822eb5c6ad9ac29b0b76b9e4",
+      "to": "0x4e73e421480a7e0c24fb3c11019254ede194f736",
+      "call": {
+        "name": "multicall",
+        "signature": "multicall(bytes[])",
+        "args": [
+          [
+            "0xc04b8d59000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000df74e9d80e998c00822eb5c6ad9ac29b0b76b9e4000000000000000000000000000000000000000000000000000001a060c14dce0000000000000000000000000000000000000000000001c8e25420eaf778a7e50000000000000000000000000000000000000000000000000000000000f736550000000000000000000000000000000000000000000000000000000000000064618275f8efe54c2afa87bfb9f210a52f0ff89364000000000000000000000000000000000000000055555555555555555555555555555555555555550000000000000000000000000000000000000000b88339cb7199b77e23db6e890353e22632ba630f00000000000000000000000000000000000000000000000000000000"
+          ]
+        ],
+        "selector": "0xac9650d8",
+        "innerCalls": [
+          {
+            "name": "exactInput",
+            "signature": "exactInput((bytes,address,uint256,uint256,uint256))",
+            "args": [
+              [
+                "0x618275f8efe54c2afa87bfb9f210a52f0ff89364000000000000000000000000000000000000000055555555555555555555555555555555555555550000000000000000000000000000000000000000b88339cb7199b77e23db6e890353e22632ba630f",
+                "0xDF74e9d80e998c00822eb5C6AD9ac29b0b76b9E4",
+                "1788329676238",
+                "8428023993955717261285",
+                "16201301"
+              ]
+            ],
+            "selector": "0xc04b8d59"
+          }
+        ]
+      },
+      "logs": [
+        {
+          "address": "0x5555555555555555555555555555555555555555",
+          "name": "Transfer",
+          "signature": "Transfer(address,address,uint256)",
+          "fields": [
+            {
+              "name": "from",
+              "value": "0x71d1FDE797e1810711E4C9abcFcA6Ef04C266196"
+            },
+            {
+              "name": "to",
+              "value": "0x4e73E421480a7E0C24fB3c11019254edE194f736"
+            },
+            {
+              "name": "value",
+              "value": "194886099506841000"
+            }
+          ]
+        },
+        {
+          "address": "0x618275f8efe54c2afa87bfb9f210a52f0ff89364",
+          "name": "Transfer",
+          "signature": "Transfer(address,address,uint256)",
+          "fields": [
+            {
+              "name": "from",
+              "value": "0xDF74e9d80e998c00822eb5C6AD9ac29b0b76b9E4"
+            },
+            {
+              "name": "to",
+              "value": "0x71d1FDE797e1810711E4C9abcFcA6Ef04C266196"
+            },
+            {
+              "name": "value",
+              "value": "8428023993955717261285"
+            }
+          ]
+        },
+        {
+          "address": "0xb88339cb7199b77e23db6e890353e22632ba630f",
+          "name": "Transfer",
+          "signature": "Transfer(address,address,uint256)",
+          "fields": [
+            {
+              "name": "from",
+              "value": "0x12Df9913E9E08453440e3C4B1aE73819160b513E"
+            },
+            {
+              "name": "to",
+              "value": "0xDF74e9d80e998c00822eb5C6AD9ac29b0b76b9E4"
+            },
+            {
+              "name": "value",
+              "value": "16217503"
+            }
+          ]
+        },
+        {
+          "address": "0x5555555555555555555555555555555555555555",
+          "name": "Transfer",
+          "signature": "Transfer(address,address,uint256)",
+          "fields": [
+            {
+              "name": "from",
+              "value": "0x4e73E421480a7E0C24fB3c11019254edE194f736"
+            },
+            {
+              "name": "to",
+              "value": "0x12Df9913E9E08453440e3C4B1aE73819160b513E"
+            },
+            {
+              "name": "value",
+              "value": "194886099506841000"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "transactionHash": "0x70873bb3b1e951f027269bbed1e74e2834684e4f9a149b2840bf54826a95e43c",
+      "block": 45601904,
+      "status": "0x1",
+      "from": "0x6ecf94b09613864a9796d8d66d63551956f0632c",
+      "to": "0x4e73e421480a7e0c24fb3c11019254ede194f736",
+      "call": {
+        "name": "exactInputSingle",
+        "signature": "exactInputSingle((address,address,address,address,uint256,uint256,uint256,uint160))",
+        "args": [
+          [
+            "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
+            "0x5555555555555555555555555555555555555555",
+            "0x0000000000000000000000000000000000000000",
+            "0x6ecf94B09613864a9796d8D66d63551956f0632C",
+            "1789110744",
+            "28842937",
+            "358200000000000000",
+            "0"
+          ]
+        ],
+        "selector": "0x1679c792"
+      },
+      "logs": [
+        {
+          "address": "0x5555555555555555555555555555555555555555",
+          "name": "Transfer",
+          "signature": "Transfer(address,address,uint256)",
+          "fields": [
+            {
+              "name": "from",
+              "value": "0x12Df9913E9E08453440e3C4B1aE73819160b513E"
+            },
+            {
+              "name": "to",
+              "value": "0x6ecf94B09613864a9796d8D66d63551956f0632C"
+            },
+            {
+              "name": "value",
+              "value": "360000001360069101"
+            }
+          ]
+        },
+        {
+          "address": "0xb88339cb7199b77e23db6e890353e22632ba630f",
+          "name": "Transfer",
+          "signature": "Transfer(address,address,uint256)",
+          "fields": [
+            {
+              "name": "from",
+              "value": "0x6ecf94B09613864a9796d8D66d63551956f0632C"
+            },
+            {
+              "name": "to",
+              "value": "0x12Df9913E9E08453440e3C4B1aE73819160b513E"
+            },
+            {
+              "name": "value",
+              "value": "28842937"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "rebaseSample": {
+    "hash": "0xb5c1569eaa6e753d1aa0cf1c207dad9f157e880d067bf133fca9fd8a02b0198e",
+    "from": "0x77c4ed5187f078be6731e85efcf717069cc43671",
+    "to": "0xdd002e8df80ccb7a8964bfef6e15ee36d414fc36",
+    "block": 47073154,
+    "status": "0x1",
+    "call": {
+      "name": "getRewardForTokenId",
+      "signature": "getRewardForTokenId(uint256)",
+      "args": [
+        "18570"
+      ],
+      "selector": "0x3c8a4ecf"
+    },
+    "logs": [
+      {
+        "address": "0x618275f8efe54c2afa87bfb9f210a52f0ff89364",
+        "name": "Transfer",
+        "signature": "Transfer(address,address,uint256)",
+        "fields": [
+          {
+            "name": "from",
+            "value": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36"
+          },
+          {
+            "name": "to",
+            "value": "0x29d3A21fF35a519E00cF6d272f2aD897b109BD84"
+          },
+          {
+            "name": "value",
+            "value": "62733592718325354817"
+          }
+        ]
+      },
+      {
+        "address": "0x29d3a21ff35a519e00cf6d272f2ad897b109bd84",
+        "name": "Deposit",
+        "signature": "Deposit(address,uint256,uint256,uint256,uint8,uint256)",
+        "fields": [
+          {
+            "name": "provider",
+            "value": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36"
+          },
+          {
+            "name": "tokenId",
+            "value": "18570"
+          },
+          {
+            "name": "value",
+            "value": "62733592718325354817"
+          },
+          {
+            "name": "locktime",
+            "value": "1849478400"
+          },
+          {
+            "name": "deposit_type",
+            "value": "0"
+          },
+          {
+            "name": "ts",
+            "value": "1790557985"
+          }
+        ]
+      },
+      {
+        "address": "0x29d3a21ff35a519e00cf6d272f2ad897b109bd84",
+        "name": "Supply",
+        "signature": "Supply(uint256,uint256)",
+        "fields": [
+          {
+            "name": "prevSupply",
+            "value": "1781702084162768310018249450"
+          },
+          {
+            "name": "supply",
+            "value": "1781702146896361028343604267"
+          }
+        ]
+      },
+      {
+        "address": "0xdd002e8df80ccb7a8964bfef6e15ee36d414fc36",
+        "name": "ClaimReward",
+        "signature": "ClaimReward(uint256,uint256,address,address)",
+        "fields": [
+          {
+            "name": "_period",
+            "value": "2955"
+          },
+          {
+            "name": "_tokenId",
+            "value": "18570"
+          },
+          {
+            "name": "_token",
+            "value": "0x618275F8EFE54c2afa87bfB9F210A52F0fF89364"
+          },
+          {
+            "name": "_to",
+            "value": "0x77c4Ed5187f078be6731e85EfCF717069cc43671"
+          }
+        ]
+      },
+      {
+        "address": "0x618275f8efe54c2afa87bfb9f210a52f0ff89364",
+        "name": "Transfer",
+        "signature": "Transfer(address,address,uint256)",
+        "fields": [
+          {
+            "name": "from",
+            "value": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36"
+          },
+          {
+            "name": "to",
+            "value": "0x29d3A21fF35a519E00cF6d272f2aD897b109BD84"
+          },
+          {
+            "name": "value",
+            "value": "60876814318314456765"
+          }
+        ]
+      },
+      {
+        "address": "0x29d3a21ff35a519e00cf6d272f2ad897b109bd84",
+        "name": "Deposit",
+        "signature": "Deposit(address,uint256,uint256,uint256,uint8,uint256)",
+        "fields": [
+          {
+            "name": "provider",
+            "value": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36"
+          },
+          {
+            "name": "tokenId",
+            "value": "18570"
+          },
+          {
+            "name": "value",
+            "value": "60876814318314456765"
+          },
+          {
+            "name": "locktime",
+            "value": "1849478400"
+          },
+          {
+            "name": "deposit_type",
+            "value": "0"
+          },
+          {
+            "name": "ts",
+            "value": "1790557985"
+          }
+        ]
+      },
+      {
+        "address": "0x29d3a21ff35a519e00cf6d272f2ad897b109bd84",
+        "name": "Supply",
+        "signature": "Supply(uint256,uint256)",
+        "fields": [
+          {
+            "name": "prevSupply",
+            "value": "1781702146896361028343604267"
+          },
+          {
+            "name": "supply",
+            "value": "1781702207773175346658061032"
+          }
+        ]
+      },
+      {
+        "address": "0xdd002e8df80ccb7a8964bfef6e15ee36d414fc36",
+        "name": "ClaimReward",
+        "signature": "ClaimReward(uint256,uint256,address,address)",
+        "fields": [
+          {
+            "name": "_period",
+            "value": "2956"
+          },
+          {
+            "name": "_tokenId",
+            "value": "18570"
+          },
+          {
+            "name": "_token",
+            "value": "0x618275F8EFE54c2afa87bfB9F210A52F0fF89364"
+          },
+          {
+            "name": "_to",
+            "value": "0x77c4Ed5187f078be6731e85EfCF717069cc43671"
+          }
+        ]
+      }
+    ]
+  },
+  "limitation": "Current-state calls and existing transaction logs only. No state/balance overrides, funded vault swap, execution trace or before/after archive state reconstruction."
+}

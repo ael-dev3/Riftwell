@@ -1,0 +1,44 @@
+{
+  "evidenceType": "local-in-process-EVM-fixture-only",
+  "recordedAt": "2026-10-02T14:51:53.070Z",
+  "node": "v24.20.0",
+  "platform": "darwin",
+  "architecture": "arm64",
+  "command": "LOCKKEEP_INDEXER_EVIDENCE_DIR=docs/evidence/indexer-financed-2026-10-02 node --test --test-concurrency=1 test/indexer.test.mjs web/model.test.mjs",
+  "result": {
+    "exitCode": 0,
+    "tests": 33,
+    "passed": 33,
+    "failed": 0,
+    "skipped": 0
+  },
+  "testedFileSha256": {
+    "scripts/indexer.mjs": "20779f01b0c0274041107ab9f2eb81149c47ab8490dc7e41456132e030a2cdc1",
+    "test/indexer.test.mjs": "d3f560f2c5db8417fd877179bb2797184acd74594f4cf0d2c0dacc2c6105dd7c",
+    "web/index-source.js": "dd49e83f2de1e21d5cde1d1da2c57268ae95a81fe6131b091dd1820c13408b67",
+    "web/model.test.mjs": "8a888f44e7e424282799dd26b6a33ce95f2f30677a77a077658d0808a06a2d38",
+    "docs/indexer.md": "d4784d0adfd63c45d2b5057a0db66e6909ea839db219c790381a15dee94e9973",
+    "contracts/LockkeepMarket.sol": "7e44b09085e30fcd958c84ea18786c03eff5de2c418878ce91d714ff1c5ee698",
+    "contracts/LockkeepLoans.sol": "ca4110bb51257dda4590b6651ffa00da5d2f77b5a829cb1c50cfc6ed091a8242",
+    "contracts/LockkeepLoanVault.sol": "6107110d78ecbcd70930ddf9785910795d2b02bc06ddb6fe5382a53307ce53b5"
+  },
+  "snapshots": [
+    "01-mixed-listed.json",
+    "02-interest-uncovered.json",
+    "03-repriced.json",
+    "04-cancelled.json",
+    "05-partial-repayment.json",
+    "06-repaid-custody.json",
+    "07-withdrawn-restart.json",
+    "08-sold.json",
+    "09-sale-reorg-restart.json",
+    "10-credit-withdrawals.json",
+    "11-offer-refund-exact-integer.json",
+    "12-expired-exact-debt.json",
+    "13-forgiven.json",
+    "14-unavailable-failclosed.json",
+    "15-midread-reorg-recovery.json"
+  ],
+  "publication": "local only",
+  "browserQA": "not performed; financed renderer held after task steering"
+}

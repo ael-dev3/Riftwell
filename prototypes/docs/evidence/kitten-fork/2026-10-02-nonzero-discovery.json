@@ -1,0 +1,120 @@
+{
+  "observedAtUtc": "2026-10-02T14:02:29.195Z",
+  "endpointHost": "hyperliquid.drpc.org",
+  "block": 47471441,
+  "blockHash": "0xdc489fb72c1af10b795dae8337959bedf53b3cda2ee890fa45f0345d483b5205",
+  "reward": "0x75b843855aa873b5bc8f9be04f4ae972b90ee503",
+  "usdc": "0xb88339cb7199b77e23db6e890353e22632ba630f",
+  "rows": [
+    {
+      "tokenId": 18373,
+      "period": 2960,
+      "earnedUSDC": "0"
+    },
+    {
+      "tokenId": 19023,
+      "period": 2960,
+      "earnedUSDC": "0"
+    },
+    {
+      "tokenId": 18370,
+      "period": 2960,
+      "earnedUSDC": "0"
+    },
+    {
+      "tokenId": 18371,
+      "period": 2960,
+      "earnedUSDC": "864622"
+    },
+    {
+      "tokenId": 18372,
+      "period": 2960,
+      "earnedUSDC": "0"
+    },
+    {
+      "tokenId": 18374,
+      "period": 2960,
+      "earnedUSDC": "0"
+    },
+    {
+      "tokenId": 18375,
+      "period": 2960,
+      "earnedUSDC": "0"
+    },
+    {
+      "tokenId": 18376,
+      "period": 2960,
+      "earnedUSDC": "0"
+    },
+    {
+      "tokenId": 18377,
+      "period": 2960,
+      "earnedUSDC": "0"
+    },
+    {
+      "tokenId": 18378,
+      "period": 2960,
+      "earnedUSDC": "0"
+    },
+    {
+      "tokenId": 18379,
+      "period": 2960,
+      "earnedUSDC": "0"
+    },
+    {
+      "tokenId": 18380,
+      "period": 2960,
+      "earnedUSDC": "0"
+    },
+    {
+      "tokenId": 18381,
+      "period": 2960,
+      "earnedUSDC": "0"
+    },
+    {
+      "tokenId": 18382,
+      "period": 2960,
+      "earnedUSDC": "0"
+    },
+    {
+      "tokenId": 18383,
+      "period": 2960,
+      "earnedUSDC": "0"
+    },
+    {
+      "tokenId": 18384,
+      "period": 2960,
+      "earnedUSDC": "0"
+    },
+    {
+      "tokenId": 18385,
+      "period": 2960,
+      "earnedUSDC": "0"
+    },
+    {
+      "tokenId": 18386,
+      "period": 2960,
+      "earnedUSDC": "0"
+    },
+    {
+      "tokenId": 18387,
+      "period": 2960,
+      "earnedUSDC": "0"
+    },
+    {
+      "tokenId": 18388,
+      "period": 2960,
+      "earnedUSDC": "0"
+    },
+    {
+      "tokenId": 18389,
+      "period": 2960,
+      "earnedUSDC": "0"
+    },
+    {
+      "tokenId": 18390,
+      "period": 2960,
+      "earnedUSDC": "0"
+    }
+  ]
+}

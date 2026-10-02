@@ -1,0 +1,1066 @@
+{
+  "remoteMethods": {
+    "eth_chainId": 1,
+    "eth_getBlockByNumber": 2,
+    "eth_call": 30,
+    "eth_getStorageAt": 4,
+    "eth_getCode": 8
+  },
+  "rpcRecords": [
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "eth_chainId",
+        "params": []
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x3e7"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "eth_getBlockByNumber",
+        "params": [
+          "0x2d463f4",
+          false
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "hash": "0xa7b8dc0c2b6ae932787c4038292b598500bc8811de45d0e74290a0e60bc78308",
+          "parentHash": "0x1f1a71a99977e383df85799d83280b02fd0052139bc458fdc8eb64f62f3e34fa",
+          "sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+          "miner": "0x0000000000000000000000000000000000000000",
+          "stateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "transactionsRoot": "0xd0f987fde07002b612484ea02e5af0f77bd9dd5f76f52e99af60fb4c9996d990",
+          "receiptsRoot": "0xb85139dab0aea3a2213d1e87f6ffe48fdc0b8d668f6587dc23708d16d0e79cf0",
+          "logsBloom": "0x00240000000000000040000000000000000000000000000000000000000200000000001000000000000004000008000010000000000020010000000000010200000000000000000800000008000000800000000000000000400000000000000000010000000000000000000000100000008010000000000088000050000900000000000040000002080000040100000000000001000010008040002400100000000400000000000000000000000000000000000000000000000000020000000000000002000000000200080000000000000000000000000000100000000000200000000000080000000000000000000000000000000000000100000000000000",
+          "difficulty": "0x0",
+          "number": "0x2d463f4",
+          "gasLimit": "0x2dc6c0",
+          "gasUsed": "0x154607",
+          "timestamp": "0x6abfc1ee",
+          "extraData": "0x",
+          "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "nonce": "0x0000000000000000",
+          "baseFeePerGas": "0xc9a432b",
+          "withdrawalsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+          "blobGasUsed": "0x0",
+          "excessBlobGas": "0x0",
+          "parentBeaconBlockRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "size": "0x673",
+          "uncles": [],
+          "transactions": [
+            "0xb9f167d84f4eefe6295dd1150b112d83bb6cffcb0e1305711ea968d403997e14",
+            "0xb297eef59b9269a055c1f6f4b267df6cf569c604923dd2d9df361e0a208d6465",
+            "0x15f6ae7558f4fc96e3b09f4a80b0cfd169fb3d03d8b8662364ee097b8a4d5a57",
+            "0x4382e620fe2df665e0dacb3475d618dc3c4d49b8acef411ca8372e90abf15037",
+            "0x5ab6b78d5c6a6a3a1e5d27b16eca755fe80c6cd88eddea70b185466fe8099efb"
+          ],
+          "withdrawals": []
+        }
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "eth_getBlockByNumber",
+        "params": [
+          "0x2d463f4",
+          false
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "hash": "0xa7b8dc0c2b6ae932787c4038292b598500bc8811de45d0e74290a0e60bc78308",
+          "parentHash": "0x1f1a71a99977e383df85799d83280b02fd0052139bc458fdc8eb64f62f3e34fa",
+          "sha3Uncles": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+          "miner": "0x0000000000000000000000000000000000000000",
+          "stateRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "transactionsRoot": "0xd0f987fde07002b612484ea02e5af0f77bd9dd5f76f52e99af60fb4c9996d990",
+          "receiptsRoot": "0xb85139dab0aea3a2213d1e87f6ffe48fdc0b8d668f6587dc23708d16d0e79cf0",
+          "logsBloom": "0x00240000000000000040000000000000000000000000000000000000000200000000001000000000000004000008000010000000000020010000000000010200000000000000000800000008000000800000000000000000400000000000000000010000000000000000000000100000008010000000000088000050000900000000000040000002080000040100000000000001000010008040002400100000000400000000000000000000000000000000000000000000000000020000000000000002000000000200080000000000000000000000000000100000000000200000000000080000000000000000000000000000000000000100000000000000",
+          "difficulty": "0x0",
+          "number": "0x2d463f4",
+          "gasLimit": "0x2dc6c0",
+          "gasUsed": "0x154607",
+          "timestamp": "0x6abfc1ee",
+          "extraData": "0x",
+          "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "nonce": "0x0000000000000000",
+          "baseFeePerGas": "0xc9a432b",
+          "withdrawalsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+          "blobGasUsed": "0x0",
+          "excessBlobGas": "0x0",
+          "parentBeaconBlockRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "size": "0x673",
+          "uncles": [],
+          "transactions": [
+            "0xb9f167d84f4eefe6295dd1150b112d83bb6cffcb0e1305711ea968d403997e14",
+            "0xb297eef59b9269a055c1f6f4b267df6cf569c604923dd2d9df361e0a208d6465",
+            "0x15f6ae7558f4fc96e3b09f4a80b0cfd169fb3d03d8b8662364ee097b8a4d5a57",
+            "0x4382e620fe2df665e0dacb3475d618dc3c4d49b8acef411ca8372e90abf15037",
+            "0x5ab6b78d5c6a6a3a1e5d27b16eca755fe80c6cd88eddea70b185466fe8099efb"
+          ],
+          "withdrawals": []
+        }
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0xb7f7053f7e6c210e6777d5ba758e4b3eca6c88a0",
+            "data": "0x07a45b36"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "result": "0x000000000000000000000000dd002e8df80ccb7a8964bfef6e15ee36d414fc36"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0xb7f7053f7e6c210e6777d5ba758e4b3eca6c88a0",
+            "data": "0x69434669"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 5,
+        "result": "0x00000000000000000000000029d3a21ff35a519e00cf6d272f2ad897b109bd84"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0x29d3a21ff35a519e00cf6d272f2ad897b109bd84",
+            "data": "0x46c96aac"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 6,
+        "result": "0x000000000000000000000000b7f7053f7e6c210e6777d5ba758e4b3eca6c88a0"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0x29d3a21ff35a519e00cf6d272f2ad897b109bd84",
+            "data": "0x15b81f94"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "result": "0x000000000000000000000000618275f8efe54c2afa87bfb9f210a52f0ff89364"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+            "data": "0x69434669"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "result": "0x00000000000000000000000029d3a21ff35a519e00cf6d272f2ad897b109bd84"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 9,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+            "data": "0x46c96aac"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 9,
+        "result": "0x000000000000000000000000b7f7053f7e6c210e6777d5ba758e4b3eca6c88a0"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 10,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+            "data": "0x71b5ef46"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 10,
+        "result": "0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001000000000000000000000000618275f8efe54c2afa87bfb9f210a52f0ff89364"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 11,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0xb7f7053f7e6c210e6777d5ba758e4b3eca6c88a0",
+            "data": "0x086146d2"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 11,
+        "result": "0x0000000000000000000000000000000000000000000000000000000000000b91"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 12,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+            "data": "0x086146d2"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 12,
+        "result": "0x0000000000000000000000000000000000000000000000000000000000000b91"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 13,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0x29d3a21ff35a519e00cf6d272f2ad897b109bd84",
+            "data": "0x6352211e00000000000000000000000000000000000000000000000000000000000047c3"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 13,
+        "result": "0x00000000000000000000000057ee32f42dfd116482e389d5cb87a4f20ef53699"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 14,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0x29d3a21ff35a519e00cf6d272f2ad897b109bd84",
+            "data": "0xb45a3c0e00000000000000000000000000000000000000000000000000000000000047c3"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 14,
+        "result": "0x000000000000000000000000000000000000000000007262023805d4d6020a1f000000000000000000000000000000000000000000000000000000006e2a5800"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 15,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0xb7f7053f7e6c210e6777d5ba758e4b3eca6c88a0",
+            "data": "0x650ed4e40000000000000000000000000000000000000000000000000000000000000b9200000000000000000000000000000000000000000000000000000000000047c3"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 15,
+        "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 16,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+            "data": "0xcb935c400000000000000000000000000000000000000000000000000000000000000b9000000000000000000000000000000000000000000000000000000000000047c3000000000000000000000000618275f8efe54c2afa87bfb9f210a52f0ff89364"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 16,
+        "result": "0x000000000000000000000000000000000000000000000006077e902d8f47672d"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 17,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+            "data": "0xcb935c400000000000000000000000000000000000000000000000000000000000000b8f00000000000000000000000000000000000000000000000000000000000047c3000000000000000000000000618275f8efe54c2afa87bfb9f210a52f0ff89364"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 17,
+        "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 18,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+            "data": "0xcb935c400000000000000000000000000000000000000000000000000000000000000b8e00000000000000000000000000000000000000000000000000000000000047c3000000000000000000000000618275f8efe54c2afa87bfb9f210a52f0ff89364"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 18,
+        "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 19,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+            "data": "0xcb935c400000000000000000000000000000000000000000000000000000000000000b8d00000000000000000000000000000000000000000000000000000000000047c3000000000000000000000000618275f8efe54c2afa87bfb9f210a52f0ff89364"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 19,
+        "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 20,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0x29d3a21ff35a519e00cf6d272f2ad897b109bd84",
+            "data": "0x6352211e00000000000000000000000000000000000000000000000000000000000047c5"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 20,
+        "result": "0x000000000000000000000000a1f62daf42d8bcd3669dec72271b3f658b9c3891"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 21,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0x29d3a21ff35a519e00cf6d272f2ad897b109bd84",
+            "data": "0xb45a3c0e00000000000000000000000000000000000000000000000000000000000047c5"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 21,
+        "result": "0x00000000000000000000000000000000000000000000dbd8a94a2bd5cf07bd4b000000000000000000000000000000000000000000000000000000006e742c00"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 22,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0xb7f7053f7e6c210e6777d5ba758e4b3eca6c88a0",
+            "data": "0x650ed4e40000000000000000000000000000000000000000000000000000000000000b9200000000000000000000000000000000000000000000000000000000000047c5"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 22,
+        "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 23,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+            "data": "0xcb935c400000000000000000000000000000000000000000000000000000000000000b9000000000000000000000000000000000000000000000000000000000000047c5000000000000000000000000618275f8efe54c2afa87bfb9f210a52f0ff89364"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 23,
+        "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 24,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+            "data": "0xcb935c400000000000000000000000000000000000000000000000000000000000000b8f00000000000000000000000000000000000000000000000000000000000047c5000000000000000000000000618275f8efe54c2afa87bfb9f210a52f0ff89364"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 24,
+        "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 25,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+            "data": "0xcb935c400000000000000000000000000000000000000000000000000000000000000b8e00000000000000000000000000000000000000000000000000000000000047c5000000000000000000000000618275f8efe54c2afa87bfb9f210a52f0ff89364"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 25,
+        "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 26,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+            "data": "0xcb935c400000000000000000000000000000000000000000000000000000000000000b8d00000000000000000000000000000000000000000000000000000000000047c5000000000000000000000000618275f8efe54c2afa87bfb9f210a52f0ff89364"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 26,
+        "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 27,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0x29d3a21ff35a519e00cf6d272f2ad897b109bd84",
+            "data": "0x6352211e0000000000000000000000000000000000000000000000000000000000004a4f"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 27,
+        "result": "0x00000000000000000000000068acb2051b73c2342be78cd1a7e5ca44483d10c5"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 28,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0x29d3a21ff35a519e00cf6d272f2ad897b109bd84",
+            "data": "0xb45a3c0e0000000000000000000000000000000000000000000000000000000000004a4f"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 28,
+        "result": "0x00000000000000000000000000000000000000000000272a2be8ead4a8d4912f000000000000000000000000000000000000000000000000000000006e742c00"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 29,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0xb7f7053f7e6c210e6777d5ba758e4b3eca6c88a0",
+            "data": "0x650ed4e40000000000000000000000000000000000000000000000000000000000000b920000000000000000000000000000000000000000000000000000000000004a4f"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 29,
+        "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 30,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+            "data": "0xcb935c400000000000000000000000000000000000000000000000000000000000000b900000000000000000000000000000000000000000000000000000000000004a4f000000000000000000000000618275f8efe54c2afa87bfb9f210a52f0ff89364"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 30,
+        "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 31,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+            "data": "0xcb935c400000000000000000000000000000000000000000000000000000000000000b8f0000000000000000000000000000000000000000000000000000000000004a4f000000000000000000000000618275f8efe54c2afa87bfb9f210a52f0ff89364"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 31,
+        "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 32,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+            "data": "0xcb935c400000000000000000000000000000000000000000000000000000000000000b8e0000000000000000000000000000000000000000000000000000000000004a4f000000000000000000000000618275f8efe54c2afa87bfb9f210a52f0ff89364"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 32,
+        "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 33,
+        "method": "eth_call",
+        "params": [
+          {
+            "to": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+            "data": "0xcb935c400000000000000000000000000000000000000000000000000000000000000b8d0000000000000000000000000000000000000000000000000000000000004a4f000000000000000000000000618275f8efe54c2afa87bfb9f210a52f0ff89364"
+          },
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 33,
+        "result": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 34,
+        "method": "eth_getStorageAt",
+        "params": [
+          "0x29d3a21ff35a519e00cf6d272f2ad897b109bd84",
+          "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 34,
+        "result": "0x000000000000000000000000d2b6bf91bbbb8d86a72788a37c3886a4f821a873"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 35,
+        "method": "eth_getCode",
+        "params": [
+          "0x29d3a21ff35a519e00cf6d272f2ad897b109bd84",
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 35,
+        "result": {
+          "runtimeKeccak256": "0x644fa0243b9dba3055c75b3655def18c8a925621b24ff439aa28225fb4bddf9b",
+          "runtimeBytes": 163,
+          "publicationSummary": true
+        }
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 36,
+        "method": "eth_getCode",
+        "params": [
+          "0xd2b6bf91bbbb8d86a72788a37c3886a4f821a873",
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 36,
+        "result": {
+          "runtimeKeccak256": "0x430513fa172eac47f8abb91c69806283f84b0411af466c3d152f47011f440054",
+          "runtimeBytes": 19835,
+          "publicationSummary": true
+        }
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 37,
+        "method": "eth_getStorageAt",
+        "params": [
+          "0xb7f7053f7e6c210e6777d5ba758e4b3eca6c88a0",
+          "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 37,
+        "result": "0x000000000000000000000000957685ab613965edb7e4964e7698f192370e1284"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 38,
+        "method": "eth_getCode",
+        "params": [
+          "0xb7f7053f7e6c210e6777d5ba758e4b3eca6c88a0",
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 38,
+        "result": {
+          "runtimeKeccak256": "0x877e158dbe0b5b7aefac92c57c818abcaae1391e87714c63d5b8897f08b0c870",
+          "runtimeBytes": 163,
+          "publicationSummary": true
+        }
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 39,
+        "method": "eth_getCode",
+        "params": [
+          "0x957685ab613965edb7e4964e7698f192370e1284",
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 39,
+        "result": {
+          "runtimeKeccak256": "0xd22fcbaf7bdabda9101efe45168d2a1b847c3f53462bdbb0e2ffbce229557574",
+          "runtimeBytes": 18439,
+          "publicationSummary": true
+        }
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 40,
+        "method": "eth_getStorageAt",
+        "params": [
+          "0xdd002e8df80ccb7a8964bfef6e15ee36d414fc36",
+          "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 40,
+        "result": "0x000000000000000000000000dcb9efb0339e13c8febe85b13d6270175f770214"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 41,
+        "method": "eth_getCode",
+        "params": [
+          "0xdd002e8df80ccb7a8964bfef6e15ee36d414fc36",
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 41,
+        "result": {
+          "runtimeKeccak256": "0x877e158dbe0b5b7aefac92c57c818abcaae1391e87714c63d5b8897f08b0c870",
+          "runtimeBytes": 163,
+          "publicationSummary": true
+        }
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 42,
+        "method": "eth_getCode",
+        "params": [
+          "0xdcb9efb0339e13c8febe85b13d6270175f770214",
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 42,
+        "result": {
+          "runtimeKeccak256": "0xee4a6f457f5b78f513200c966acf5da64143ec73b486298c0a1643fba6553040",
+          "runtimeBytes": 10426,
+          "publicationSummary": true
+        }
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 43,
+        "method": "eth_getStorageAt",
+        "params": [
+          "0x618275f8efe54c2afa87bfb9f210a52f0ff89364",
+          "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 43,
+        "result": "0x000000000000000000000000e9c39eaca6dcd550bb554ef826ae46a27733dcb6"
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 44,
+        "method": "eth_getCode",
+        "params": [
+          "0x618275f8efe54c2afa87bfb9f210a52f0ff89364",
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 44,
+        "result": {
+          "runtimeKeccak256": "0x644fa0243b9dba3055c75b3655def18c8a925621b24ff439aa28225fb4bddf9b",
+          "runtimeBytes": 163,
+          "publicationSummary": true
+        }
+      }
+    },
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 45,
+        "method": "eth_getCode",
+        "params": [
+          "0xe9c39eaca6dcd550bb554ef826ae46a27733dcb6",
+          "0x2d463f4"
+        ]
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 45,
+        "result": {
+          "runtimeKeccak256": "0x4beea063e106297a6372f41e949b2a2174ce77ab7a611668e4cb2f742eb11227",
+          "runtimeBytes": 5376,
+          "publicationSummary": true
+        }
+      }
+    }
+  ],
+  "observedAtUtc": "2026-10-02T14:40:16.621Z",
+  "endpointHost": "rpc.hyperliquid.xyz",
+  "addresses": {
+    "escrow": "0x29d3a21ff35a519e00cf6d272f2ad897b109bd84",
+    "voter": "0xb7f7053f7e6c210e6777d5ba758e4b3eca6c88a0",
+    "rebase": "0xdd002e8df80ccb7a8964bfef6e15ee36d414fc36",
+    "kitten": "0x618275f8efe54c2afa87bfb9f210a52f0ff89364",
+    "usdc": "0xb88339cb7199b77e23db6e890353e22632ba630f"
+  },
+  "safety": "Allowlisted remote reads only; fixed numeric block; bounded explicit candidates; no balance, storage or code overrides.",
+  "block": {
+    "number": 47473652,
+    "hash": "0xa7b8dc0c2b6ae932787c4038292b598500bc8811de45d0e74290a0e60bc78308",
+    "timestamp": 1790951918,
+    "timestampUtc": "2026-10-02T14:38:38.000Z"
+  },
+  "identity": {
+    "canonical": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+    "getter": "Voter.rebaseReward()",
+    "voter": "0xb7f7053f7e6c210e6777d5ba758e4b3eca6c88a0",
+    "escrow": "0x29d3a21ff35a519e00cf6d272f2ad897b109bd84",
+    "kitten": "0x618275f8efe54c2afa87bfb9f210a52f0ff89364",
+    "currentPeriod": "2961",
+    "rewardTokens": [
+      "0x618275F8EFE54c2afa87bfB9F210A52F0fF89364"
+    ],
+    "policy": "Registry is mutable; snapshot canonical address immutably in each vault and reject registry drift."
+  },
+  "rows": [
+    {
+      "tokenId": "18371",
+      "owner": "0x57Ee32f42dfD116482e389d5cb87a4F20eF53699",
+      "lockedAmount": "540157719850561543735839",
+      "lockEnd": "1848268800",
+      "nextPeriodVoted": false,
+      "periods": [
+        {
+          "period": "2960",
+          "earnedKITTEN": "111220491972940097325"
+        },
+        {
+          "period": "2959",
+          "earnedKITTEN": "0"
+        },
+        {
+          "period": "2958",
+          "earnedKITTEN": "0"
+        },
+        {
+          "period": "2957",
+          "earnedKITTEN": "0"
+        }
+      ],
+      "transferableCandidate": true
+    },
+    {
+      "tokenId": "18373",
+      "owner": "0xa1F62DAf42d8BcD3669DEC72271B3F658b9C3891",
+      "lockedAmount": "1038194955079111552777547",
+      "lockEnd": "1853107200",
+      "nextPeriodVoted": false,
+      "periods": [
+        {
+          "period": "2960",
+          "earnedKITTEN": "0"
+        },
+        {
+          "period": "2959",
+          "earnedKITTEN": "0"
+        },
+        {
+          "period": "2958",
+          "earnedKITTEN": "0"
+        },
+        {
+          "period": "2957",
+          "earnedKITTEN": "0"
+        }
+      ],
+      "transferableCandidate": true
+    },
+    {
+      "tokenId": "19023",
+      "owner": "0x68ACb2051b73C2342be78Cd1a7E5Ca44483D10c5",
+      "lockedAmount": "184950220119949278744879",
+      "lockEnd": "1853107200",
+      "nextPeriodVoted": false,
+      "periods": [
+        {
+          "period": "2960",
+          "earnedKITTEN": "0"
+        },
+        {
+          "period": "2959",
+          "earnedKITTEN": "0"
+        },
+        {
+          "period": "2958",
+          "earnedKITTEN": "0"
+        },
+        {
+          "period": "2957",
+          "earnedKITTEN": "0"
+        }
+      ],
+      "transferableCandidate": true
+    }
+  ],
+  "selected": {
+    "tokenId": "18371",
+    "owner": "0x57Ee32f42dfD116482e389d5cb87a4F20eF53699",
+    "lockedAmount": "540157719850561543735839",
+    "lockEnd": "1848268800",
+    "period": "2960",
+    "earnedKITTEN": "111220491972940097325"
+  },
+  "implementations": {
+    "escrow": {
+      "address": "0x29d3a21ff35a519e00cf6d272f2ad897b109bd84",
+      "implementationSlot": "0x000000000000000000000000d2b6bf91bbbb8d86a72788a37c3886a4f821a873",
+      "implementation": "0xd2b6bf91bbbb8d86a72788a37c3886a4f821a873",
+      "proxyCodeHash": "0x644fa0243b9dba3055c75b3655def18c8a925621b24ff439aa28225fb4bddf9b",
+      "implementationCodeHash": "0x430513fa172eac47f8abb91c69806283f84b0411af466c3d152f47011f440054"
+    },
+    "voter": {
+      "address": "0xb7f7053f7e6c210e6777d5ba758e4b3eca6c88a0",
+      "implementationSlot": "0x000000000000000000000000957685ab613965edb7e4964e7698f192370e1284",
+      "implementation": "0x957685ab613965edb7e4964e7698f192370e1284",
+      "proxyCodeHash": "0x877e158dbe0b5b7aefac92c57c818abcaae1391e87714c63d5b8897f08b0c870",
+      "implementationCodeHash": "0xd22fcbaf7bdabda9101efe45168d2a1b847c3f53462bdbb0e2ffbce229557574"
+    },
+    "rebase": {
+      "address": "0xdd002e8df80ccb7a8964bfef6e15ee36d414fc36",
+      "implementationSlot": "0x000000000000000000000000dcb9efb0339e13c8febe85b13d6270175f770214",
+      "implementation": "0xdcb9efb0339e13c8febe85b13d6270175f770214",
+      "proxyCodeHash": "0x877e158dbe0b5b7aefac92c57c818abcaae1391e87714c63d5b8897f08b0c870",
+      "implementationCodeHash": "0xee4a6f457f5b78f513200c966acf5da64143ec73b486298c0a1643fba6553040"
+    },
+    "kitten": {
+      "address": "0x618275f8efe54c2afa87bfb9f210a52f0ff89364",
+      "implementationSlot": "0x000000000000000000000000e9c39eaca6dcd550bb554ef826ae46a27733dcb6",
+      "implementation": "0xe9c39eaca6dcd550bb554ef826ae46a27733dcb6",
+      "proxyCodeHash": "0x644fa0243b9dba3055c75b3655def18c8a925621b24ff439aa28225fb4bddf9b",
+      "implementationCodeHash": "0x4beea063e106297a6372f41e949b2a2174ce77ab7a611668e4cb2f742eb11227"
+    }
+  },
+  "status": "nonzero-transferable-candidate-found",
+  "finishedAtUtc": "2026-10-02T14:40:33.751Z"
+}

@@ -1,0 +1,5 @@
+node_modules/
+dist/
+prototypes/
+docs/qa/
+package-lock.json

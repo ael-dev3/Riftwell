@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="700" viewBox="0 0 800 700">
+<defs>
+<radialGradient id="bg"><stop stop-color="#46334e"/><stop offset=".58" stop-color="#251c2d"/><stop offset="1" stop-color="#17151c"/></radialGradient>
+<linearGradient id="ring" x1=".1" y1=".2" x2=".95" y2=".85"><stop stop-color="#ece2ff"/><stop offset=".18" stop-color="#a68ed0"/><stop offset=".4" stop-color="#63517f"/><stop offset=".62" stop-color="#201d31"/><stop offset=".79" stop-color="#8c72b8"/><stop offset="1" stop-color="#d8c4f0"/></linearGradient>
+<linearGradient id="inner" x1=".2" y1="0" x2=".7" y2="1"><stop stop-color="#3b2f50"/><stop offset=".55" stop-color="#c0a9df"/><stop offset="1" stop-color="#7d658f"/></linearGradient>
+<radialGradient id="ball" cx=".32" cy=".24" r=".78"><stop stop-color="#e6d4f3"/><stop offset=".3" stop-color="#a68cc4"/><stop offset=".69" stop-color="#594769"/><stop offset="1" stop-color="#262033"/></radialGradient>
+<radialGradient id="floor"><stop stop-color="#a286b5" stop-opacity=".22"/><stop offset="1" stop-color="#a286b5" stop-opacity="0"/></radialGradient>
+<filter id="blur"><feGaussianBlur stdDeviation="14"/></filter>
+</defs>
+<rect width="800" height="700" fill="url(#bg)"/>
+<ellipse cx="421" cy="591" rx="245" ry="44" fill="url(#floor)"/>
+<ellipse cx="422" cy="570" rx="152" ry="19" fill="#0c0717" opacity=".8" filter="url(#blur)"/>
+<g transform="translate(404 328) rotate(-28)">
+<ellipse cx="-17" cy="14" rx="177" ry="242" fill="#181525"/>
+<path d="M0-245C120-245 191-139 191 0S120 245 0 245S-191 139-191 0S-120-245 0-245ZM0-174C-77-174-116-93-116 0S-77 174 0 174S116 93 116 0S77-174 0-174Z" fill="url(#ring)" fill-rule="evenodd"/>
+<ellipse rx="120" ry="177" fill="none" stroke="url(#inner)" stroke-width="7"/>
+<path d="M-150-135C-123-206-76-239 1-241" fill="none" stroke="#f9eaff" stroke-width="2" opacity=".5"/>
+<path d="M110 196C154 158 185 73 185 0" fill="none" stroke="#e9d1ff" stroke-width="1.5" opacity=".6"/>
+</g>
+<circle cx="410" cy="357" r="77" fill="url(#ball)"/>
+<ellipse cx="385" cy="317" rx="27" ry="18" fill="#f4e1ff" opacity=".11" transform="rotate(-25 385 317)"/>
+<path d="M53 69h22M64 58v22" stroke="#e5d4fb" stroke-width="1" opacity=".35"/>
+<path d="M725 620h22M736 609v22" stroke="#e5d4fb" stroke-width="1" opacity=".25"/>
+</svg>

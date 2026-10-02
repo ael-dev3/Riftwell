@@ -1,0 +1,19 @@
+Kitten fork: Validate chain, genesis and an explicit numeric fork block.
+Kitten fork: Sample every remote contract read at numeric block 47471441.
+Kitten fork: Initialize local fork: NFT 18371, closed period 2960, real claimable USDC 864622 raw units.
+Kitten fork: Accept a funded local offer and move the live NFT into its deployed custody vault.
+Kitten fork: Exercise typed owner vote and its next-period transfer restriction.
+Kitten fork: Claim actual nonzero closed-period USDC into the NFT-owning vault.
+▶ live Kitten custody, typed vote, epoch release and nonzero closed-period USDC gate
+  ✔ nonzero closed-period reward follows NFT into contract custody and becomes lender credit (2486.253708ms)
+Kitten fork: Advance local time to the next period, freeze revoting, and release the exact collateral.
+✔ live Kitten custody, typed vote, epoch release and nonzero closed-period USDC gate (48470.379291ms)
+ℹ Fork evidence saved to <local-project>/docs/evidence/kitten-fork/2026-10-02-anvil-token18371.json
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 48720.916542

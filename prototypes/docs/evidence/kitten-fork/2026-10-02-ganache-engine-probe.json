@@ -1,0 +1,9 @@
+{
+  "observedAtUtc": "2026-10-02T14:06:54.665Z",
+  "blockNumber": 47471441,
+  "engine": "Ganache7.9.2/shanghai",
+  "remoteReadOnly": true,
+  "localNativeGasFundingOnly": true,
+  "blockHash": "0xdc489fb72c1af10b795dae8337959bedf53b3cda2ee890fa45f0345d483b5205",
+  "status": "succeeded"
+}

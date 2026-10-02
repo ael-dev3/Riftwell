@@ -1,0 +1,123 @@
+{
+  "status": "passed",
+  "baseURL": "http://127.0.0.1:5191",
+  "browser": "isolated headless Chrome",
+  "checkedAt": "2026-10-02T15:19:13.269Z",
+  "checks": [
+    "Six sample NFT positions",
+    "Exactly two primary sections",
+    "Initial hash route",
+    "Local artwork loads",
+    "Accessibility: marketplace desktop",
+    "No horizontal overflow: marketplace 320",
+    "No horizontal overflow: marketplace 390",
+    "No horizontal overflow: marketplace 768",
+    "No horizontal overflow: marketplace 1440",
+    "No horizontal overflow: marketplace 1920",
+    "Accessibility: marketplace mobile",
+    "Search empty state",
+    "Lock filter",
+    "Ask sorting",
+    "Accessibility: position details",
+    "Position lock and reference value shown",
+    "Backward focus stays in dialog",
+    "Forward focus stays in dialog",
+    "Focus returns to details trigger",
+    "Accessibility: purchase review",
+    "Seller pays exact 0.5% fee",
+    "Purchase receipt saved",
+    "Accessibility: preview account",
+    "Purchased preview removed from marketplace",
+    "Purchase persists after reload",
+    "Lending hash route",
+    "Accessibility: lending desktop",
+    "No horizontal overflow: lending 320",
+    "No horizontal overflow: lending 390",
+    "No horizontal overflow: lending 768",
+    "No horizontal overflow: lending 1440",
+    "No horizontal overflow: lending 1920",
+    "Accessibility: lending mobile",
+    "No horizontal overflow: loan dialog mobile",
+    "Accessibility: loan mobile",
+    "Reject invalid amount 999999",
+    "Reject invalid amount 1e3",
+    "Reject invalid amount 0x10",
+    "Reject invalid amount 1.0000001",
+    "Borrow proceeds and interest separated",
+    "Accessibility: loan desktop",
+    "Loan saved in matching account tab",
+    "Account loan accounting visible",
+    "Cancellation can be declined",
+    "Cancellation retains receipt",
+    "Cancelled collateral available again",
+    "APR cap validation",
+    "Accessibility: lending proposal",
+    "Proposal saved in matching account tab",
+    "Proposal cancellation",
+    "Reset confirmation can be declined",
+    "Reset clears all receipts",
+    "Direct lending route loads",
+    "Browser back updates route",
+    "Browser forward updates route",
+    "Reduced motion suppresses portal animation",
+    "Corrupt storage safely recovers",
+    "No runtime or console errors",
+    "No remote requests or wallet services",
+    "Storage unavailable notice",
+    "Storage unavailable keeps interface usable"
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "accessibility": [
+    {
+      "view": "marketplace desktop",
+      "violations": [],
+      "passes": 25
+    },
+    {
+      "view": "marketplace mobile",
+      "violations": [],
+      "passes": 26
+    },
+    {
+      "view": "position details",
+      "violations": [],
+      "passes": 28
+    },
+    {
+      "view": "purchase review",
+      "violations": [],
+      "passes": 26
+    },
+    {
+      "view": "preview account",
+      "violations": [],
+      "passes": 27
+    },
+    {
+      "view": "lending desktop",
+      "violations": [],
+      "passes": 21
+    },
+    {
+      "view": "lending mobile",
+      "violations": [],
+      "passes": 21
+    },
+    {
+      "view": "loan mobile",
+      "violations": [],
+      "passes": 30
+    },
+    {
+      "view": "loan desktop",
+      "violations": [],
+      "passes": 29
+    },
+    {
+      "view": "lending proposal",
+      "violations": [],
+      "passes": 29
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "name": "riftwell",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "vitest run",
+    "test:ui": "node scripts/browser-qa.mjs",
+    "format:check": "prettier --check src scripts index.html vite.config.ts tsconfig.json",
+    "check": "npm run test && npm run build",
+    "contracts:compile": "npm --prefix prototypes run compile",
+    "contracts:test": "npm --prefix prototypes run test"
+  },
+  "dependencies": {
+    "lucide-react": "1.50.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.1",
+    "axe-core": "4.13.0",
+    "playwright": "1.63.0",
+    "prettier": "3.9.9",
+    "typescript": "7.0.2",
+    "vite": "8.3.2",
+    "vitest": "5.0.3"
+  }
+}

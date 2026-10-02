@@ -1,0 +1,41 @@
+{
+  "capturedAtUtc": "2026-10-02T14:19:36.710Z",
+  "primaryEvidence": "2026-10-02-anvil-token18371.json",
+  "testOutput": "2026-10-02-anvil-token18371.tap",
+  "evidenceSha256": "92c8c82577a3a3dd566902bae6e2802bbfcae2e193b1b0e8a6183edb95bddc54",
+  "testOutputSha256": "f615b805eaec64fc39aa9f6672d3d7e3fed00375e4e7c82c090353aae589eac8",
+  "compiler": "0.8.37+commit.f401782d.Emscripten.clang",
+  "evmVersion": "shanghai",
+  "optimizer": {
+    "enabled": true,
+    "runs": 200
+  },
+  "forkEngine": "@foundry-rs/anvil 1.7.1 (Cancun)",
+  "block": {
+    "number": 47471441,
+    "hash": "0xdc489fb72c1af10b795dae8337959bedf53b3cda2ee890fa45f0345d483b5205",
+    "timestamp": 1790949743,
+    "timestampUtc": "2026-10-02T14:02:23.000Z",
+    "genesisHash": null
+  },
+  "sourceSha256": {
+    "test/kitten-fork.test.mjs": "224adfccd100f780e0f481d6677cd815248283377264b469d871f59a53b62cac",
+    "scripts/compile.mjs": "cd938f8f91d84287933e7a916debad58a629bb515ca8d914b0bbb1b6ab7502cc",
+    "contracts/LockkeepLoans.sol": "ca4110bb51257dda4590b6651ffa00da5d2f77b5a829cb1c50cfc6ed091a8242",
+    "contracts/LockkeepLoanVault.sol": "6107110d78ecbcd70930ddf9785910795d2b02bc06ddb6fe5382a53307ce53b5",
+    "contracts/interfaces/IKittenVoting.sol": "f2a3a72858cad4dd45155e5404ef1c0f8f88548d4d4e8e82fa12207b2f3b435e",
+    "package.json": "a0732f17c2e2dff18fb166f5210b8a8b228d0e6d162fb029f484c892340b730d",
+    "package-lock.json": "b58f9d820693b796f562220b668e6c7b41d3d012157c8d724accbaa8dcdec69b"
+  },
+  "bytecodes": {
+    "LockkeepLoans": {
+      "creationBytecodeSha256": "107582892b8603ace4925f96c6aefd41def12e7a30e1cbe1a7f14f5689175afb",
+      "compiledRuntimeTemplateSha256": "e27cd4a3dbf3e1f1c67ca484358eebf59b5367069fd5416f740e8547528144ac"
+    },
+    "LockkeepLoanVault": {
+      "creationBytecodeSha256": "2ce854d318dae6d8c77c8d65d726db24a8946ba73d08a204be49b9f8e5c11c1e",
+      "compiledRuntimeTemplateSha256": "bc80dd2886eafe8e74d65004de94b68f504822d934f9ff694af1095af41db18a"
+    }
+  },
+  "note": "Source hashes captured after the successful gate; core contracts unchanged. The harness subsequently received readability, x64 platform-package resolution, cleanup guard and failed-subtest report status improvements. Runtime template hashes precede immutable constructor patching; live Kitten code hashes are in primary evidence. No network rerun performed for this manifest."
+}

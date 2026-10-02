@@ -1,0 +1,135 @@
+{
+  "capturedAtUtc": "2026-10-02T14:41:32.948Z",
+  "primaryEvidence": "2026-10-02-anvil-financed-token18371.json",
+  "testOutput": "2026-10-02-anvil-financed-token18371.tap",
+  "evidenceSha256": "4c46d8606ee04457e63270e8265f4ca60995f6628c17590637b3177fd3a56497",
+  "testOutputSha256": "69ab24c70c14f1af5485fe2c91f1f4e8e86a3f1eab674511a0ccbc3208473f1a",
+  "status": "local-gates-passed-release-review-required",
+  "productionClaimsVerified": false,
+  "forkEngine": "@foundry-rs/anvil 1.7.1 (Cancun)",
+  "block": {
+    "number": 47471441,
+    "hash": "0xdc489fb72c1af10b795dae8337959bedf53b3cda2ee890fa45f0345d483b5205",
+    "timestamp": 1790949743,
+    "timestampUtc": "2026-10-02T14:02:23.000Z",
+    "genesisHash": null
+  },
+  "sample": {
+    "owner": "0x57Ee32f42dfD116482e389d5cb87a4F20eF53699",
+    "lockedAmount": "540157719850561543735839",
+    "lockEnd": "1848268800",
+    "period": "2961",
+    "closedPeriod": "2960",
+    "votingReward": "0x75B843855aA873b5Bc8F9be04F4AE972b90eE503",
+    "earnedUSDC": "864622",
+    "usdcFunder": "0x68acb2051b73c2342be78cd1a7e5ca44483d10c5",
+    "funderBalance": "9725267765"
+  },
+  "sourceIdentity": {
+    "compiler": "0.8.37+commit.f401782d.Emscripten.clang",
+    "evmVersion": "shanghai",
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "sourceSha256": {
+      "test/kitten-fork.test.mjs": "a4c9be40ddb47f606f3c538694341f114d9b3f91f86e12e0c8a9d84d4ecd41b4",
+      "scripts/compile.mjs": "cd938f8f91d84287933e7a916debad58a629bb515ca8d914b0bbb1b6ab7502cc",
+      "contracts/LockkeepLoans.sol": "ca4110bb51257dda4590b6651ffa00da5d2f77b5a829cb1c50cfc6ed091a8242",
+      "contracts/LockkeepLoanVault.sol": "6107110d78ecbcd70930ddf9785910795d2b02bc06ddb6fe5382a53307ce53b5",
+      "contracts/interfaces/IKittenVoting.sol": "f2a3a72858cad4dd45155e5404ef1c0f8f88548d4d4e8e82fa12207b2f3b435e",
+      "package.json": "a0732f17c2e2dff18fb166f5210b8a8b228d0e6d162fb029f484c892340b730d",
+      "package-lock.json": "b58f9d820693b796f562220b668e6c7b41d3d012157c8d724accbaa8dcdec69b"
+    },
+    "bytecodes": {
+      "LockkeepLoans": {
+        "creationBytecodeSha256": "ba27c8b700684ae3ec67b2505627bb4a6a665ad5d72317e0777e3e24d4e3aa06",
+        "compiledRuntimeTemplateSha256": "ca5a0befb6fd475df0609f0db1c6d8fc2ac73fde481fc27d36fa60909f868447"
+      },
+      "LockkeepLoanVault": {
+        "creationBytecodeSha256": "4860d228ef44d3c9f7f55b0f8dec0f6d8c82a7164d729170d063a1887070c8eb",
+        "compiledRuntimeTemplateSha256": "3c3dbf5dc204e84f255f080f20f8e507a19937a3ebf654ed125ecf365bbae61e"
+      }
+    }
+  },
+  "localRuntimeCodeHashes": {
+    "manager": "0x0ad90a46a5ba17cb2784896328008860192043caf62a7d9007965d020d4140f2",
+    "vault": "0x408c1d258b9597c2b7c8201b56dc9c97dd5b0ce3c4e176d6641c8203000d4b6d"
+  },
+  "liveProtocolIdentity": {
+    "escrow": {
+      "slot": "0x000000000000000000000000d2b6bf91bbbb8d86a72788a37c3886a4f821a873",
+      "implementation": "0xd2b6bf91bbbb8d86a72788a37c3886a4f821a873",
+      "proxyCodeHash": "0x644fa0243b9dba3055c75b3655def18c8a925621b24ff439aa28225fb4bddf9b",
+      "implementationCodeHash": "0x430513fa172eac47f8abb91c69806283f84b0411af466c3d152f47011f440054"
+    },
+    "voter": {
+      "slot": "0x000000000000000000000000957685ab613965edb7e4964e7698f192370e1284",
+      "implementation": "0x957685ab613965edb7e4964e7698f192370e1284",
+      "proxyCodeHash": "0x877e158dbe0b5b7aefac92c57c818abcaae1391e87714c63d5b8897f08b0c870",
+      "implementationCodeHash": "0xd22fcbaf7bdabda9101efe45168d2a1b847c3f53462bdbb0e2ffbce229557574"
+    },
+    "reward": {
+      "slot": "0x000000000000000000000000b390c8c641a1fb3f786b9cabacef14e594ef82f1",
+      "implementation": "0xb390c8c641a1fb3f786b9cabacef14e594ef82f1",
+      "proxyCodeHash": "0x877e158dbe0b5b7aefac92c57c818abcaae1391e87714c63d5b8897f08b0c870",
+      "implementationCodeHash": "0xcabb51425aadfcbd90995b65c287c83748f973142493b68c1f4bd06d65b4df9f"
+    },
+    "settlement": {
+      "slot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "implementation": "0x0000000000000000000000000000000000000000",
+      "proxyCodeHash": "0xa119f674d44072e257f162aee49c7aba9b7a04fe2e8c84fcefddb366ab6d40cd",
+      "implementationCodeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+    }
+  },
+  "hashEncoding": {
+    "sourceSha256": "SHA-256 of file bytes captured before compilation",
+    "compiledBytecodeSha256": "SHA-256 of the UTF-8 0x-prefixed hexadecimal bytecode string",
+    "runtimeAndLiveCodeHashes": "Keccak-256 of decoded runtime bytecode bytes; local deployed runtime includes constructor immutables"
+  },
+  "checks": {
+    "originalGates": {
+      "custody": true,
+      "typedVote": true,
+      "epochTransferRestriction": true,
+      "epochRelease": true,
+      "nonzeroClaimAfterOwnershipTransfer": true,
+      "lenderCreditWithdrawal": true
+    },
+    "optionalFinancedSaleGates": {
+      "fundedBuyer": true,
+      "sellerListing": true,
+      "settlement": true,
+      "exactSaleFee": true,
+      "separateCredits": true,
+      "buyerOwnership": true,
+      "creditWithdrawals": true,
+      "votedPurchaseAtomicRollback": true,
+      "unclaimedClosedPeriodRewardFollowsBuyer": true
+    },
+    "testCount": 4,
+    "passed": 4,
+    "failed": 0
+  },
+  "safety": "Read-only remote RPC; transactions only on disposable local fork; local native gas funding only. No ERC20 balance or protocol storage overrides.",
+  "snapshotBranches": [
+    {
+      "name": "financed-sale-success",
+      "snapshotId": "0x0",
+      "restored": true,
+      "transactionIndexes": [
+        6,
+        12
+      ],
+      "note": "These transactions were mined successfully on a disposable branch and then reverted by snapshot reset."
+    }
+  ],
+  "cleanup": {
+    "completed": true,
+    "localForkPid": 20182,
+    "forkExitCode": 0,
+    "forkSignal": null,
+    "proxyClosed": true
+  },
+  "scope": "Exact live NFT18371, pool0x12df9913e9e08453440e3c4b1ae73819160b513e, USDC, closed period2960, pinned block47471441 and recorded contract source hashes. Not production deployment or broad launch completion."
+}

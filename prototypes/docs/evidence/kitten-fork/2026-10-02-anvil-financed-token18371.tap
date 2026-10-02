@@ -1,0 +1,46 @@
+TAP version 13
+# Kitten fork: Validate chain and an explicit numeric fork block.
+# Kitten fork: Sample every remote contract read at numeric block 47471441.
+# Kitten fork: Initialize local fork: NFT 18371, closed period 2960, real claimable USDC 864622 raw units.
+# Kitten fork: Accept a funded local offer and move the live NFT into its deployed custody vault.
+# Kitten fork: Snapshot custody and settle financed sale with actual funded buyer USDC.
+# Kitten fork: Claim untouched closed-period USDC as the actual financed-sale NFT buyer.
+# Kitten fork: Exercise typed owner vote and its next-period transfer restriction.
+# Subtest: live Kitten custody, typed vote, epoch release and nonzero closed-period USDC gate
+    # Subtest: financed live NFT sale, separate funded credits and prior unclaimed USDC follows buyer
+    ok 1 - financed live NFT sale, separate funded credits and prior unclaimed USDC follows buyer
+      ---
+      duration_ms: 5106.748625
+      type: 'test'
+      ...
+# Kitten fork: Mine a financed purchase rejected by the live next-period vote guard and compare complete state.
+# Kitten fork: Claim actual nonzero closed-period USDC into the NFT-owning vault.
+    # Subtest: live next-period vote atomically rejects financed purchase without consuming funds, debt or listing
+    ok 2 - live next-period vote atomically rejects financed purchase without consuming funds, debt or listing
+      ---
+      duration_ms: 138.271958
+      type: 'test'
+      ...
+    # Subtest: nonzero closed-period reward follows NFT into contract custody and becomes lender credit
+    ok 3 - nonzero closed-period reward follows NFT into contract custody and becomes lender credit
+      ---
+      duration_ms: 584.995083
+      type: 'test'
+      ...
+# Kitten fork: Advance local time to the next period, freeze revoting, and release the exact collateral.
+    1..3
+ok 1 - live Kitten custody, typed vote, epoch release and nonzero closed-period USDC gate
+  ---
+  duration_ms: 50736.033416
+  type: 'test'
+  ...
+# Fork evidence saved to <local-project>/docs/evidence/kitten-fork/2026-10-02-anvil-financed-token18371.json
+1..1
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 50971.661541

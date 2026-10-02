@@ -1,0 +1,535 @@
+{
+  "observedAtUtc": "2026-10-02T14:14:55.194Z",
+  "endpoint": "https://rpc.hyperliquid.xyz/evm",
+  "chainId": "0x3e7",
+  "block": {
+    "number": 47472185,
+    "hash": "0x943441169fb94d764ce02e361096ab4425821908e2e7f4da0643c72d6f35b36f",
+    "timestamp": 1790950475
+  },
+  "addresses": {
+    "factory": "0x5f95E92c338e6453111Fc55ee66D4AafccE661A7",
+    "quoter": "0xc58874216AFe47779ADED27B8AAd77E8Bd6eBEBb",
+    "router": "0x4e73E421480a7E0C24fB3c11019254edE194f736",
+    "rebase": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+    "veKitten": "0x29d3A21fF35a519E00cF6d272f2aD897b109BD84",
+    "voter": "0xb7F7053F7e6c210e6777D5BA758E4b3ECa6C88A0",
+    "kitten": "0x618275F8EFE54c2afa87bfB9F210A52F0fF89364",
+    "whype": "0x5555555555555555555555555555555555555555",
+    "usdc": "0xb88339cb7199b77e23db6e890353e22632ba630f",
+    "primaryPool": "0x12df9913e9e08453440e3c4b1ae73819160b513e",
+    "kittenWhypePool": "0x71d1FDE797e1810711E4C9abcFcA6Ef04C266196"
+  },
+  "code": {
+    "factory": {
+      "address": "0x5f95E92c338e6453111Fc55ee66D4AafccE661A7",
+      "runtimeBytes": 10699,
+      "runtimeKeccak256": "0x2b2d29eb8522417c1ad40566e68ce709f59b03afb1d6d7234cb3507c076b6b28",
+      "implementationSlot": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "quoter": {
+      "address": "0xc58874216AFe47779ADED27B8AAd77E8Bd6eBEBb",
+      "runtimeBytes": 9262,
+      "runtimeKeccak256": "0x5d9d9198143acb537c97bf19e061f35f7abfe97b28c97cfbbc0506d85d342581",
+      "implementationSlot": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "router": {
+      "address": "0x4e73E421480a7E0C24fB3c11019254edE194f736",
+      "runtimeBytes": 12561,
+      "runtimeKeccak256": "0x19d1ac2ea27ef5244f45cf3d4c70ae4dd3dc8dbc4fd00416c694597b82f31cce",
+      "implementationSlot": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "rebase": {
+      "address": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+      "runtimeBytes": 163,
+      "runtimeKeccak256": "0x877e158dbe0b5b7aefac92c57c818abcaae1391e87714c63d5b8897f08b0c870",
+      "implementationSlot": "0x000000000000000000000000dcb9efb0339e13c8febe85b13d6270175f770214"
+    },
+    "veKitten": {
+      "address": "0x29d3A21fF35a519E00cF6d272f2aD897b109BD84",
+      "runtimeBytes": 163,
+      "runtimeKeccak256": "0x644fa0243b9dba3055c75b3655def18c8a925621b24ff439aa28225fb4bddf9b",
+      "implementationSlot": "0x000000000000000000000000d2b6bf91bbbb8d86a72788a37c3886a4f821a873"
+    },
+    "voter": {
+      "address": "0xb7F7053F7e6c210e6777D5BA758E4b3ECa6C88A0",
+      "runtimeBytes": 163,
+      "runtimeKeccak256": "0x877e158dbe0b5b7aefac92c57c818abcaae1391e87714c63d5b8897f08b0c870",
+      "implementationSlot": "0x000000000000000000000000957685ab613965edb7e4964e7698f192370e1284"
+    },
+    "kitten": {
+      "address": "0x618275F8EFE54c2afa87bfB9F210A52F0fF89364",
+      "runtimeBytes": 163,
+      "runtimeKeccak256": "0x644fa0243b9dba3055c75b3655def18c8a925621b24ff439aa28225fb4bddf9b",
+      "implementationSlot": "0x000000000000000000000000e9c39eaca6dcd550bb554ef826ae46a27733dcb6"
+    },
+    "whype": {
+      "address": "0x5555555555555555555555555555555555555555",
+      "runtimeBytes": 2041,
+      "runtimeKeccak256": "0xe2e18bc11f218432ca1aabc44b53cce54a78c77ae2d76093a577e0564a77aa04",
+      "implementationSlot": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "usdc": {
+      "address": "0xb88339cb7199b77e23db6e890353e22632ba630f",
+      "runtimeBytes": 1798,
+      "runtimeKeccak256": "0xa119f674d44072e257f162aee49c7aba9b7a04fe2e8c84fcefddb366ab6d40cd",
+      "implementationSlot": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "primaryPool": {
+      "address": "0x12df9913e9e08453440e3c4b1ae73819160b513e",
+      "runtimeBytes": 22586,
+      "runtimeKeccak256": "0x71e7aa0ac8510f451169875dc9bb81b5b65d50be6122d89c9230671b914d10f6",
+      "implementationSlot": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  },
+  "rows": [
+    {
+      "label": "kitten decimals",
+      "address": "0x618275F8EFE54c2afa87bfB9F210A52F0fF89364",
+      "method": "decimals",
+      "signature": "decimals()",
+      "args": [],
+      "raw": "0x0000000000000000000000000000000000000000000000000000000000000012",
+      "decoded": [
+        "18"
+      ]
+    },
+    {
+      "label": "kitten symbol",
+      "address": "0x618275F8EFE54c2afa87bfB9F210A52F0fF89364",
+      "method": "symbol",
+      "signature": "symbol()",
+      "args": [],
+      "raw": "0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000064b495454454e0000000000000000000000000000000000000000000000000000",
+      "decoded": [
+        "KITTEN"
+      ]
+    },
+    {
+      "label": "whype decimals",
+      "address": "0x5555555555555555555555555555555555555555",
+      "method": "decimals",
+      "signature": "decimals()",
+      "args": [],
+      "raw": "0x0000000000000000000000000000000000000000000000000000000000000012",
+      "decoded": [
+        "18"
+      ]
+    },
+    {
+      "label": "whype symbol",
+      "address": "0x5555555555555555555555555555555555555555",
+      "method": "symbol",
+      "signature": "symbol()",
+      "args": [],
+      "raw": "0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000055748595045000000000000000000000000000000000000000000000000000000",
+      "decoded": [
+        "WHYPE"
+      ]
+    },
+    {
+      "label": "usdc decimals",
+      "address": "0xb88339cb7199b77e23db6e890353e22632ba630f",
+      "method": "decimals",
+      "signature": "decimals()",
+      "args": [],
+      "raw": "0x0000000000000000000000000000000000000000000000000000000000000006",
+      "decoded": [
+        "6"
+      ]
+    },
+    {
+      "label": "usdc symbol",
+      "address": "0xb88339cb7199b77e23db6e890353e22632ba630f",
+      "method": "symbol",
+      "signature": "symbol()",
+      "args": [],
+      "raw": "0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000045553444300000000000000000000000000000000000000000000000000000000",
+      "decoded": [
+        "USDC"
+      ]
+    },
+    {
+      "label": "factory poolDeployer",
+      "address": "0x5f95E92c338e6453111Fc55ee66D4AafccE661A7",
+      "method": "poolDeployer",
+      "signature": "poolDeployer()",
+      "args": [],
+      "raw": "0x00000000000000000000000088813b47d2687cea50dbfd644eefe17294e10303",
+      "decoded": [
+        "0x88813b47D2687ceA50DBfd644EeFE17294E10303"
+      ]
+    },
+    {
+      "label": "quoter factory",
+      "address": "0xc58874216AFe47779ADED27B8AAd77E8Bd6eBEBb",
+      "method": "factory",
+      "signature": "factory()",
+      "args": [],
+      "raw": "0x0000000000000000000000005f95e92c338e6453111fc55ee66d4aafcce661a7",
+      "decoded": [
+        "0x5f95E92c338e6453111Fc55ee66D4AafccE661A7"
+      ]
+    },
+    {
+      "label": "quoter poolDeployer",
+      "address": "0xc58874216AFe47779ADED27B8AAd77E8Bd6eBEBb",
+      "method": "poolDeployer",
+      "signature": "poolDeployer()",
+      "args": [],
+      "raw": "0x00000000000000000000000088813b47d2687cea50dbfd644eefe17294e10303",
+      "decoded": [
+        "0x88813b47D2687ceA50DBfd644EeFE17294E10303"
+      ]
+    },
+    {
+      "label": "quoter WNativeToken",
+      "address": "0xc58874216AFe47779ADED27B8AAd77E8Bd6eBEBb",
+      "method": "WNativeToken",
+      "signature": "WNativeToken()",
+      "args": [],
+      "raw": "0x0000000000000000000000005555555555555555555555555555555555555555",
+      "decoded": [
+        "0x5555555555555555555555555555555555555555"
+      ]
+    },
+    {
+      "label": "router factory",
+      "address": "0x4e73E421480a7E0C24fB3c11019254edE194f736",
+      "method": "factory",
+      "signature": "factory()",
+      "args": [],
+      "raw": "0x0000000000000000000000005f95e92c338e6453111fc55ee66d4aafcce661a7",
+      "decoded": [
+        "0x5f95E92c338e6453111Fc55ee66D4AafccE661A7"
+      ]
+    },
+    {
+      "label": "router poolDeployer",
+      "address": "0x4e73E421480a7E0C24fB3c11019254edE194f736",
+      "method": "poolDeployer",
+      "signature": "poolDeployer()",
+      "args": [],
+      "raw": "0x00000000000000000000000088813b47d2687cea50dbfd644eefe17294e10303",
+      "decoded": [
+        "0x88813b47D2687ceA50DBfd644EeFE17294E10303"
+      ]
+    },
+    {
+      "label": "router WNativeToken",
+      "address": "0x4e73E421480a7E0C24fB3c11019254edE194f736",
+      "method": "WNativeToken",
+      "signature": "WNativeToken()",
+      "args": [],
+      "raw": "0x0000000000000000000000005555555555555555555555555555555555555555",
+      "decoded": [
+        "0x5555555555555555555555555555555555555555"
+      ]
+    },
+    {
+      "label": "rebase veKitten",
+      "address": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+      "method": "veKitten",
+      "signature": "veKitten()",
+      "args": [],
+      "raw": "0x00000000000000000000000029d3a21ff35a519e00cf6d272f2ad897b109bd84",
+      "decoded": [
+        "0x29d3A21fF35a519E00cF6d272f2aD897b109BD84"
+      ]
+    },
+    {
+      "label": "rebase voter",
+      "address": "0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36",
+      "method": "voter",
+      "signature": "voter()",
+      "args": [],
+      "raw": "0x000000000000000000000000b7f7053f7e6c210e6777d5ba758e4b3eca6c88a0",
+      "decoded": [
+        "0xb7F7053F7e6c210e6777D5BA758E4b3ECa6C88A0"
+      ]
+    },
+    {
+      "label": "base pool whype/usdc",
+      "address": "0x5f95E92c338e6453111Fc55ee66D4AafccE661A7",
+      "method": "poolByPair",
+      "signature": "poolByPair(address,address)",
+      "args": [
+        "0x5555555555555555555555555555555555555555",
+        "0xb88339cb7199b77e23db6e890353e22632ba630f"
+      ],
+      "raw": "0x00000000000000000000000012df9913e9e08453440e3c4b1ae73819160b513e",
+      "decoded": [
+        "0x12Df9913E9E08453440e3C4B1aE73819160b513E"
+      ]
+    },
+    {
+      "label": "base pool kitten/whype",
+      "address": "0x5f95E92c338e6453111Fc55ee66D4AafccE661A7",
+      "method": "poolByPair",
+      "signature": "poolByPair(address,address)",
+      "args": [
+        "0x618275F8EFE54c2afa87bfB9F210A52F0fF89364",
+        "0x5555555555555555555555555555555555555555"
+      ],
+      "raw": "0x00000000000000000000000071d1fde797e1810711e4c9abcfca6ef04c266196",
+      "decoded": [
+        "0x71d1FDE797e1810711E4C9abcFcA6Ef04C266196"
+      ]
+    },
+    {
+      "label": "base pool kitten/usdc",
+      "address": "0x5f95E92c338e6453111Fc55ee66D4AafccE661A7",
+      "method": "poolByPair",
+      "signature": "poolByPair(address,address)",
+      "args": [
+        "0x618275F8EFE54c2afa87bfB9F210A52F0fF89364",
+        "0xb88339cb7199b77e23db6e890353e22632ba630f"
+      ],
+      "raw": "0x000000000000000000000000df99badeea1c9b81c5d4134e644e939244c1fb1c",
+      "decoded": [
+        "0xdf99bADEEA1C9B81c5d4134E644e939244C1Fb1C"
+      ]
+    },
+    {
+      "label": "primaryPool token0",
+      "address": "0x12df9913e9e08453440e3c4b1ae73819160b513e",
+      "method": "token0",
+      "signature": "token0()",
+      "args": [],
+      "raw": "0x0000000000000000000000005555555555555555555555555555555555555555",
+      "decoded": [
+        "0x5555555555555555555555555555555555555555"
+      ]
+    },
+    {
+      "label": "primaryPool token1",
+      "address": "0x12df9913e9e08453440e3c4b1ae73819160b513e",
+      "method": "token1",
+      "signature": "token1()",
+      "args": [],
+      "raw": "0x000000000000000000000000b88339cb7199b77e23db6e890353e22632ba630f",
+      "decoded": [
+        "0xb88339CB7199b77E23DB6E890353E22632Ba630f"
+      ]
+    },
+    {
+      "label": "primaryPool liquidity",
+      "address": "0x12df9913e9e08453440e3c4b1ae73819160b513e",
+      "method": "liquidity",
+      "signature": "liquidity()",
+      "args": [],
+      "raw": "0x00000000000000000000000000000000000000000000000004fcb7edc72bea28",
+      "decoded": [
+        "359364302159473192"
+      ]
+    },
+    {
+      "label": "primaryPool plugin",
+      "address": "0x12df9913e9e08453440e3c4b1ae73819160b513e",
+      "method": "plugin",
+      "signature": "plugin()",
+      "args": [],
+      "raw": "0x00000000000000000000000084510aa9ed5b356f2b223aa10b930cf6a9604943",
+      "decoded": [
+        "0x84510Aa9ed5b356f2b223aa10B930cF6a9604943"
+      ]
+    },
+    {
+      "label": "primaryPool factory",
+      "address": "0x12df9913e9e08453440e3c4b1ae73819160b513e",
+      "method": "factory",
+      "signature": "factory()",
+      "args": [],
+      "raw": "0x0000000000000000000000005f95e92c338e6453111fc55ee66d4aafcce661a7",
+      "decoded": [
+        "0x5f95E92c338e6453111Fc55ee66D4AafccE661A7"
+      ]
+    },
+    {
+      "label": "primaryPool globalState",
+      "address": "0x12df9913e9e08453440e3c4b1ae73819160b513e",
+      "method": "globalState",
+      "signature": "globalState()",
+      "args": [],
+      "raw": "0x000000000000000000000000000000000000000000009f70f70145db849eed6efffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc788700000000000000000000000000000000000000000000000000000000000001f400000000000000000000000000000000000000000000000000000000000000c300000000000000000000000000000000000000000000000000000000000003e80000000000000000000000000000000000000000000000000000000000000001",
+      "decoded": [
+        "752940104696540528831854",
+        "-231289",
+        "500",
+        "195",
+        "1000",
+        true
+      ]
+    },
+    {
+      "label": "kittenWhypePool token0",
+      "address": "0x71d1FDE797e1810711E4C9abcFcA6Ef04C266196",
+      "method": "token0",
+      "signature": "token0()",
+      "args": [],
+      "raw": "0x0000000000000000000000005555555555555555555555555555555555555555",
+      "decoded": [
+        "0x5555555555555555555555555555555555555555"
+      ]
+    },
+    {
+      "label": "kittenWhypePool token1",
+      "address": "0x71d1FDE797e1810711E4C9abcFcA6Ef04C266196",
+      "method": "token1",
+      "signature": "token1()",
+      "args": [],
+      "raw": "0x000000000000000000000000618275f8efe54c2afa87bfb9f210a52f0ff89364",
+      "decoded": [
+        "0x618275F8EFE54c2afa87bfB9F210A52F0fF89364"
+      ]
+    },
+    {
+      "label": "kittenWhypePool liquidity",
+      "address": "0x71d1FDE797e1810711E4C9abcFcA6Ef04C266196",
+      "method": "liquidity",
+      "signature": "liquidity()",
+      "args": [],
+      "raw": "0x000000000000000000000000000000000000000000006aa01369588ae63af2e3",
+      "decoded": [
+        "503523724982488787514083"
+      ]
+    },
+    {
+      "label": "kittenWhypePool plugin",
+      "address": "0x71d1FDE797e1810711E4C9abcFcA6Ef04C266196",
+      "method": "plugin",
+      "signature": "plugin()",
+      "args": [],
+      "raw": "0x0000000000000000000000009cc23759073ba914943445bbca3a2d665f73e7bb",
+      "decoded": [
+        "0x9cC23759073bA914943445BbcA3A2D665F73E7Bb"
+      ]
+    },
+    {
+      "label": "kittenWhypePool factory",
+      "address": "0x71d1FDE797e1810711E4C9abcFcA6Ef04C266196",
+      "method": "factory",
+      "signature": "factory()",
+      "args": [],
+      "raw": "0x0000000000000000000000005f95e92c338e6453111fc55ee66d4aafcce661a7",
+      "decoded": [
+        "0x5f95E92c338e6453111Fc55ee66D4AafccE661A7"
+      ]
+    },
+    {
+      "label": "kittenWhypePool globalState",
+      "address": "0x71d1FDE797e1810711E4C9abcFcA6Ef04C266196",
+      "method": "globalState",
+      "signature": "globalState()",
+      "args": [],
+      "raw": "0x00000000000000000000000000000000000000f8ad8be29deb6e3445708faeb9000000000000000000000000000000000000000000000000000000000001aef800000000000000000000000000000000000000000000000000000000000001f400000000000000000000000000000000000000000000000000000000000000c300000000000000000000000000000000000000000000000000000000000003e80000000000000000000000000000000000000000000000000000000000000001",
+      "decoded": [
+        "19702294321093503355974985952953",
+        "110328",
+        "500",
+        "195",
+        "1000",
+        true
+      ]
+    },
+    {
+      "label": "quote whype/usdc",
+      "address": "0xc58874216AFe47779ADED27B8AAd77E8Bd6eBEBb",
+      "method": "quoteExactInputSingle",
+      "signature": "quoteExactInputSingle((address,address,address,uint256,uint160))",
+      "args": [
+        [
+          "0x5555555555555555555555555555555555555555",
+          "0xb88339cb7199b77e23db6e890353e22632ba630f",
+          "0x0000000000000000000000000000000000000000",
+          "1000000000000000000",
+          0
+        ]
+      ],
+      "raw": "0x0000000000000000000000000000000000000000000000000000000005613d160000000000000000000000000000000000000000000000000de0b6b3a7640000000000000000000000000000000000000000000000009f6fe2d969a38e3313e80000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002142a00000000000000000000000000000000000000000000000000000000000001f4",
+      "decoded": [
+        "90258710",
+        "1000000000000000000",
+        "752920205580929053430760",
+        "0",
+        "136234",
+        "500"
+      ]
+    },
+    {
+      "label": "quote kitten/whype",
+      "address": "0xc58874216AFe47779ADED27B8AAd77E8Bd6eBEBb",
+      "method": "quoteExactInputSingle",
+      "signature": "quoteExactInputSingle((address,address,address,uint256,uint160))",
+      "args": [
+        [
+          "0x618275F8EFE54c2afa87bfB9F210A52F0fF89364",
+          "0x5555555555555555555555555555555555555555",
+          "0x0000000000000000000000000000000000000000",
+          "10000000000000000000000",
+          0
+        ]
+      ],
+      "raw": "0x00000000000000000000000000000000000000000000000002327d23d73111bf00000000000000000000000000000000000000000000021e19e0c9bab240000000000000000000000000000000000000000000f8b2865546e9bc050c62adcd4d000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000212e400000000000000000000000000000000000000000000000000000000000001f4",
+      "decoded": [
+        "158326529799033279",
+        "10000000000000000000000",
+        "19703835034054848977078045232461",
+        "0",
+        "135908",
+        "500"
+      ]
+    },
+    {
+      "label": "quote kitten/usdc",
+      "address": "0xc58874216AFe47779ADED27B8AAd77E8Bd6eBEBb",
+      "method": "quoteExactInputSingle",
+      "args": [
+        [
+          "0x618275F8EFE54c2afa87bfB9F210A52F0fF89364",
+          "0xb88339cb7199b77e23db6e890353e22632ba630f",
+          "0x0000000000000000000000000000000000000000",
+          "10000000000000000000000",
+          0
+        ]
+      ],
+      "error": "execution reverted: Zero liquidity swap",
+      "data": "0x08c379a0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000135a65726f206c6971756964697479207377617000000000000000000000000000"
+    },
+    {
+      "label": "quote KITTEN→WHYPE→USDC",
+      "address": "0xc58874216AFe47779ADED27B8AAd77E8Bd6eBEBb",
+      "method": "quoteExactInput",
+      "signature": "quoteExactInput(bytes,uint256)",
+      "args": [
+        "0x618275f8efe54c2afa87bfb9f210a52f0ff89364000000000000000000000000000000000000000055555555555555555555555555555555555555550000000000000000000000000000000000000000b88339cb7199b77e23db6e890353e22632ba630f",
+        "10000000000000000000000"
+      ],
+      "raw": "0x00000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000120000000000000000000000000000000000000000000000000000000000000018000000000000000000000000000000000000000000000000000000000000001e000000000000000000000000000000000000000000000000000000000000427110000000000000000000000000000000000000000000000000000000000000240000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000002327d23d73111bf0000000000000000000000000000000000000000000000000000000000da0eea000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000021e19e0c9bab240000000000000000000000000000000000000000000000000000002327d23d73111bf000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000f8b2865546e9bc050c62adcd4d000000000000000000000000000000000000000000009f70cb47fe616aeb951b000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000001f400000000000000000000000000000000000000000000000000000000000001f4",
+      "decoded": [
+        [
+          "158326529799033279",
+          "14290666"
+        ],
+        [
+          "10000000000000000000000",
+          "158326529799033279"
+        ],
+        [
+          "19703835034054848977078045232461",
+          "752936954068536463693083"
+        ],
+        [
+          "0",
+          "0"
+        ],
+        "272145",
+        [
+          "500",
+          "500"
+        ]
+      ]
+    }
+  ],
+  "caution": "All methods are read-only; no state or balance overrides; no wallet, signing or broadcast. A quoter result proves a quoted route at observed state, not a funded isolated-vault execution or future price."
+}

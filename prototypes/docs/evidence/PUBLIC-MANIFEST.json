@@ -1,0 +1,225 @@
+{
+  "context": "Historical predecessor evidence. Private local paths redacted from logs and prose; original JSON observations retained. Predecessor source/compiler hashes do not identify the renamed current source. Original manifests describe their historical run, not a new release verification. External contract runtime bytecode in RPC records is summarized by keccak256 and byte length rather than redistributed. These publication transforms change some file hashes; hashes below describe this public copy.",
+  "files": [
+    {
+      "path": "kitten-fork/2026-10-02-anvil-financed-manifest.json",
+      "sha256": "c0201d57cc04e198ce2d4b607e74ea582f6a14dadf6475378a18084124bf1a99",
+      "historical": true
+    },
+    {
+      "path": "kitten-fork/2026-10-02-anvil-financed-token18371.json",
+      "sha256": "4c46d8606ee04457e63270e8265f4ca60995f6628c17590637b3177fd3a56497",
+      "historical": true
+    },
+    {
+      "path": "kitten-fork/2026-10-02-anvil-financed-token18371.tap",
+      "sha256": "fedae67f4c4ba5be705ee3d2112229dac6153138371882b00f31b4df86782f79",
+      "historical": true
+    },
+    {
+      "path": "kitten-fork/2026-10-02-anvil-token18371-clock-probe.json",
+      "sha256": "62dd38cfc48181ea6aec7ba2840b171e890d74371286f55dfcfd43be3b6c0e75",
+      "historical": true
+    },
+    {
+      "path": "kitten-fork/2026-10-02-anvil-token18371-rate-limit.json",
+      "sha256": "d81316c3e1769e4e3b707dfc99942e328668f3a3de0d464440c833efb661e7dd",
+      "historical": true
+    },
+    {
+      "path": "kitten-fork/2026-10-02-anvil-token18371.json",
+      "sha256": "92c8c82577a3a3dd566902bae6e2802bbfcae2e193b1b0e8a6183edb95bddc54",
+      "historical": true
+    },
+    {
+      "path": "kitten-fork/2026-10-02-anvil-token18371.tap",
+      "sha256": "53d2d395cbea77276471b6cde45e7fd02e6c6086e30bf5a9cdc13553f56ed0d8",
+      "historical": true
+    },
+    {
+      "path": "kitten-fork/2026-10-02-drpc-token18371-gas5m-failure.json",
+      "sha256": "78d93f7995c1fd8b637dd99d7bf3174da67bfe21d32d239e8f4c5b2511d22401",
+      "historical": true
+    },
+    {
+      "path": "kitten-fork/2026-10-02-drpc-token18371.json",
+      "sha256": "67913dcf861bf2de32f426a6577326b0efa7e01e4a387462f1f1d8b7dfb13b0c",
+      "historical": true
+    },
+    {
+      "path": "kitten-fork/2026-10-02-ganache-engine-probe.json",
+      "sha256": "4a116dd5504e7a60f26d48e0113cebdfa4ede48ba86e2b77133e8fe40375d5dd",
+      "historical": true
+    },
+    {
+      "path": "kitten-fork/2026-10-02-nonzero-discovery.json",
+      "sha256": "1751217e4867754fe14b47edcc5b7ce9a506a324fd53dd10ed3bca7d359a2ec7",
+      "historical": true
+    },
+    {
+      "path": "kitten-fork/README.md",
+      "sha256": "aff219903a2e45366a09530d43c31e045581a7de569f23adddf257f02118fe2a",
+      "historical": true
+    },
+    {
+      "path": "kitten-fork/manifest.json",
+      "sha256": "c1a4deb982de6163d2e4384e37737d67cebd906f7dbbf9792d676f06e0c9556e",
+      "historical": true
+    },
+    {
+      "path": "reward-settlement/app-abi-evidence.json",
+      "sha256": "e35d28ce221ca9981aa9b4811f5569c6448a7a7de01ae4af2ed82bdf3d17faaf",
+      "historical": true
+    },
+    {
+      "path": "reward-settlement/collect-supplement.mjs",
+      "sha256": "923eb856917994e2133fedc651dc0fc337a76504a8855d1bf3b0d8255ccd377b",
+      "historical": true
+    },
+    {
+      "path": "reward-settlement/collect.mjs",
+      "sha256": "6bb2963e0db359ff45136fb4be1523b193efe55de295976c5c670da9f84b16a5",
+      "historical": true
+    },
+    {
+      "path": "reward-settlement/rpc-requests.json",
+      "sha256": "e5d3890edd887fd513ea5aab540695d8f8d1a9011a8137b1443e53dcbc65df52",
+      "historical": true
+    },
+    {
+      "path": "reward-settlement/rpc-route-evidence.json",
+      "sha256": "aea5a727c29d5906791331ef28d16cae6c9958ba6aff065b12c78767f55c4089",
+      "historical": true
+    },
+    {
+      "path": "reward-settlement/supplement-evidence.json",
+      "sha256": "f86bb237f6082c30333517160584c6621ae4cb04f4a79a8718e4479c0c67940e",
+      "historical": true
+    },
+    {
+      "path": "reward-settlement/supplement-rpc-requests.json",
+      "sha256": "aa5a41e03a9a45311e683a2df7b27ac66e2fe97128ddadb2878e28adfa723b6a",
+      "historical": true
+    },
+    {
+      "path": "reward-settlement/transaction-70873bb3.json",
+      "sha256": "e4bd7076caf197a089ef36a4670d6877f71e287008b66ebae40d7e26ae666f9d",
+      "historical": true
+    },
+    {
+      "path": "reward-settlement/transaction-ba122414.json",
+      "sha256": "a04ae41b83bbdd205e0b90b440c71a3d4b2d4b40b7020f39c84ca469086f5726",
+      "historical": true
+    },
+    {
+      "path": "reward-settlement/transaction-rebase-b5c1569e.json",
+      "sha256": "880e1ab0fa74e139a4de8514b71d04a14210b87adb2747a3a99066963c730247",
+      "historical": true
+    },
+    {
+      "path": "indexer-financed-2026-10-02/01-mixed-listed.json",
+      "sha256": "7271556b80ffccc1c697646ddaebc19ae2de5647f203fd7122e18ad1a3a677e8",
+      "historical": true
+    },
+    {
+      "path": "indexer-financed-2026-10-02/02-interest-uncovered.json",
+      "sha256": "69e5b56f8c644d4c9c993ea33cb24fba89adfe0be72b3c509702345336c9b366",
+      "historical": true
+    },
+    {
+      "path": "indexer-financed-2026-10-02/03-repriced.json",
+      "sha256": "8def12f26c0ebb7a33563f763b49803235eb7fdf8531c3b5c03d4a3877185f3e",
+      "historical": true
+    },
+    {
+      "path": "indexer-financed-2026-10-02/04-cancelled.json",
+      "sha256": "927b89db24957742bcd6578fecfe27445d3ee1b240f3de6ba7ed2d6ab5dac810",
+      "historical": true
+    },
+    {
+      "path": "indexer-financed-2026-10-02/05-partial-repayment.json",
+      "sha256": "d1ded16228a24a7eb9835eb50bead638caa4ff762db14a7afcac71e059de266d",
+      "historical": true
+    },
+    {
+      "path": "indexer-financed-2026-10-02/06-repaid-custody.json",
+      "sha256": "aecdc9cb1eee1f2426fa4175a2b61ac6a056b26bbe650be0c8ab53a7660d59cc",
+      "historical": true
+    },
+    {
+      "path": "indexer-financed-2026-10-02/07-withdrawn-restart.json",
+      "sha256": "399c4c6181bc1565f39fffaf88d9a0833acab943c3b82d134abcb0feac28a06c",
+      "historical": true
+    },
+    {
+      "path": "indexer-financed-2026-10-02/08-sold.json",
+      "sha256": "c2b5d294cb880e37d4f3bd782593a4389862af81c8083043b56a9510e80b9fd6",
+      "historical": true
+    },
+    {
+      "path": "indexer-financed-2026-10-02/09-sale-reorg-restart.json",
+      "sha256": "a611ed2e0d597407e9bc9901a8632563f2eb6a814c41f1724af60eaa5c790353",
+      "historical": true
+    },
+    {
+      "path": "indexer-financed-2026-10-02/10-credit-withdrawals.json",
+      "sha256": "6b08fa8c40e742be30f9c05a729515d4d55cc023929199479f081ab8aad30013",
+      "historical": true
+    },
+    {
+      "path": "indexer-financed-2026-10-02/11-offer-refund-exact-integer.json",
+      "sha256": "6ce30239a4ee64b6ebb5f6d5ba38b810aea7d3fbf4ef909749df255bb3a2e9a0",
+      "historical": true
+    },
+    {
+      "path": "indexer-financed-2026-10-02/12-expired-exact-debt.json",
+      "sha256": "638f8104092376bc9221310f66377cc86fbcceda02134c227854611d31055981",
+      "historical": true
+    },
+    {
+      "path": "indexer-financed-2026-10-02/13-forgiven.json",
+      "sha256": "049545871cec0ce5c633b56ae22ea0cde2fa243730b60ed314ca5858564cb4c3",
+      "historical": true
+    },
+    {
+      "path": "indexer-financed-2026-10-02/14-unavailable-failclosed.json",
+      "sha256": "0b9d30336cbc7c0a84a6914b1491d5a91827bcbc061c6abbf0c1aeb958732bdc",
+      "historical": true
+    },
+    {
+      "path": "indexer-financed-2026-10-02/15-midread-reorg-recovery.json",
+      "sha256": "db51c3aa1d793f964bcd20a081ea2d789aa9a9ae70a6bb139c98af65040c841d",
+      "historical": true
+    },
+    {
+      "path": "indexer-financed-2026-10-02/README.md",
+      "sha256": "f57dac803ee159919d3faf41d830580e74c2fef94193370332449b8f48e13490",
+      "historical": true
+    },
+    {
+      "path": "indexer-financed-2026-10-02/focused-tests.log",
+      "sha256": "e03f2e1974264286327da9a8af69442c8645a744cef4d1a6b1b71a77501b9e1a",
+      "historical": true
+    },
+    {
+      "path": "indexer-financed-2026-10-02/manifest.json",
+      "sha256": "a1458790a5eae3b208804f3b8473c10e551b88813e5a027bd049455a3e0757d9",
+      "historical": true
+    },
+    {
+      "path": "rebase/2026-10-02-candidates-discovery.json",
+      "sha256": "c73e92bd5a090af46de0e80b5c7946db1129cce870e936a4e89648f34e63adf4",
+      "historical": true
+    },
+    {
+      "path": "rebase/2026-10-02-discovery.json",
+      "sha256": "bfaa59c0b2810538e6e13e9b1e1e0140a84b73230c58c3f1a780aec6791385ea",
+      "historical": true
+    },
+    {
+      "path": "rebase/app-voter-abi.json",
+      "sha256": "db1241ee63c1f42587d7b5241953d226c07413b68b31209a465346f5f5067407",
+      "historical": true
+    }
+  ]
+}

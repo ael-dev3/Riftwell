@@ -1,0 +1,52 @@
+{
+  "recordedAt": "2026-10-02T15:21:30.801Z",
+  "scope": "Default local EVM and model/indexer tests on renamed public source; remote fork opt-in skipped.",
+  "tests": 87,
+  "passed": 86,
+  "failed": 0,
+  "skipped": 1,
+  "compilerPackage": "0.8.37",
+  "contracts": [
+    {
+      "path": "prototypes/contracts/RiftwellKittenRewardConverter.sol",
+      "sha256": "3ab8e340fc4e2771dcb5896f3cdad6fe6a43c05585ad55b8db0f262db93c9249"
+    },
+    {
+      "path": "prototypes/contracts/RiftwellLoanVault.sol",
+      "sha256": "351b306227f6d1e2b7afd60fd2b0278381be4a2615a812f4291c1a3f1b8bd8c8"
+    },
+    {
+      "path": "prototypes/contracts/RiftwellLoans.sol",
+      "sha256": "3348290b47d8d3223fbb4a23cc14434eaaede86936403b9f65f90e15a82c9bbd"
+    },
+    {
+      "path": "prototypes/contracts/RiftwellMarket.sol",
+      "sha256": "63a19be039dc3f9b10a3f69e03854374ebf34fb1e1945bb74da846ce5173a15b"
+    },
+    {
+      "path": "prototypes/contracts/interfaces/IKittenVoting.sol",
+      "sha256": "f653fd115223f5eb143a7153b4c4de19a8f456a874e5cf0b5c27cc5fce0a6bbc"
+    },
+    {
+      "path": "prototypes/contracts/mocks/FinancedSalesMocks.sol",
+      "sha256": "aba32dd48343be060881737859f3c7a75eb3d8b2ee43e997cc061627f2549379"
+    },
+    {
+      "path": "prototypes/contracts/mocks/LoanAdversarialMocks.sol",
+      "sha256": "54a6a6ad17cd06362d3d9583ddfd42473b019d286db26456d3ddb4a70534643b"
+    },
+    {
+      "path": "prototypes/contracts/mocks/LoanMocks.sol",
+      "sha256": "06defc01b2153f02772ca88cb79dc17d010ef8f289586554e45abf36e485b7c2"
+    },
+    {
+      "path": "prototypes/contracts/mocks/MarketMocks.sol",
+      "sha256": "91683bc9861749083ed6804ff677f191690332282e364d95b73f98021f2d56a5"
+    }
+  ],
+  "limits": [
+    "Reward converter compiles but has no dedicated swap/fork tests and is not integrated.",
+    "No live deployment or independent security audit.",
+    "Historical predecessor fork evidence is identified separately."
+  ]
+}

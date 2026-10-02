@@ -1,0 +1,177 @@
+{
+  "evidenceType": "local-in-process-EVM-fixture-only",
+  "snapshot": {
+    "schemaVersion": 1,
+    "snapshotId": "0x687bf697a867dc090f6f800ca1bf8f6f350b855a70eb178d4d642c84126a4d77",
+    "source": {
+      "kind": "lockkeep-market-events",
+      "chainId": 31337,
+      "market": "0x254dffcd3277c0b1660f6d42efbb754edababc2b",
+      "collection": "0xe78a0f7e598cc8b0bb87894b0f60dd2a88d6a8ab",
+      "paymentToken": "0x5b1869d9a4c187f2eaa108f3062412ecf0526b24",
+      "paymentDecimals": 6,
+      "deploymentBlock": 4,
+      "deploymentBlockHash": "0x4acd50d7a6508c20e25fe0c85e4572d8553550c26860ed78c8511792f9db6374",
+      "expectedMarketCodeHash": "0x10586629db43db756fcf426b130801d2774bee930647732b3eaec6915e46ca2a",
+      "abiHash": "0xaafb91913f9dc6f111e586091a9cb33bd8fb602d908db786bd3bb1664229dfe2",
+      "rpcOrigin": "http://127.0.0.1:8545",
+      "confirmations": 0
+    },
+    "financedSource": {
+      "kind": "lockkeep-loans-events",
+      "chainId": 31337,
+      "loans": "0xc89ce4735882c9f0f0fe26686c53074e09b0d550",
+      "collection": "0xe78a0f7e598cc8b0bb87894b0f60dd2a88d6a8ab",
+      "paymentToken": "0x5b1869d9a4c187f2eaa108f3062412ecf0526b24",
+      "paymentDecimals": 6,
+      "deploymentBlock": 5,
+      "deploymentBlockHash": "0xd1df71651726ac302b85647fc6051d5f1eee1e9c878e0137ad95e358edde6a01",
+      "expectedCodeHash": "0x06d15cdd3827c916764be7d45920b662d2d529fdb61356b512b70fb3f0d01e42",
+      "voter": "0xcfeb869f69431e42cdb54a4f4f105c19c080a601",
+      "treasury": "0x1df62f291b2e969fb0849d99d9ce41e2f137006e",
+      "guardian": "0x1df62f291b2e969fb0849d99d9ce41e2f137006e",
+      "claimsVerified": true,
+      "abiHash": "0x0f71e6aed756546b7cff904831cedc5e432057e7739d5b3c068d6eb99ff8d45c",
+      "rpcOrigin": "http://127.0.0.1:8545",
+      "confirmations": 0,
+      "creditCoverage": "complete_manager_events"
+    },
+    "sync": {
+      "status": "synced",
+      "completedAt": "2026-10-02T14:50:53.403Z",
+      "lastSuccessfulSyncAt": "2026-10-02T14:50:53.403Z",
+      "observedHead": {
+        "number": 25,
+        "hash": "0x6edc6b1d7b3bca885e8b846507c0b4c5fcafc72679707c8cd92a84a144cb9b13",
+        "timestamp": 1790952651
+      },
+      "indexedThrough": {
+        "number": 25,
+        "hash": "0x6edc6b1d7b3bca885e8b846507c0b4c5fcafc72679707c8cd92a84a144cb9b13",
+        "timestamp": 1790952651
+      },
+      "confirmedTarget": 25,
+      "lagBlocks": 0,
+      "staleAfterSeconds": 90,
+      "stale": false,
+      "clockSkew": false,
+      "observationFailures": 0,
+      "rolledBackBlocks": 0
+    },
+    "listings": [
+      {
+        "sourceKind": "financed",
+        "orderKey": "financed:1",
+        "listingId": "1",
+        "loanId": "1",
+        "seller": "0x22d491bde2303f2f43325b2108d26f1eaba1e32b",
+        "tokenId": "1",
+        "priceAtomic": "1250000000",
+        "expiry": "1793458251",
+        "eventState": "sold",
+        "createdBlock": 24,
+        "createdTransaction": "0xc23f5c501544b838688af6acb93e1d59c900a00efa96baf01914f7b8f1a53bf1",
+        "updatedBlock": 25,
+        "updatedTransaction": "0xb78834c5b33769f0b91bf424eb2c3ae55abd44500bb13d4b9b157bdd652d6d36",
+        "buyer": "0xe11ba2b4d45eaed5996cd0823791e0c93114882d",
+        "recipient": "0xe11ba2b4d45eaed5996cd0823791e0c93114882d",
+        "debtPaidAtomic": "1000000000",
+        "protocolFeeAtomic": "6250000",
+        "borrowerProceedsAtomic": "243750000",
+        "orderState": "sold",
+        "loanState": "sold",
+        "collateralState": "withdrawn",
+        "observation": {
+          "status": "loan_and_custody_observed",
+          "atBlock": 25,
+          "blockHash": "0x6edc6b1d7b3bca885e8b846507c0b4c5fcafc72679707c8cd92a84a144cb9b13",
+          "transactionSimulation": "not_performed",
+          "financedOrderMatches": true,
+          "owner": "0xe11ba2b4d45eaed5996cd0823791e0c93114882d",
+          "ownerMatchesCustody": false
+        },
+        "debt": {
+          "principalAtomic": "0",
+          "interestAtomic": "0",
+          "totalAtomic": "0",
+          "atBlock": 25,
+          "blockHash": "0x6edc6b1d7b3bca885e8b846507c0b4c5fcafc72679707c8cd92a84a144cb9b13"
+        }
+      }
+    ],
+    "loans": [
+      {
+        "loanId": "1",
+        "offerId": "1",
+        "lender": "0xffcf8fdee72ac11b5c542428b35eef5769c409f0",
+        "borrower": "0x22d491bde2303f2f43325b2108d26f1eaba1e32b",
+        "tokenId": "1",
+        "vault": "0x141f5fca84cc82ef0a6751241019471731289456",
+        "principalAtomic": "0",
+        "aprBps": "0",
+        "maturity": "1793544651",
+        "lastAccrued": "1790952651",
+        "accruedInterestAtomic": "0",
+        "interestRemainder": "0",
+        "loanState": "sold",
+        "collateralState": "withdrawn",
+        "activeListingId": "0",
+        "createdBlock": 23,
+        "createdTransaction": "0x9e19acd245db7c579af74e23bc097439bcdf4ae540fb79e274ae729eac398574",
+        "updatedBlock": 25,
+        "updatedTransaction": "0xb78834c5b33769f0b91bf424eb2c3ae55abd44500bb13d4b9b157bdd652d6d36",
+        "lastPaymentAtomic": "1000000000",
+        "recipient": "0xe11ba2b4d45eaed5996cd0823791e0c93114882d",
+        "observation": {
+          "status": "loan_and_custody_observed",
+          "atBlock": 25,
+          "blockHash": "0x6edc6b1d7b3bca885e8b846507c0b4c5fcafc72679707c8cd92a84a144cb9b13",
+          "transactionSimulation": "not_performed",
+          "owner": "0xe11ba2b4d45eaed5996cd0823791e0c93114882d",
+          "loanStateMatches": true,
+          "ownerMatchesCustody": false
+        },
+        "debt": {
+          "principalAtomic": "0",
+          "interestAtomic": "0",
+          "totalAtomic": "0",
+          "atBlock": 25,
+          "blockHash": "0x6edc6b1d7b3bca885e8b846507c0b4c5fcafc72679707c8cd92a84a144cb9b13"
+        }
+      }
+    ],
+    "creditAccounts": [
+      {
+        "account": "0x22d491bde2303f2f43325b2108d26f1eaba1e32b",
+        "lenderCreditAtomic": "0",
+        "borrowerCreditAtomic": "243750000",
+        "observation": {
+          "status": "credits_observed",
+          "atBlock": 25,
+          "blockHash": "0x6edc6b1d7b3bca885e8b846507c0b4c5fcafc72679707c8cd92a84a144cb9b13",
+          "transactionSimulation": "not_performed"
+        }
+      },
+      {
+        "account": "0xffcf8fdee72ac11b5c542428b35eef5769c409f0",
+        "lenderCreditAtomic": "1000000000",
+        "borrowerCreditAtomic": "0",
+        "observation": {
+          "status": "credits_observed",
+          "atBlock": 25,
+          "blockHash": "0x6edc6b1d7b3bca885e8b846507c0b4c5fcafc72679707c8cd92a84a144cb9b13",
+          "transactionSimulation": "not_performed"
+        }
+      }
+    ],
+    "transactionSimulation": "not_performed",
+    "orderCounts": {
+      "active": 0,
+      "cancelled": 0,
+      "sold": 1,
+      "invalidated": 0,
+      "superseded": 0,
+      "expired": 0
+    }
+  }
+}
