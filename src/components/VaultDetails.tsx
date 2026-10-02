@@ -1,6 +1,6 @@
 import { ArrowRight } from 'lucide-react';
 import { useState } from 'react';
-import { COLLATERAL_LIMITS } from '../data';
+import { collateralLimits } from '../data';
 import { formatMicros, roundAmount } from '../domain';
 import { usd } from '../format';
 import { getLendingMetrics, type LendingState } from '../lending';
@@ -19,7 +19,7 @@ type Props = {
 
 export default function VaultDetails({ market, lending, onClose }: Props) {
   const metrics = lending
-    ? getLendingMetrics(lending, COLLATERAL_LIMITS)
+    ? getLendingMetrics(lending, collateralLimits(lending))
     : null;
   const [span, setSpan] = useState<4 | 13 | 0>(13);
   const allEpochs = lending

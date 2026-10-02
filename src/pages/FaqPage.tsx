@@ -134,9 +134,23 @@ export default function FaqPage({
       answer: (
         <>
           A way to automate reward collection without borrowing. Add a position
-          and its rewards are collected every epoch and paid to you. While it is
+          and its rewards are collected every epoch and paid to you, or partly
+          used to repay your debt if you choose a repayment share. While it is
           in the relayer it cannot back a loan or be listed; take it back at any
           time. Any automation charge is published at launch.
+        </>
+      ),
+    },
+    {
+      question: 'Can I merge positions or add to a lock?',
+      answer: (
+        <>
+          Yes, for deposited collateral. Merge folds a position from your wallet
+          into a deposited one: the locked balances add up, the later unlock
+          date applies and the wallet position stops existing on its own.
+          Increase lock adds {market.tokenSymbol} from your wallet without
+          changing the unlock date. Both raise the position’s credit and leave
+          your debt unchanged. A merge cannot be undone.
         </>
       ),
     },

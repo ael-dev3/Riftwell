@@ -11,9 +11,10 @@ import { useRef, useState, type FormEvent } from 'react';
 import { assetLink, copyText } from '../app/links';
 import { useToast } from '../app/toast';
 import {
-  COLLATERAL_LIMITS,
+  collateralLimits,
+  creditMicros,
+  rewardMicros,
   SAMPLE_CREDIT_EPOCHS,
-  SAMPLE_REWARD_MICROS,
 } from '../data';
 import {
   discountBps,
@@ -114,7 +115,7 @@ export function AssetDetails({
             </div>
             <div>
               <dt>Example reward / epoch</dt>
-              <dd>{formatMicros(SAMPLE_REWARD_MICROS[asset.id])}</dd>
+              <dd>{formatMicros(rewardMicros(asset))}</dd>
             </div>
           </dl>
           <Notice>
@@ -173,8 +174,8 @@ export function BuyDialog({ asset, lending, onClose, onBuy }: BuyProps) {
   const price = priceMicros(asset.price);
   const fee = priceMicros(marketplaceFee(asset.price));
   const wallet = BigInt(lending.walletMicros);
-  const metrics = getLendingMetrics(lending, COLLATERAL_LIMITS);
-  const positionCredit = BigInt(COLLATERAL_LIMITS[asset.id]);
+  const metrics = getLendingMetrics(lending, collateralLimits(lending));
+  const positionCredit = creditMicros(asset);
   const remainingCredit =
     BigInt(metrics.totalCreditMicros) +
     positionCredit -
@@ -321,8 +322,7 @@ export function BuyDialog({ asset, lending, onClose, onBuy }: BuyProps) {
                 <strong>Reward relayer</strong>
                 <small>
                   Automated reward collection · about{' '}
-                  {formatMicros(SAMPLE_REWARD_MICROS[asset.id])} per epoch, no
-                  borrowing
+                  {formatMicros(rewardMicros(asset))} per epoch, no borrowing
                 </small>
               </span>
             </label>
@@ -350,7 +350,7 @@ export function BuyDialog({ asset, lending, onClose, onBuy }: BuyProps) {
                 setError('');
               }}
               maximum={borrowCap}
-              hint={`Up to ${formatMicros(borrowCap)} · example reward ${formatMicros(SAMPLE_REWARD_MICROS[asset.id])} × ${SAMPLE_CREDIT_EPOCHS} epochs`}
+              hint={`Up to ${formatMicros(borrowCap)} · example reward ${formatMicros(rewardMicros(asset))} × ${SAMPLE_CREDIT_EPOCHS} epochs`}
               error={Boolean(error)}
               inputRef={borrowRef}
               describedBy="buy-borrow-hint buy-error"

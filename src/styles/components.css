@@ -258,6 +258,26 @@
   font-size: 12.5px;
 }
 
+.block-tools {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+
+.share-range {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.share-range output {
+  min-width: 3.5ch;
+  font: 650 13px/1 var(--mono);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 .mini-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1084,6 +1104,9 @@ select.input-control.compact {
 .tablist {
   position: relative;
   display: flex;
+  /* Tab strips scroll sideways, and scroll containers have no automatic
+     minimum height; without this a grid row can squash the tabs. */
+  min-height: max-content;
 }
 
 /* Equal tabs while they fit; on narrow screens each keeps its label on one

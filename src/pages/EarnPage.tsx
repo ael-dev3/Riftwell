@@ -17,7 +17,7 @@ import {
 import { Sparkline } from '../components/ui/Charts';
 import CountUp from '../components/ui/CountUp';
 import { Meter } from '../components/ui/Meter';
-import { COLLATERAL_LIMITS } from '../data';
+import { collateralLimits } from '../data';
 import { formatMicros, roundAmount } from '../domain';
 import { getLendingMetrics, type LendingState } from '../lending';
 import type { Market } from '../markets';
@@ -61,7 +61,7 @@ export default function EarnPage({
   onNavigate,
   onDetails,
 }: Props) {
-  const metrics = getLendingMetrics(lending, COLLATERAL_LIMITS);
+  const metrics = getLendingMetrics(lending, collateralLimits(lending));
   const assets = BigInt(metrics.totalAssetsMicros);
   const cash = BigInt(lending.poolCashMicros);
   const outstanding = BigInt(lending.poolOutstandingMicros);

@@ -234,7 +234,8 @@ export function ConnectedBorrow({
               >
                 The relayer launches with the lending contracts. Positions added
                 to it will have their rewards collected each epoch and paid to
-                you, without opening a credit line.
+                you, without opening a credit line. Merging positions and
+                increasing locks open at the same time.
               </EmptyState>
             </section>
             <details className="faq-item">

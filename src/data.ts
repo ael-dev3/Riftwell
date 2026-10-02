@@ -1,4 +1,5 @@
 import type { Asset, AssetCategory } from './domain';
+import type { CollateralLimits, LendingState } from './lending';
 import { DEFAULT_MARKET } from './markets';
 
 // Fictional veKITTEN positions with illustrative KITTEN balances, not live listings.
@@ -206,20 +207,64 @@ export const SMALL_POSITION_KITTEN = 5000;
 
 // An example net historical reward observation, not a forecast or live credit policy:
 // one USDC per 1,000 sample KITTEN per seven-day epoch.
-export const SAMPLE_REWARD_MICROS: Readonly<Record<string, string>> =
-  Object.fromEntries(
-    ASSETS.map((asset) => [
-      asset.id,
-      (BigInt(asset.underlyingBalance) * 1000n).toString(),
-    ]),
-  );
+const REWARD_MICROS_PER_UNIT = 1000n;
 export const SAMPLE_CREDIT_EPOCHS = 40;
-export const COLLATERAL_LIMITS: Readonly<Record<string, string>> =
-  Object.fromEntries(
+
+/** Example net reward per epoch for a position's locked balance. */
+export function rewardMicros(asset: Asset): bigint {
+  return BigInt(asset.underlyingBalance) * REWARD_MICROS_PER_UNIT;
+}
+
+/** Example credit for a position: its reward × the sample epoch count. */
+export function creditMicros(asset: Asset): bigint {
+  return rewardMicros(asset) * BigInt(SAMPLE_CREDIT_EPOCHS);
+}
+
+type LockChanges = Pick<LendingState, 'lockIncreases' | 'mergedInto'>;
+
+const increase = (changes: LockChanges, id: string) =>
+  Object.hasOwn(changes.lockIncreases, id)
+    ? Number(changes.lockIncreases[id])
+    : 0;
+
+/**
+ * A position after preview merges and lock increases: its own units, any
+ * increases and every position merged into it, with the latest unlock date.
+ */
+export function positionView(asset: Asset, changes: LockChanges): Asset {
+  let units = 0;
+  let latest = asset;
+  const visit = (item: Asset, depth: number) => {
+    units += item.underlyingBalance + increase(changes, item.id);
+    if (item.unlockDate > latest.unlockDate) latest = item;
+    // The ledger rejects merge cycles; the depth bound is a second guard.
+    if (depth >= ASSETS.length) return;
+    for (const [source, target] of Object.entries(changes.mergedInto)) {
+      const merged = target === item.id ? assetById(source) : undefined;
+      if (merged) visit(merged, depth + 1);
+    }
+  };
+  visit(asset, 0);
+  if (units === asset.underlyingBalance && latest === asset) return asset;
+  return {
+    ...asset,
+    underlyingBalance: units,
+    referenceValue: units / 10,
+    // Keep the original ask's discount to reference value.
+    price: Math.round((asset.price * units) / asset.underlyingBalance),
+    unlockDate: latest.unlockDate,
+    lockTerm: latest.lockTerm,
+    category: latest.category,
+    description: `A fictional vote-escrowed NFT, now holding ${units.toLocaleString('en-US')} sample KITTEN units after preview merges or lock increases.`,
+  };
+}
+
+/** Credit limits for every sample position, after merges and increases. */
+export function collateralLimits(changes: LockChanges): CollateralLimits {
+  return Object.fromEntries(
     ASSETS.map((asset) => [
       asset.id,
-      (
-        BigInt(SAMPLE_REWARD_MICROS[asset.id]) * BigInt(SAMPLE_CREDIT_EPOCHS)
-      ).toString(),
+      creditMicros(positionView(asset, changes)).toString(),
     ]),
   );
+}

@@ -1,7 +1,7 @@
 import { ArrowRight, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 import type { Page } from '../app/router';
-import { COLLATERAL_LIMITS, STARTING_POSITION_IDS } from '../data';
+import { collateralLimits, STARTING_POSITION_IDS } from '../data';
 import {
   formatAmount,
   formatBalance,
@@ -12,6 +12,7 @@ import {
 } from '../domain';
 import { formatShares } from '../format';
 import { getLendingMetrics, type LendingState } from '../lending';
+import { DEFAULT_MARKET } from '../markets';
 import type { LendingAction } from '../preview/actions';
 import type { Holdings } from '../preview/store';
 import Dialog from './Dialog';
@@ -53,7 +54,7 @@ export default function AccountDialog({
   initialTab = 'positions',
 }: Props) {
   const [tab, setTab] = useState<AccountTab>(initialTab);
-  const metrics = getLendingMetrics(lending, COLLATERAL_LIMITS);
+  const metrics = getLendingMetrics(lending, collateralLimits(lending));
   return (
     <Dialog
       title="Preview account"
@@ -142,7 +143,7 @@ export default function AccountDialog({
         )}
         {tab === 'borrow' && (
           <TabPanel idBase="account" id="borrow">
-            <dl className="mini-stats three">
+            <dl className="mini-stats">
               <div>
                 <dt>Borrowed</dt>
                 <dd>{formatMicros(lending.debtMicros)}</dd>
@@ -154,6 +155,15 @@ export default function AccountDialog({
               <div>
                 <dt>Available credit</dt>
                 <dd>{formatMicros(metrics.availableCreditMicros)}</dd>
+              </div>
+              <div>
+                <dt>Demo {DEFAULT_MARKET.tokenSymbol}</dt>
+                <dd>
+                  {formatBalance(
+                    Number(lending.tokenUnits),
+                    DEFAULT_MARKET.tokenSymbol,
+                  )}
+                </dd>
               </div>
             </dl>
             <div className="dialog-actions">

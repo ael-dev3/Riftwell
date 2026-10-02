@@ -18,7 +18,7 @@ export const RELEASE_NOTES: readonly ReleaseNote[] = [
     kind: 'Update',
     title: 'Borrow, Earn and Marketplace',
     summary:
-      'A rebuilt interface with a reward relayer, private listings, market history and statistics.',
+      'A rebuilt interface with merges and lock increases, a reward relayer, private listings, market history and statistics.',
   },
   {
     id: 'pooled-lending',

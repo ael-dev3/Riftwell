@@ -12,7 +12,7 @@ import PageFallback from './components/PageFallback';
 import { Notice } from './components/ui/Bits';
 import type { AccountTab } from './components/AccountDialog';
 import type { LendingActionInput } from './components/LendingDialogs';
-import { COLLATERAL_LIMITS } from './data';
+import { collateralLimits } from './data';
 import {
   marketplaceFee,
   priceMicros,
@@ -26,12 +26,15 @@ import {
   depositCollateral,
   depositToRelayer,
   getLendingMetrics,
+  increaseLock,
   LendingError,
+  mergePositions,
   purchase,
   purchaseIntoCollateral,
   purchaseIntoRelayer,
   removeCollateral,
   repay,
+  setRelayerRepayShare,
   supply,
   withdraw,
   withdrawFromRelayer,
@@ -184,26 +187,42 @@ function PreviewApp() {
   ): string | null {
     try {
       const current = store.lendingRef.current;
+      const limits = collateralLimits(current);
       let next = current;
       switch (action.kind) {
         case 'deposit-collateral':
           if (!holdings.wallet.some((asset) => asset.id === action.asset.id))
             return 'This position is no longer in your demo wallet.';
-          next = depositCollateral(current, action.asset.id, COLLATERAL_LIMITS);
+          next = depositCollateral(current, action.asset.id, limits);
           break;
         case 'remove-collateral':
-          next = removeCollateral(current, action.asset.id, COLLATERAL_LIMITS);
+          next = removeCollateral(current, action.asset.id, limits);
           break;
         case 'relayer-deposit':
           if (!holdings.wallet.some((asset) => asset.id === action.asset.id))
             return 'This position is no longer in your demo wallet.';
-          next = depositToRelayer(current, action.asset.id, COLLATERAL_LIMITS);
+          next = depositToRelayer(current, action.asset.id, limits);
+          break;
+        case 'merge': {
+          const sourceId = input.mergeSourceId ?? '';
+          if (!holdings.wallet.some((asset) => asset.id === sourceId))
+            return 'Choose a position that is still in your demo wallet.';
+          next = mergePositions(current, sourceId, action.asset.id, limits);
+          break;
+        }
+        case 'increase-lock':
+          next = increaseLock(
+            current,
+            action.asset.id,
+            input.lockUnits ?? '0',
+            limits,
+          );
           break;
         case 'relayer-withdraw':
           next = withdrawFromRelayer(current, action.asset.id);
           break;
         case 'borrow':
-          next = borrow(current, input.amountMicros ?? '0', COLLATERAL_LIMITS);
+          next = borrow(current, input.amountMicros ?? '0', limits);
           break;
         case 'repay':
           next = repay(current, input.amountMicros ?? '0');
@@ -221,6 +240,9 @@ function PreviewApp() {
             input.poolYieldMicros ?? '0',
             input.relayerRewardMicros ?? '0',
           );
+          break;
+        case 'relayer-strategy':
+          next = setRelayerRepayShare(current, Number(input.repayBps ?? '0'));
           break;
         case 'how':
           return null;
@@ -263,6 +285,7 @@ function PreviewApp() {
     try {
       const price = priceMicros(asset.price).toString();
       const current = store.lendingRef.current;
+      const limits = collateralLimits(current);
       const next =
         destination === 'collateral'
           ? purchaseIntoCollateral(
@@ -270,10 +293,10 @@ function PreviewApp() {
               asset.id,
               price,
               borrowMicros,
-              COLLATERAL_LIMITS,
+              limits,
             )
           : destination === 'relayer'
-            ? purchaseIntoRelayer(current, asset.id, price, COLLATERAL_LIMITS)
+            ? purchaseIntoRelayer(current, asset.id, price, limits)
             : purchase(current, asset.id, price);
       const receipt = receiptFor(asset, destination);
       store.setLending(next);
@@ -383,6 +406,7 @@ function PreviewApp() {
     store.portfolio.receipts.length > 0 ||
     store.lending.activity.length > 0 ||
     store.listings.listings.length > 0 ||
+    store.lending.relayerRepayBps !== 0 ||
     !isDefaultVotePlan(store.votes);
 
   const notices = (store.storageIssue || store.migrated) && (
@@ -411,7 +435,7 @@ function PreviewApp() {
 
   function statsModel(): StatsModel {
     const lending = store.lending;
-    const metrics = getLendingMetrics(lending, COLLATERAL_LIMITS);
+    const metrics = getLendingMetrics(lending, collateralLimits(lending));
     const epochs = lending.activity.filter((entry) => entry.kind === 'epoch');
     const sales = marketSales(store.portfolio.receipts);
     const totals = summarize(sales);
@@ -634,6 +658,7 @@ function PreviewApp() {
             key={modal.action.kind}
             action={modal.action}
             state={store.lending}
+            wallet={holdings.wallet}
             onClose={closeModal}
             onApply={(input) => applyLendingAction(modal.action, input)}
           />
@@ -671,9 +696,9 @@ function PreviewApp() {
         >
           <div className="dialog-body">
             <p>
-              This will clear saved purchases, listings, collateral, debt, vault
-              shares, vote plans and activity, then restore the starting demo
-              balances.
+              This will clear saved purchases, listings, collateral, merges,
+              debt, vault shares, vote plans and activity, then restore the
+              starting demo balances.
             </p>
             <p className="text-muted">
               No real assets or funds are affected. You can explore every

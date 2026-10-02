@@ -5,7 +5,11 @@ import { Notice } from '../components/ui/Bits';
 import { PageHead } from '../components/page';
 import { AreaChart } from '../components/ui/Charts';
 import CountUp from '../components/ui/CountUp';
-import { ASSETS, SAMPLE_CREDIT_EPOCHS, SAMPLE_REWARD_MICROS } from '../data';
+import {
+  ASSETS,
+  rewardMicros as exampleReward,
+  SAMPLE_CREDIT_EPOCHS,
+} from '../data';
 import {
   formatBalance,
   formatDate,
@@ -154,10 +158,7 @@ export default function SimulatorPage({ market }: { market: Market }) {
                 const asset = ASSETS.find(
                   (item) => item.id === event.target.value,
                 );
-                if (asset)
-                  setReward(
-                    String(roundAmount(BigInt(SAMPLE_REWARD_MICROS[asset.id]))),
-                  );
+                if (asset) setReward(String(roundAmount(exampleReward(asset))));
               }}
             >
               {ASSETS.map((asset) => (

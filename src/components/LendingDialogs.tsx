@@ -1,12 +1,22 @@
 import { ArrowRight } from 'lucide-react';
-import { useRef, useState, type FormEvent } from 'react';
+import { useRef, useState, type CSSProperties, type FormEvent } from 'react';
 import {
-  COLLATERAL_LIMITS,
+  assetById,
+  collateralLimits,
+  creditMicros,
+  positionView,
+  rewardMicros as exampleReward,
   SAMPLE_CREDIT_EPOCHS,
-  SAMPLE_REWARD_MICROS,
 } from '../data';
-import { formatMicros, microsToDecimal, parseUSDCMicros } from '../domain';
-import { formatShares } from '../format';
+import {
+  formatBalance,
+  formatDate,
+  formatMicros,
+  microsToDecimal,
+  parseUSDCMicros,
+  type Asset,
+} from '../domain';
+import { formatShares, relayerStrategyLabel } from '../format';
 import {
   getLendingMetrics,
   MAX_EPOCH_INPUT_MICROS,
@@ -22,10 +32,15 @@ export type LendingActionInput = {
   collateralRewardMicros?: string;
   poolYieldMicros?: string;
   relayerRewardMicros?: string;
+  mergeSourceId?: string;
+  lockUnits?: string;
+  repayBps?: string;
 };
 type Props = {
   action: LendingAction;
   state: LendingState;
+  /** Idle wallet positions, which can be merged into collateral. */
+  wallet: readonly Asset[];
   onClose: () => void;
   onApply: (input: LendingActionInput) => string | null;
 };
@@ -40,17 +55,31 @@ const titles: Readonly<Record<LendingAction['kind'], string>> = {
   how: 'How pooled lending works',
   'relayer-deposit': 'Add to the reward relayer',
   'relayer-withdraw': 'Remove from the reward relayer',
+  'relayer-strategy': 'Relayer reward strategy',
+  merge: 'Merge into collateral',
+  'increase-lock': 'Increase lock',
 };
 const min = (a: bigint, b: bigint) => (a < b ? a : b);
 const ceilDiv = (a: bigint, b: bigint) => (a + b - 1n) / b;
+/** Whole token units; separators are allowed while typing. */
+const parseUnits = (value: string) => {
+  const plain = value.replace(/[\s,]/g, '');
+  return /^[1-9][0-9]{0,8}$/.test(plain) ? BigInt(plain) : null;
+};
 
 export default function LendingActionDialog({
   action,
   state,
+  wallet,
   onClose,
   onApply,
 }: Props) {
-  const metrics = getLendingMetrics(state, COLLATERAL_LIMITS);
+  const metrics = getLendingMetrics(state, collateralLimits(state));
+  const rewardOf = (ids: readonly string[]) =>
+    ids.reduce((sum, id) => {
+      const asset = assetById(id);
+      return sum + (asset ? exampleReward(positionView(asset, state)) : 0n);
+    }, 0n);
   const maximum =
     action.kind === 'borrow'
       ? BigInt(metrics.availableCreditMicros)
@@ -66,10 +95,7 @@ export default function LendingActionDialog({
       action.kind === 'supply' ? min(maximum, 1000_000000n) : maximum,
     ),
   );
-  const sampleReward = state.collateralIds.reduce(
-    (sum, id) => sum + BigInt(SAMPLE_REWARD_MICROS[id] ?? '0'),
-    0n,
-  );
+  const sampleReward = rewardOf(state.collateralIds);
   const [reward, setReward] = useState(
     microsToDecimal(
       action.kind === 'epoch' && action.rewardMicros
@@ -77,19 +103,25 @@ export default function LendingActionDialog({
         : sampleReward,
     ),
   );
-  const relayerSample = state.relayerIds.reduce(
-    (sum, id) => sum + BigInt(SAMPLE_REWARD_MICROS[id] ?? '0'),
-    0n,
-  );
+  const relayerSample = rewardOf(state.relayerIds);
   const [relayerReward, setRelayerReward] = useState(
     microsToDecimal(relayerSample),
   );
   const [poolYield, setPoolYield] = useState('200');
+  const [sourceId, setSourceId] = useState(wallet[0]?.id ?? '');
+  const tokens = BigInt(state.tokenUnits);
+  const [units, setUnits] = useState(tokens.toString());
+  const [repayShare, setRepayShare] = useState(state.relayerRepayBps / 100);
   const [error, setError] = useState('');
   const amountRef = useRef<HTMLInputElement>(null);
   const rewardRef = useRef<HTMLInputElement>(null);
   const relayerRef = useRef<HTMLInputElement>(null);
   const poolYieldRef = useRef<HTMLInputElement>(null);
+  const unitsRef = useRef<HTMLInputElement>(null);
+  const source = wallet.find((asset) => asset.id === sourceId);
+  const unitsParsed = parseUnits(units);
+  const unitsValid =
+    unitsParsed !== null && unitsParsed <= tokens ? unitsParsed : 0n;
   const parsed = parseUSDCMicros(amount);
   const amountMicros = parsed !== null && parsed <= maximum ? parsed : 0n;
   const fee = (amountMicros * 5n) / 1000n;
@@ -113,6 +145,16 @@ export default function LendingActionDialog({
       ? poolParsed
       : 0n;
   const repaidReward = min(rewardMicros, BigInt(state.debtMicros));
+  const relayerRepay = min(
+    (relayerMicros * BigInt(state.relayerRepayBps)) / 10_000n,
+    BigInt(state.debtMicros) - repaidReward,
+  );
+  // The strategy example uses this epoch's example relayer rewards, or 100 USDC.
+  const strategyBase = relayerSample > 0n ? relayerSample : 100_000000n;
+  const strategyRepay = min(
+    (strategyBase * BigInt(repayShare)) / 100n,
+    BigInt(state.debtMicros),
+  );
   const shares = BigInt(state.totalSharesRaw);
   const assets = BigInt(metrics.totalAssetsMicros);
   const quotedShares =
@@ -128,6 +170,23 @@ export default function LendingActionDialog({
   );
   const credit = BigInt(metrics.totalCreditMicros);
   const debtAfterBorrow = BigInt(state.debtMicros) + amountMicros;
+  const symbol = 'asset' in action ? action.asset.underlyingSymbol : '';
+  const growth =
+    action.kind === 'merge'
+      ? (source?.underlyingBalance ?? 0)
+      : action.kind === 'increase-lock'
+        ? Number(unitsValid)
+        : 0;
+  const grown =
+    'asset' in action
+      ? {
+          ...action.asset,
+          underlyingBalance: action.asset.underlyingBalance + growth,
+        }
+      : null;
+  const blocked =
+    (action.kind === 'merge' && !wallet.length) ||
+    (action.kind === 'increase-lock' && tokens === 0n);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -177,6 +236,23 @@ export default function LendingActionDialog({
         poolYieldMicros: poolParsed.toString(),
         relayerRewardMicros: (relayerParsed ?? 0n).toString(),
       };
+    } else if (action.kind === 'relayer-strategy') {
+      input = { repayBps: String(repayShare * 100) };
+    } else if (action.kind === 'merge') {
+      if (!source) {
+        setError('Choose a wallet position to merge.');
+        return;
+      }
+      input = { mergeSourceId: source.id };
+    } else if (action.kind === 'increase-lock') {
+      if (unitsParsed === null || unitsParsed > tokens) {
+        setError(
+          `Enter a whole number of ${symbol} from 1 to ${formatBalance(Number(tokens), symbol)}.`,
+        );
+        unitsRef.current?.focus();
+        return;
+      }
+      input = { lockUnits: unitsParsed.toString() };
     }
     const issue = onApply(input);
     if (issue) setError(issue);
@@ -250,7 +326,7 @@ export default function LendingActionDialog({
   return (
     <Dialog
       title={titles[action.kind]}
-      kicker="USDC · LOCAL PREVIEW"
+      kicker={`${'asset' in action ? 'POSITION' : 'USDC'} · LOCAL PREVIEW`}
       onClose={onClose}
     >
       <form onSubmit={submit} noValidate>
@@ -259,7 +335,9 @@ export default function LendingActionDialog({
             <AssetSummary
               asset={action.asset}
               kicker={
-                action.kind === 'remove-collateral'
+                action.kind === 'remove-collateral' ||
+                action.kind === 'merge' ||
+                action.kind === 'increase-lock'
                   ? 'Deposited collateral'
                   : action.kind === 'relayer-withdraw'
                     ? 'In the reward relayer'
@@ -350,8 +428,11 @@ export default function LendingActionDialog({
                     </div>
                     <p className="form-hint" id="relayer-reward-hint">
                       Collected for {state.relayerIds.length} relayer{' '}
-                      {state.relayerIds.length === 1 ? 'position' : 'positions'}{' '}
-                      and paid to your demo balance. They never repay debt.
+                      {state.relayerIds.length === 1 ? 'position' : 'positions'}
+                      .{' '}
+                      {state.relayerRepayBps === 0
+                        ? 'Paid to your demo balance.'
+                        : `${state.relayerRepayBps / 100}% repays remaining debt; the rest goes to your demo balance.`}
                     </p>
                   </div>
                 )}
@@ -390,7 +471,7 @@ export default function LendingActionDialog({
                 {
                   label: 'Example net reward history',
                   hint: 'Per 7-day epoch · not a forecast',
-                  value: formatMicros(SAMPLE_REWARD_MICROS[action.asset.id]),
+                  value: formatMicros(exampleReward(action.asset)),
                   strong: true,
                 },
                 {
@@ -404,7 +485,7 @@ export default function LendingActionDialog({
                   value: formatMicros(
                     credit +
                       (action.kind === 'deposit-collateral' ? 1n : -1n) *
-                        BigInt(COLLATERAL_LIMITS[action.asset.id]),
+                        creditMicros(action.asset),
                   ),
                   strong: true,
                 },
@@ -422,7 +503,7 @@ export default function LendingActionDialog({
                 {
                   label: 'Example net reward history',
                   hint: 'Per 7-day epoch · not a forecast',
-                  value: formatMicros(SAMPLE_REWARD_MICROS[action.asset.id]),
+                  value: formatMicros(exampleReward(action.asset)),
                   strong: true,
                 },
                 { label: 'Credit from this position', value: 'None' },
@@ -441,6 +522,235 @@ export default function LendingActionDialog({
               ]}
             />
           )}
+          {action.kind === 'relayer-strategy' && (
+            <>
+              <p className="dialog-lede">
+                Choose how the relayer uses the rewards it collects. Collateral
+                rewards repay your debt first each epoch; this share of relayer
+                rewards then repays what remains, and the rest is paid to your
+                demo balance.
+              </p>
+              <div className="form-field">
+                <div className="field-label">
+                  <label htmlFor="relayer-share">Share that repays debt</label>
+                  <span className="quick-picks">
+                    {[
+                      [0, 'Pay out'],
+                      [50, 'Half'],
+                      [100, 'Repay debt'],
+                    ].map(([share, label]) => (
+                      <button
+                        key={share}
+                        type="button"
+                        className="chip-button"
+                        aria-pressed={repayShare === share}
+                        onClick={() => setRepayShare(Number(share))}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </span>
+                </div>
+                <div className="share-range">
+                  <input
+                    id="relayer-share"
+                    className="range"
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={5}
+                    value={repayShare}
+                    aria-valuetext={`${repayShare}% repays debt, ${100 - repayShare}% paid out`}
+                    aria-describedby="relayer-share-hint"
+                    style={{ '--fill': `${repayShare}%` } as CSSProperties}
+                    onChange={(event) =>
+                      setRepayShare(Number(event.target.value))
+                    }
+                  />
+                  <output htmlFor="relayer-share">{repayShare}%</output>
+                </div>
+                <p className="form-hint" id="relayer-share-hint">
+                  {relayerStrategyLabel(repayShare * 100)} · applies from the
+                  next simulated epoch
+                  {BigInt(state.debtMicros) === 0n &&
+                    ' · with no debt, rewards are paid out until you borrow'}
+                </p>
+              </div>
+              <Breakdown
+                rows={[
+                  {
+                    label: 'Example relayer rewards',
+                    hint:
+                      relayerSample > 0n
+                        ? 'Your relayer positions, per epoch'
+                        : 'For every 100 USDC collected',
+                    value: formatMicros(strategyBase),
+                  },
+                  {
+                    label: 'Toward your debt',
+                    hint: 'Never more than the debt left',
+                    value: formatMicros(strategyRepay),
+                    strong: true,
+                  },
+                  {
+                    label: 'Paid to your demo balance',
+                    value: formatMicros(strategyBase - strategyRepay),
+                    strong: true,
+                  },
+                  {
+                    label: 'Debt now',
+                    value: formatMicros(state.debtMicros),
+                    total: true,
+                  },
+                ]}
+              />
+              <p className="form-hint">
+                Simulated relayer amounts are net of any automation charge,
+                which is set at launch. Swapping rewards into locked tokens is
+                not simulated.
+              </p>
+            </>
+          )}
+          {action.kind === 'merge' &&
+            (wallet.length ? (
+              <>
+                <div className="form-field">
+                  <label className="field-label" htmlFor="merge-source">
+                    Wallet position to merge
+                  </label>
+                  <select
+                    id="merge-source"
+                    className="input-control"
+                    value={sourceId}
+                    onChange={(event) => {
+                      setSourceId(event.target.value);
+                      setError('');
+                    }}
+                    aria-describedby="merge-source-hint pooled-action-error"
+                  >
+                    {wallet.map((asset) => (
+                      <option key={asset.id} value={asset.id}>
+                        {asset.name} ·{' '}
+                        {formatBalance(
+                          asset.underlyingBalance,
+                          asset.underlyingSymbol,
+                        )}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="form-hint" id="merge-source-hint">
+                    It joins {action.asset.name} and stops existing as a
+                    separate position.
+                  </p>
+                </div>
+                {source && grown && (
+                  <Breakdown
+                    rows={[
+                      {
+                        label: 'Locked after merge',
+                        value: formatBalance(grown.underlyingBalance, symbol),
+                        strong: true,
+                      },
+                      {
+                        label: 'Unlocks',
+                        hint: 'The later of the two dates',
+                        value: formatDate(
+                          source.unlockDate > action.asset.unlockDate
+                            ? source.unlockDate
+                            : action.asset.unlockDate,
+                        ),
+                      },
+                      {
+                        label: 'Example net reward after merge',
+                        hint: 'Per 7-day epoch · not a forecast',
+                        value: formatMicros(exampleReward(grown)),
+                      },
+                      {
+                        label: 'Portfolio credit after merge',
+                        value: formatMicros(credit + creditMicros(source)),
+                        strong: true,
+                      },
+                      {
+                        label: 'Existing debt',
+                        hint: 'Unchanged',
+                        value: formatMicros(state.debtMicros),
+                        total: true,
+                      },
+                    ]}
+                  />
+                )}
+              </>
+            ) : (
+              <Notice>
+                No positions are idle in your demo wallet. Buy one in the
+                marketplace, or take one out of the relayer or a listing, to
+                merge it here.
+              </Notice>
+            ))}
+          {action.kind === 'increase-lock' &&
+            (tokens > 0n ? (
+              <>
+                <AmountField
+                  id="lock-units"
+                  label={`${symbol} to add`}
+                  value={units}
+                  onChange={(value) => {
+                    setUnits(value);
+                    setError('');
+                  }}
+                  maximum={tokens}
+                  toText={(value) => value.toString()}
+                  unit={symbol}
+                  hint={`Demo balance ${formatBalance(Number(tokens), symbol)} · whole units`}
+                  error={Boolean(error)}
+                  inputRef={unitsRef}
+                  describedBy="lock-units-hint pooled-action-error"
+                />
+                {grown && (
+                  <Breakdown
+                    rows={[
+                      {
+                        label: 'Locked after increase',
+                        value: formatBalance(grown.underlyingBalance, symbol),
+                        strong: true,
+                      },
+                      {
+                        label: 'Unlocks',
+                        hint: 'Unchanged',
+                        value: formatDate(action.asset.unlockDate),
+                      },
+                      {
+                        label: 'Example net reward after increase',
+                        hint: 'Per 7-day epoch · not a forecast',
+                        value: formatMicros(exampleReward(grown)),
+                      },
+                      {
+                        label: 'Portfolio credit after increase',
+                        value: formatMicros(
+                          credit +
+                            creditMicros(grown) -
+                            creditMicros(action.asset),
+                        ),
+                        strong: true,
+                      },
+                      {
+                        label: `Demo ${symbol} left`,
+                        value: formatBalance(
+                          Number(tokens - unitsValid),
+                          symbol,
+                        ),
+                        total: true,
+                      },
+                    ]}
+                  />
+                )}
+              </>
+            ) : (
+              <Notice>
+                All of your demo {symbol} is already locked. Reset the preview
+                to start over with a fresh balance.
+              </Notice>
+            ))}
           {action.kind === 'borrow' && (
             <>
               <Breakdown
@@ -559,9 +869,18 @@ export default function LendingActionDialog({
                   ? [
                       {
                         label: 'Relayer rewards to demo balance',
-                        value: formatMicros(relayerMicros),
+                        value: formatMicros(relayerMicros - relayerRepay),
                         strong: true,
                       },
+                      ...(state.relayerRepayBps > 0
+                        ? [
+                            {
+                              label: 'Relayer rewards repaying debt',
+                              hint: relayerStrategyLabel(state.relayerRepayBps),
+                              value: formatMicros(relayerRepay),
+                            },
+                          ]
+                        : []),
                     ]
                   : []),
                 {
@@ -570,7 +889,9 @@ export default function LendingActionDialog({
                 },
                 {
                   label: 'Debt after epoch',
-                  value: formatMicros(BigInt(state.debtMicros) - repaidReward),
+                  value: formatMicros(
+                    BigInt(state.debtMicros) - repaidReward - relayerRepay,
+                  ),
                   total: true,
                 },
               ]}
@@ -610,6 +931,20 @@ export default function LendingActionDialog({
               as collateral or list it. No real NFT is transferred.
             </p>
           )}
+          {action.kind === 'merge' && wallet.length > 0 && (
+            <p className="form-hint">
+              Merging adds the locked balances together and keeps the later
+              unlock date. It raises this position’s example credit and does not
+              change your debt. It cannot be undone. No real NFT is merged.
+            </p>
+          )}
+          {action.kind === 'increase-lock' && tokens > 0n && (
+            <p className="form-hint">
+              Adds demo {symbol} from your wallet to this lock, raising its
+              example reward and credit without changing your debt or unlock
+              date. No real tokens are locked.
+            </p>
+          )}
           <p className="form-error" id="pooled-action-error" role="alert">
             {error}
           </p>
@@ -622,24 +957,30 @@ export default function LendingActionDialog({
           <button className="button secondary" type="button" onClick={onClose}>
             Cancel
           </button>
-          <button className="button primary" type="submit">
+          <button className="button primary" type="submit" disabled={blocked}>
             {action.kind === 'epoch'
               ? 'Apply example rewards'
-              : action.kind === 'deposit-collateral'
-                ? 'Deposit in preview'
-                : action.kind === 'relayer-deposit'
-                  ? 'Add to relayer in preview'
-                  : action.kind === 'relayer-withdraw'
-                    ? 'Remove from relayer in preview'
-                    : action.kind === 'remove-collateral'
-                      ? 'Remove in preview'
-                      : action.kind === 'borrow'
-                        ? 'Borrow in preview'
-                        : action.kind === 'repay'
-                          ? 'Repay in preview'
-                          : action.kind === 'supply'
-                            ? 'Supply in preview'
-                            : 'Withdraw in preview'}
+              : action.kind === 'relayer-strategy'
+                ? 'Save strategy'
+                : action.kind === 'merge'
+                  ? 'Merge in preview'
+                  : action.kind === 'increase-lock'
+                    ? 'Increase lock in preview'
+                    : action.kind === 'deposit-collateral'
+                      ? 'Deposit in preview'
+                      : action.kind === 'relayer-deposit'
+                        ? 'Add to relayer in preview'
+                        : action.kind === 'relayer-withdraw'
+                          ? 'Remove from relayer in preview'
+                          : action.kind === 'remove-collateral'
+                            ? 'Remove in preview'
+                            : action.kind === 'borrow'
+                              ? 'Borrow in preview'
+                              : action.kind === 'repay'
+                                ? 'Repay in preview'
+                                : action.kind === 'supply'
+                                  ? 'Supply in preview'
+                                  : 'Withdraw in preview'}
             <ArrowRight size={16} aria-hidden="true" />
           </button>
         </div>

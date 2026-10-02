@@ -4,9 +4,12 @@ import {
   Clock3,
   Landmark,
   Layers3,
+  LockKeyhole,
+  Merge,
   PiggyBank,
   Plus,
   RefreshCcw,
+  SlidersHorizontal,
   Sparkles,
   Store,
   Tag,
@@ -26,9 +29,10 @@ import { Meter, Ring } from '../components/ui/Meter';
 import StatCard from '../components/ui/StatCard';
 import { TabPanel, Tabs } from '../components/ui/Tabs';
 import {
-  COLLATERAL_LIMITS,
+  collateralLimits,
+  creditMicros,
+  rewardMicros,
   SAMPLE_CREDIT_EPOCHS,
-  SAMPLE_REWARD_MICROS,
 } from '../data';
 import {
   formatBalance,
@@ -41,7 +45,7 @@ import {
 } from '../domain';
 import { epochAt, epochStartMs } from '../epoch';
 import { getLendingMetrics, type LendingState } from '../lending';
-import { usd } from '../format';
+import { relayerStrategyLabel, usd } from '../format';
 import type { Market } from '../markets';
 import { BORROW_KINDS, type LendingAction } from '../preview/actions';
 import type { Holdings } from '../preview/store';
@@ -103,14 +107,12 @@ function PositionRow({
       <dl className="position-data">
         <div>
           <dt>Example reward</dt>
-          <dd>{formatMicros(SAMPLE_REWARD_MICROS[asset.id])}</dd>
+          <dd>{formatMicros(rewardMicros(asset))}</dd>
         </div>
         <div>
           <dt>Credit</dt>
           <dd>
-            {mode === 'relayer'
-              ? 'None'
-              : formatMicros(COLLATERAL_LIMITS[asset.id])}
+            {mode === 'relayer' ? 'None' : formatMicros(creditMicros(asset))}
           </dd>
         </div>
       </dl>
@@ -118,6 +120,22 @@ function PositionRow({
         {mode === 'collateral' && (
           <>
             <span className="pill accent">Deposited</span>
+            <button
+              type="button"
+              className="button ghost small"
+              aria-label={`Increase the lock of ${asset.name}`}
+              onClick={() => onAction({ kind: 'increase-lock', asset })}
+            >
+              <LockKeyhole size={14} aria-hidden="true" /> Increase
+            </button>
+            <button
+              type="button"
+              className="button ghost small"
+              aria-label={`Merge a wallet position into ${asset.name}`}
+              onClick={() => onAction({ kind: 'merge', asset })}
+            >
+              <Merge size={14} aria-hidden="true" /> Merge
+            </button>
             <button
               type="button"
               className="button secondary small"
@@ -195,7 +213,7 @@ export default function BorrowPage({
   onSell,
 }: Props) {
   const [tab, setTab] = useState<Tab>('positions');
-  const metrics = getLendingMetrics(lending, COLLATERAL_LIMITS);
+  const metrics = getLendingMetrics(lending, collateralLimits(lending));
   const debt = BigInt(lending.debtMicros);
   const credit = BigInt(metrics.totalCreditMicros);
   const available = BigInt(metrics.availableCreditMicros);
@@ -206,12 +224,19 @@ export default function BorrowPage({
   const supplied = BigInt(metrics.suppliedAssetsMicros);
   const utilization = metrics.utilizationBps / 100;
   const creditUsed = credit > 0n ? Number((debt * 10_000n) / credit) / 100 : 0;
-  const sampleReward = lending.collateralIds.reduce(
-    (sum, id) => sum + BigInt(SAMPLE_REWARD_MICROS[id] ?? '0'),
+  const sampleReward = holdings.collateral.reduce(
+    (sum, asset) => sum + rewardMicros(asset),
     0n,
   );
+  // The chosen share of relayer rewards also repays debt.
+  const relayerRepayment =
+    (holdings.relayer.reduce((sum, asset) => sum + rewardMicros(asset), 0n) *
+      BigInt(lending.relayerRepayBps)) /
+    10_000n;
+  const repayment = sampleReward + relayerRepayment;
   const payoffEpochs =
-    debt > 0n && sampleReward > 0n ? ceilDiv(debt, sampleReward) : null;
+    debt > 0n && repayment > 0n ? ceilDiv(debt, repayment) : null;
+  const strategy = relayerStrategyLabel(lending.relayerRepayBps);
   const clock = epochAt(now);
   const borrowActivity = lending.activity.filter((entry) =>
     (BORROW_KINDS as readonly string[]).includes(entry.kind),
@@ -404,8 +429,8 @@ export default function BorrowPage({
                       About {payoffEpochs.toString()} epoch
                       {payoffEpochs === 1n ? '' : 's'} to repay
                     </strong>{' '}
-                    at the example reward of {formatMicros(sampleReward)} per
-                    epoch, around{' '}
+                    at example rewards of {formatMicros(repayment)} per epoch,
+                    around{' '}
                     {formatDate(
                       new Date(
                         epochStartMs(clock.period + Number(payoffEpochs)),
@@ -449,9 +474,7 @@ export default function BorrowPage({
                       key={asset.id}
                       asset={asset}
                       mode="collateral"
-                      removable={
-                        credit - BigInt(COLLATERAL_LIMITS[asset.id]) >= debt
-                      }
+                      removable={credit - creditMicros(asset) >= debt}
                       now={now}
                       onAction={onAction}
                       onSell={onSell}
@@ -478,8 +501,19 @@ export default function BorrowPage({
                 <h3 id="relayer-title">
                   <RefreshCcw size={17} aria-hidden="true" /> Reward relayer
                 </h3>
-                <span className="text-muted">
-                  Automated reward collection · no borrowing
+                <span className="block-tools">
+                  <span className="text-muted">
+                    Automated reward collection · no borrowing
+                  </span>
+                  <button
+                    type="button"
+                    className="button ghost small"
+                    aria-label={`Relayer strategy: ${strategy}`}
+                    onClick={() => onAction({ kind: 'relayer-strategy' })}
+                  >
+                    <SlidersHorizontal size={14} aria-hidden="true" />{' '}
+                    {strategy}
+                  </button>
                 </span>
               </div>
               {holdings.relayer.length ? (
@@ -592,7 +626,12 @@ export default function BorrowPage({
                 {
                   id: 'collateral',
                   label: 'Collateral',
-                  kinds: ['deposit-collateral', 'remove-collateral'],
+                  kinds: [
+                    'deposit-collateral',
+                    'remove-collateral',
+                    'merge',
+                    'increase-lock',
+                  ],
                 },
                 { id: 'epochs', label: 'Epochs', kinds: ['epoch'] },
                 {
@@ -604,8 +643,8 @@ export default function BorrowPage({
               ]}
               empty={
                 <EmptyState icon={Vote} title="No activity yet." compact>
-                  Deposits, draws, repayments, purchases and simulated epochs
-                  appear here.
+                  Deposits, merges, draws, repayments, purchases and simulated
+                  epochs appear here.
                 </EmptyState>
               }
             />

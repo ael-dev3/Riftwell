@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatShares, plain, usd } from './format';
+import { formatShares, plain, relayerStrategyLabel, usd } from './format';
 
 describe('display formatting', () => {
   it('groups exact share amounts without rounding', () => {
@@ -14,5 +14,11 @@ describe('display formatting', () => {
     expect(usd(1592.5)).toBe('1,592.5');
     expect(plain(0.0775)).toBe('0.0775');
     expect(plain(310000)).toBe('310,000');
+  });
+
+  it('names relayer strategies from their repayment share', () => {
+    expect(relayerStrategyLabel(0)).toBe('Rewards paid out');
+    expect(relayerStrategyLabel(5_000)).toBe('50% repays debt');
+    expect(relayerStrategyLabel(10_000)).toBe('Rewards repay debt');
   });
 });

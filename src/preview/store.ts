@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ASSETS,
-  COLLATERAL_LIMITS,
+  collateralLimits,
   LISTING_IDS,
   LISTINGS,
+  positionView,
   STARTING_POSITION_IDS,
   assetById,
 } from '../data';
@@ -56,7 +57,7 @@ function load(): Loaded {
       portfolio: parsePortfolio(current ?? legacy, LISTING_IDS),
       lending: parseLendingState(
         localStorage.getItem(LENDING_STORAGE_KEY),
-        COLLATERAL_LIMITS,
+        collateralLimits,
       ),
       listings: parseListingBook(
         localStorage.getItem(LISTINGS_STORAGE_KEY),
@@ -136,6 +137,7 @@ export function usePreviewStore() {
 }
 
 export type Holdings = {
+  /** Every position you hold, as it stands after merges and increases. */
   owned: Asset[];
   wallet: Asset[];
   collateral: Asset[];
@@ -153,26 +155,30 @@ export function useHoldings(
   listings: ListingBook,
   now: number,
 ): Holdings {
+  const { lockIncreases, mergedInto } = lending;
   return useMemo(() => {
+    const changes = { lockIncreases, mergedInto };
+    const view = (ids: readonly string[]) =>
+      ids
+        .map(assetById)
+        .filter((asset): asset is Asset => asset !== undefined)
+        .map((asset) => positionView(asset, changes));
     const purchasedIds = new Set(
       portfolio.receipts.map((receipt) => receipt.assetId),
     );
-    const ownedIds = [...STARTING_POSITION_IDS, ...purchasedIds];
-    const owned = ownedIds
-      .map(assetById)
-      .filter((asset): asset is Asset => asset !== undefined);
+    // Merged positions live on inside the position they joined.
+    const ownedIds = [...STARTING_POSITION_IDS, ...purchasedIds].filter(
+      (id) => !Object.hasOwn(mergedInto, id),
+    );
+    const owned = view(ownedIds);
     const live = liveListings(listings, now).filter((listing) =>
       ownedIds.includes(listing.assetId),
     );
-    const collateral = lending.collateralIds
-      .map(assetById)
-      .filter((asset): asset is Asset => asset !== undefined);
-    const relayer = lending.relayerIds
-      .map(assetById)
-      .filter((asset): asset is Asset => asset !== undefined);
+    const collateral = view(lending.collateralIds);
+    const relayer = view(lending.relayerIds);
     const engaged = new Set([...lending.collateralIds, ...lending.relayerIds]);
     const listed = live.flatMap((listing) => {
-      const asset = assetById(listing.assetId);
+      const asset = owned.find((item) => item.id === listing.assetId);
       return asset && !engaged.has(asset.id) ? [{ asset, listing }] : [];
     });
     const wallet = owned.filter(
@@ -182,5 +188,13 @@ export function useHoldings(
     );
     const market = LISTINGS.filter((asset) => !purchasedIds.has(asset.id));
     return { owned, wallet, collateral, relayer, listed, market, purchasedIds };
-  }, [portfolio, lending.collateralIds, lending.relayerIds, listings, now]);
+  }, [
+    portfolio,
+    lending.collateralIds,
+    lending.relayerIds,
+    lockIncreases,
+    mergedInto,
+    listings,
+    now,
+  ]);
 }

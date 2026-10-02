@@ -1,7 +1,7 @@
 import { ArrowRight, type LucideIcon } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { assetById } from '../data';
-import { formatDate, formatMicros } from '../domain';
+import { formatBalance, formatDate, formatMicros } from '../domain';
 import { formatShares } from '../format';
 import type { LendingActivity } from '../lending';
 import { activityLabel } from '../preview/actions';
@@ -91,10 +91,15 @@ export function PromoBanner({
 }
 
 function activityAmount(entry: LendingActivity): string {
-  if (entry.kind === 'epoch')
-    return BigInt(entry.rewardRepaidMicros) > 0n
-      ? `${formatMicros(entry.rewardRepaidMicros)} repaid`
-      : 'No repayment';
+  if (entry.kind === 'increase-lock') {
+    const asset = entry.collateralId ? assetById(entry.collateralId) : null;
+    return `+${formatBalance(Number(entry.lockUnits), asset?.underlyingSymbol ?? 'tokens')}`;
+  }
+  if (entry.kind === 'epoch') {
+    const repaid =
+      BigInt(entry.rewardRepaidMicros) + BigInt(entry.relayerRepaidMicros);
+    return repaid > 0n ? `${formatMicros(repaid)} repaid` : 'No repayment';
+  }
   if (BigInt(entry.amountMicros) > 0n) return formatMicros(entry.amountMicros);
   return '—';
 }
@@ -108,11 +113,19 @@ function activityDetail(entry: LendingActivity): string {
   if (entry.kind === 'epoch')
     return `Surplus ${formatMicros(entry.rewardSurplusMicros)}${
       BigInt(entry.relayerRewardMicros) > 0n
-        ? ` · relayer ${formatMicros(entry.relayerRewardMicros)}`
+        ? ` · relayer ${formatMicros(entry.relayerRewardMicros)}${
+            BigInt(entry.relayerRepaidMicros) > 0n
+              ? ` (${formatMicros(entry.relayerRepaidMicros)} to debt)`
+              : ''
+          }`
         : ''
     } · lender revenue ${formatMicros(entry.poolYieldMicros)}`;
   if (entry.kind === 'supply' || entry.kind === 'withdraw')
     return `${formatShares(entry.sharesRaw)} shares`;
+  if (entry.kind === 'merge') {
+    const source = entry.mergedId ? assetById(entry.mergedId) : undefined;
+    return `${source?.name ?? 'Wallet position'} into ${asset?.name ?? 'collateral'}`;
+  }
   return asset?.name ?? 'Preview action';
 }
 

@@ -93,6 +93,9 @@ type AmountFieldProps = {
   error: boolean;
   inputRef: RefObject<HTMLInputElement | null>;
   describedBy: string;
+  /** Quick picks are USDC micros unless another conversion is given. */
+  toText?: (value: bigint) => string;
+  unit?: ReactNode;
 };
 
 /** Exact decimal entry with quick picks. The text field stays authoritative. */
@@ -106,9 +109,10 @@ export function AmountField({
   error,
   inputRef,
   describedBy,
+  toText = microsToDecimal,
+  unit,
 }: AmountFieldProps) {
-  const pick = (share: bigint) =>
-    onChange(microsToDecimal((maximum * share) / 100n));
+  const pick = (share: bigint) => onChange(toText((maximum * share) / 100n));
   return (
     <div className="form-field">
       <div className="field-label">
@@ -130,7 +134,7 @@ export function AmountField({
             className="chip-button"
             aria-label="Use max."
             disabled={maximum === 0n}
-            onClick={() => onChange(microsToDecimal(maximum))}
+            onClick={() => onChange(toText(maximum))}
           >
             Max
           </button>
@@ -151,10 +155,14 @@ export function AmountField({
           aria-describedby={describedBy}
         />
         <span className="amount-unit">
-          <span className="usdc-glyph" aria-hidden="true">
-            $
-          </span>
-          USDC
+          {unit ?? (
+            <>
+              <span className="usdc-glyph" aria-hidden="true">
+                $
+              </span>
+              USDC
+            </>
+          )}
         </span>
       </div>
       <p className="form-hint" id={`${id}-hint`}>

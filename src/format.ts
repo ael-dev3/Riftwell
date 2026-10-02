@@ -12,6 +12,13 @@ export const plain = (value: number) =>
   new Intl.NumberFormat('en-GB', { maximumFractionDigits: 6 }).format(value);
 
 /** Exact share amount from raw six-decimal units, grouped for display. */
+/** How relayer rewards are routed, for buttons and summaries. */
+export function relayerStrategyLabel(repayBps: number): string {
+  if (repayBps === 0) return 'Rewards paid out';
+  if (repayBps === 10_000) return 'Rewards repay debt';
+  return `${repayBps / 100}% repays debt`;
+}
+
 export function formatShares(raw: string | bigint) {
   const [whole, fraction] = microsToDecimal(raw).split('.');
   const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
