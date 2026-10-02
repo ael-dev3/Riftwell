@@ -291,3 +291,67 @@ test('configuration rejects conflicting storage and malformed or insecure produc
       /DATABASE_URL must be a PostgreSQL connection URL/,
     );
 });
+
+test('configuration fills an absent PostgreSQL database path from PGDATABASE without changing credentials or TLS', () => {
+  for (const path of ['', '/']) {
+    const source = `postgresql://riftwell:test-password@db.example.invalid:5432${path}?sslmode=verify-full`;
+    const config = loadConfig({
+      ...productionPostgres,
+      DATABASE_URL: source,
+      PGDATABASE: '4cebbe-production',
+    });
+    const database = new URL(config.databaseUrl!);
+    assert.equal(database.pathname, '/4cebbe-production');
+    assert.equal(database.username, 'riftwell');
+    assert.equal(database.password, 'test-password');
+    assert.equal(database.hostname, 'db.example.invalid');
+    assert.equal(database.port, '5432');
+    assert.equal(database.searchParams.get('sslmode'), 'verify-full');
+  }
+});
+
+test('configuration rejects missing or unsafe PGDATABASE fallbacks and keeps explicit paths authoritative', () => {
+  const source =
+    'postgresql://riftwell:test-password@db.example.invalid:5432?sslmode=verify-full';
+  for (const PGDATABASE of [
+    undefined,
+    '',
+    ' ',
+    '../other',
+    'other/database',
+    'other?sslmode=disable',
+    'other#fragment',
+    'other\n',
+    'a'.repeat(64),
+  ])
+    assert.throws(
+      () =>
+        loadConfig({
+          ...productionPostgres,
+          DATABASE_URL: source,
+          PGDATABASE,
+        }),
+      /DATABASE_NAME_REQUIRED/,
+    );
+
+  for (const PGDATABASE of ['different-database', '../invalid'])
+    assert.equal(
+      loadConfig({ ...productionPostgres, PGDATABASE }).databaseUrl,
+      productionPostgres.DATABASE_URL,
+    );
+
+  for (const DATABASE_URL of [
+    'postgresql://riftwell@db.example.invalid?sslmode=verify-full',
+    'postgresql://riftwell:test-password@db.example.invalid?sslmode=disable',
+    'postgresql://riftwell:test-password@db.example.invalid?sslmode=verify-full#fragment',
+  ])
+    assert.throws(
+      () =>
+        loadConfig({
+          ...productionPostgres,
+          DATABASE_URL,
+          PGDATABASE: '4cebbe-production',
+        }),
+      /DATABASE_URL must be a PostgreSQL connection URL/,
+    );
+});

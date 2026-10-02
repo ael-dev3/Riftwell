@@ -1,0 +1,104 @@
+{
+  "checkedAt": "2026-10-02T21:36:25.287Z",
+  "api": "https://riftwell.ael-dev3.deno.net",
+  "origin": "https://riftwell-ael.web.app",
+  "checks": [
+    {
+      "name": "HTTPS liveness",
+      "passed": true
+    },
+    {
+      "name": "PostgreSQL and canonical HyperEVM readiness",
+      "passed": true
+    },
+    {
+      "name": "Connected mode with settlement and lending execution disabled",
+      "passed": true
+    },
+    {
+      "name": "Exact Firebase CORS origin",
+      "passed": true
+    },
+    {
+      "name": "API freshness and security headers",
+      "passed": true
+    },
+    {
+      "name": "Supported cross-origin preflight",
+      "passed": true
+    },
+    {
+      "name": "Unrelated preflight origin rejected",
+      "passed": true
+    },
+    {
+      "name": "Unrelated mutation origin rejected",
+      "passed": true
+    },
+    {
+      "name": "Persisted wallet challenge",
+      "passed": true
+    },
+    {
+      "name": "EOA signature verified with bearer-only response",
+      "passed": true
+    },
+    {
+      "name": "Authenticated PostgreSQL session",
+      "passed": true
+    },
+    {
+      "name": "Consumed signature replay rejected",
+      "passed": true
+    },
+    {
+      "name": "Mutation without CSRF rejected",
+      "passed": true
+    },
+    {
+      "name": "Authenticated lending execution remains disabled",
+      "passed": true
+    },
+    {
+      "name": "Session logout",
+      "passed": true
+    },
+    {
+      "name": "Revoked bearer cannot authenticate",
+      "passed": true
+    },
+    {
+      "name": "Actual canonical on-chain NFT read",
+      "passed": true
+    }
+  ],
+  "readiness": {
+    "ready": true,
+    "database": "ready",
+    "chain": {
+      "ready": true,
+      "available": true,
+      "chainId": 999,
+      "blockNumber": 47499137,
+      "blockHash": "0x54f078577883306d9db2d8104f8f0b76ec3c15e7b3e969e2173b9f00b848424d",
+      "observedAt": "2026-10-02T21:36:28.393Z"
+    }
+  },
+  "position": {
+    "id": "kittenswap-18371",
+    "tokenId": "18371",
+    "marketId": "kittenswap",
+    "owner": "0x57Ee32f42dfD116482e389d5cb87a4F20eF53699",
+    "lockedAmountRaw": "540157719850561543735839",
+    "lockedUntil": "2028-07-27T00:00:00.000Z",
+    "votingPowerRaw": "490655329077147980629314",
+    "blockNumber": 47499140,
+    "blockHash": "0x79c437c2d9e8c8df1d972b4c1d570283a4e6a3dceaf6434671e6134aa035633b",
+    "observedAt": "2026-10-02T21:36:31.344Z"
+  },
+  "limitations": [
+    "Ephemeral EOA used; no funded transaction or user-wallet approval.",
+    "Owned NFT listing and client wallet interoperability require an actual owner wallet.",
+    "This run does not prove instance restart or managed backup retention."
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "checkedAt": "2026-10-02T21:40:21.435Z",
+  "source": "Official Deno console copy URL for each attached timeline",
+  "connections": [
+    {
+      "timeline": "production",
+      "database": "postgres",
+      "schema": "public",
+      "version": "170002",
+      "public_tables": 9,
+      "schema_version": 2,
+      "audit_records": 4,
+      "active_sessions": 0
+    },
+    {
+      "timeline": "preview",
+      "database": "postgres",
+      "schema": "public",
+      "version": "170002",
+      "public_tables": 9,
+      "schema_version": 2,
+      "audit_records": 0,
+      "active_sessions": 0
+    }
+  ],
+  "distinctCredentials": true
+}

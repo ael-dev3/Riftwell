@@ -44,8 +44,21 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     );
   let databaseUrl: string | undefined;
   if (env.DATABASE_URL) {
+    let missingDatabaseName = false;
     try {
       const database = new URL(env.DATABASE_URL);
+      if (!database.pathname || database.pathname === '/') {
+        // Managed providers may inject the database separately from the URL.
+        // Fill only an absent path; never redirect an explicitly named database.
+        if (
+          !env.PGDATABASE ||
+          !/^[A-Za-z0-9_][A-Za-z0-9_-]{0,62}$/.test(env.PGDATABASE)
+        ) {
+          missingDatabaseName = true;
+          throw new Error('Database name is required');
+        }
+        database.pathname = `/${encodeURIComponent(env.PGDATABASE)}`;
+      }
       if (
         !['postgres:', 'postgresql:'].includes(database.protocol) ||
         !database.hostname ||
@@ -62,7 +75,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
       databaseUrl = database.toString();
     } catch {
       throw new Error(
-        'DATABASE_URL must be a PostgreSQL connection URL; remote production connections require TLS',
+        'DATABASE_URL must be a PostgreSQL connection URL; remote production connections require TLS' +
+          (missingDatabaseName
+            ? '; DATABASE_NAME_REQUIRED: provide a valid database path or PGDATABASE'
+            : ''),
       );
     }
   }

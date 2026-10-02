@@ -49,7 +49,7 @@ npm ci --prefix prototypes --ignore-scripts
 npm run typecheck:all
 ```
 
-Read [deployment and operations](docs/OPERATIONS.md), the [API contract](docs/API.md), [hosting modes](docs/HOSTING.md) and [validation scope](docs/VALIDATION.md). Docker supplies a same-origin HTTPS deployment with persistent SQLite. [Firebase and Deno setup](docs/FIREBASE_DENO.md) uses the default Firebase domain, PostgreSQL and wallet sessions held only in browser memory; a page refresh requires signing in again. The Firebase preview is published and verified. The Deno application and live connected release still need provider verification.
+Read [deployment and operations](docs/OPERATIONS.md), the [API contract](docs/API.md), [hosting modes](docs/HOSTING.md) and [validation scope](docs/VALIDATION.md). Docker supplies a same-origin HTTPS deployment with persistent SQLite. [Firebase and Deno setup](docs/FIREBASE_DENO.md) uses the default Firebase domain, PostgreSQL and wallet sessions held only in browser memory; a page refresh requires signing in again. The Firebase preview and Deno API are live and verified. The connected frontend release and recovery check remain pending.
 
 ## Source
 
