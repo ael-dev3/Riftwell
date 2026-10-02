@@ -1,0 +1,19 @@
+{
+  "name": "@riftwell/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "start": "node index.mjs",
+    "test": "node --test --test-concurrency=1 test/*.test.mjs",
+    "backup": "node backup.mjs"
+  },
+  "dependencies": {
+    "better-sqlite3": "13.0.3",
+    "ethers": "6.17.0",
+    "fastify": "5.12.5"
+  }
+}

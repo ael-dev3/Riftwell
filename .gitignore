@@ -10,3 +10,10 @@ build/
 *.tsbuildinfo
 playwright-report/
 test-results/
+
+server/data/
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+backups/

@@ -9,7 +9,8 @@
     "preview": "vite preview --host 127.0.0.1",
     "test": "vitest run",
     "test:ui": "node scripts/browser-qa.mjs",
-    "format:check": "prettier --check src scripts index.html vite.config.ts tsconfig.json",
+    "test:connected": "node scripts/connected-browser-qa.mjs",
+    "format:check": "prettier --check src scripts server/*.mjs server/test server/package.json deploy docs/API.md docs/OPERATIONS.md index.html vite.config.ts tsconfig.json",
     "check": "npm run test && npm run build",
     "contracts:compile": "npm --prefix prototypes run compile",
     "contracts:test": "npm --prefix prototypes run test"

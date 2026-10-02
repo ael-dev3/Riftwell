@@ -2,7 +2,7 @@
   "status": "passed",
   "baseURL": "http://127.0.0.1:5192/Riftwell",
   "browser": "isolated headless Chrome",
-  "checkedAt": "2026-10-02T16:28:12.291Z",
+  "checkedAt": "2026-10-02T17:16:13.343Z",
   "checks": [
     "Six sample NFT positions",
     "Exactly two primary sections",

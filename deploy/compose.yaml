@@ -1,0 +1,62 @@
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    init: true
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    environment:
+      APP_ORIGIN: https://${RIFTWELL_DOMAIN:?Set RIFTWELL_DOMAIN}
+      SESSION_SECRET: ${SESSION_SECRET:?Generate a random SESSION_SECRET}
+      HYPEREVM_RPC_URL: ${HYPEREVM_RPC_URL:?Configure a reliable HyperEVM RPC}
+      TRUST_PROXY: 10.89.0.2
+    volumes:
+      - application-data:/var/lib/riftwell
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    networks:
+      application:
+        ipv4_address: 10.89.0.3
+    expose:
+      - '8080'
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 100
+    stop_grace_period: 30s
+  edge:
+    image: caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d
+    restart: unless-stopped
+    environment:
+      RIFTWELL_DOMAIN: ${RIFTWELL_DOMAIN:?Set RIFTWELL_DOMAIN}
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - certificate-data:/data
+      - certificate-config:/config
+    networks:
+      application:
+        ipv4_address: 10.89.0.2
+    depends_on:
+      app:
+        condition: service_healthy
+    mem_limit: 128m
+    pids_limit: 100
+
+networks:
+  application:
+    ipam:
+      config:
+        - subnet: 10.89.0.0/24
+
+volumes:
+  application-data:
+  certificate-data:
+  certificate-config:

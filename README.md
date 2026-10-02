@@ -2,53 +2,56 @@
 
 [Live preview → ael-dev3.github.io/Riftwell](https://ael-dev3.github.io/Riftwell/)
 
-A focused interface for NFT-backed lending and an NFT marketplace. KittenSwap is the first market, with a light-green accent, veKITTEN position previews, and a quiet portal theme.
+NFT-backed lending and a focused marketplace, starting with KittenSwap on HyperEVM. Dark surfaces, a light-green accent and a quiet portal theme.
 
-![Riftwell frontend preview](docs/qa/preview.png)
+![Riftwell preview](docs/qa/preview.png)
 
-## Direction
+## Application
 
-- Borrow against eligible NFTs, with terms and fees visible before committing.
-- Discover, compare, and trade NFT positions in one clean marketplace.
-- Choose a market from the header. KittenSwap is the only current option; its identity and accent carry through both sections.
-- Keep the platform fee simple: 0.5% of a sale, or a one-time 0.5% of new loan principal. Lender interest is separate.
+Two build modes share the interface:
 
-The current release is a deployable frontend preview. Its collections, prices, offers, balances, and activity are illustrative. Preview actions do not connect a wallet, request a signature, move funds, or deploy contracts.
+- **Preview:** the GitHub Pages site uses labelled sample positions and local demo receipts.
+- **Connected:** the Node service serves the interface and API together. Wallet sign-in, confirmed veKITTEN ownership reads, persistent listings, borrowing requests and lender offers work through SQLite. Borrowers can review received offers; creators can cancel their records.
 
-## Run
+Listings and offers are off-chain expressions of interest. Purchases, funded loans, acceptance, repayment and liquidation remain unavailable until the settlement contracts are separately released. No application route requests token approvals, transfers an NFT or sends a blockchain transaction. Displayed 0.5% settlement fees are future terms; saving a record charges nothing.
 
-Node.js 22.12+ or 24+ and npm are required.
+## Run locally
+
+Use Node.js 24 and npm. Frontend and server dependencies have separate lockfiles.
 
 ```sh
 npm ci --ignore-scripts
+npm ci --prefix server
 npm run dev
 ```
 
+To run the connected application at `http://127.0.0.1:8080`:
+
+```sh
+VITE_APP_MODE=connected npm run build
+APP_ORIGIN=http://127.0.0.1:8080 npm --prefix server start
+```
+
+The development database is `server/data/riftwell.sqlite`. Authentication supports EOA accounts through an Ethereum browser wallet on HyperEVM (chain 999). Open the site inside a compatible mobile wallet browser or use an extension. Desktop WalletConnect and contract-wallet authentication are not implemented.
+
 ```sh
 npm run check
-npm run build
-npm run preview
+npm --prefix server test
+npm run format:check
 ```
 
-The frontend builds to `dist/`, ready for static hosting. No backend, API key, external fonts, remote images, analytics, or wallet connection is required. The included original SVG artwork is served locally. See [hosting notes](docs/HOSTING.md).
+Read [deployment and operations](docs/OPERATIONS.md), the [API contract](docs/API.md), [hosting modes](docs/HOSTING.md) and [validation scope](docs/VALIDATION.md). The Docker deployment supplies HTTPS configuration, persistent storage and health checks. A production host, domain and suitable RPC endpoint must still be configured and verified.
 
-For the browser checks, start `npm run preview -- --port 5191` and run `npm run test:ui` in another terminal. The checks use an isolated installed Google Chrome session through Playwright. Set `RIFTWELL_PREVIEW_URL` to test another local preview URL. See [validation results](docs/VALIDATION.md).
+## Source
 
-## Source layout
+- `src/` — React interface, preview logic and connected API/wallet client.
+- `server/` — authentication, SQLite persistence, order APIs and read-only chain adapter.
+- `deploy/` — single-instance Docker Compose and HTTPS reverse proxy.
+- `public/` — original artwork and supplied KittenSwap logo.
+- `prototypes/` — experimental Solidity and local integration tooling.
 
-- `src/` — React and TypeScript interface, preview data, and domain logic.
-- `public/` — original brand mark, artwork, and the supplied KittenSwap market logo.
-- `prototypes/` — experimental Solidity, local EVM tests, and integration tooling.
-- `docs/` — product direction, validation, and release boundaries.
-
-```sh
-npm ci --prefix prototypes --ignore-scripts
-npm run contracts:compile
-npm run contracts:test
-```
-
-The contract prototypes are **not deployed, independently audited, or approved for real funds**. They are published for development and review. The frontend does not use them. Remote fork tests are explicit opt-in and write only to an isolated local fork. See [prototype boundaries](prototypes/README.md).
+The Solidity prototypes are not deployed, independently audited or approved for real funds. They are not used by the running application and remain a separate release. See [prototype boundaries](prototypes/README.md).
 
 ## License
 
-Original Riftwell source and artwork use Apache 2.0. Upstream dependencies retain their own licenses and notices. Branding and third-party collection rights are separate from software permissions.
+Original source and artwork use Apache 2.0. Dependencies retain their own licenses and notices. Branding and collection rights are separate from software permissions.

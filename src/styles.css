@@ -2614,6 +2614,65 @@ div.field-label {
     height: 11px;
   }
 }
+.connected-inline-field {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.connected-inline-field .input-control {
+  min-width: 0;
+}
+.connected-inline-field .button {
+  flex-shrink: 0;
+}
+.connected-lending-tabs {
+  margin-bottom: 24px;
+}
+.connected-pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 28px;
+}
+[data-mode='connected'] .position-stat strong,
+.connected-position .details-list dd {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+[data-mode='connected'] .asset-meta {
+  flex-wrap: wrap;
+}
+.connected-account .portfolio-tabs {
+  width: 100%;
+  flex-wrap: wrap;
+}
+.connected-account .portfolio-item-value {
+  overflow-wrap: anywhere;
+}
+.connected-position .details-list {
+  width: 100%;
+}
+.connected-position .asset-actions {
+  margin-left: 0;
+}
+@media (max-width: 540px) {
+  .connected-inline-field {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .connected-account .portfolio-tabs {
+    gap: 5px;
+  }
+  .connected-account .portfolio-tabs button {
+    padding-inline: 9px;
+  }
+  .connected-account .portfolio-item-value {
+    margin-left: 0;
+    align-items: start;
+  }
+  [data-mode='connected'] .section-heading > .button {
+    margin-top: 15px;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

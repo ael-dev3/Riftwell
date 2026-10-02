@@ -1,0 +1,16 @@
+.git
+.github
+.env*
+node_modules
+server/node_modules
+server/data
+server/test
+dist
+prototypes
+docs
+scripts
+*.log
+*.sqlite*
+*.db*
+test-results
+playwright-report

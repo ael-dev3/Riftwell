@@ -1,0 +1,14 @@
+{
+  "checkedAt": "2026-10-02T17:18:16.628Z",
+  "scope": "Read-only live HyperEVM smoke check; no wallet authentication or transactions",
+  "chainId": 999,
+  "escrow": "0x29d3A21fF35a519E00cF6d272f2aD897b109BD84",
+  "tokenId": "18371",
+  "blockNumber": 47483386,
+  "blockHash": "0x4c7108bf7bfc354883f4190e067ef1f1521e01eae07defeefd59310808e6050c",
+  "observedAt": "2026-10-02T17:18:16.378Z",
+  "canonicalHashPinning": true,
+  "lockedAmountRaw": "540157719850561543735839",
+  "lockedUntil": "2028-07-27T00:00:00.000Z",
+  "votingPowerRaw": "490788064752248878849368"
+}

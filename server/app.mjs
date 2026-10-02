@@ -1,0 +1,382 @@
+import Fastify from 'fastify';
+import { createHmac, randomUUID } from 'node:crypto';
+import { openDatabase, expireRecords, pruneAuth } from './database.mjs';
+import { registerAuth } from './auth.mjs';
+import { registerOrders } from './orders.mjs';
+import { registerStatic } from './static.mjs';
+import { RateLimiter } from './rate-limit.mjs';
+import { ApiError, fail } from './errors.mjs';
+import { fields, tokenId, address } from './validation.mjs';
+
+const market = {
+  id: 'kittenswap',
+  name: 'KittenSwap',
+  shortName: 'Kitten',
+  chain: 'HyperEVM',
+  tokenSymbol: 'KITTEN',
+  positionSymbol: 'veKITTEN',
+  accentColor: '#bff4aa',
+  logoPath: 'markets/kittenswap.png',
+};
+
+export async function createApp({ config, chain, now = Date.now }) {
+  if (
+    !chain ||
+    !['getPosition', 'getOwnedPositions', 'health'].every(
+      (method) => typeof chain[method] === 'function',
+    )
+  )
+    throw new Error('A read-only chain adapter is required');
+  const db = openDatabase(config.dbPath);
+  const app = Fastify({
+    bodyLimit: 16384,
+    requestTimeout: 30000,
+    connectionTimeout: 15000,
+    keepAliveTimeout: 5000,
+    trustProxy: config.trustProxy ?? false,
+    genReqId: () => randomUUID(),
+    logger: config.logger
+      ? {
+          redact: [
+            'req.headers.cookie',
+            'req.headers.authorization',
+            'req.headers.x-csrf-token',
+            'res.headers.set-cookie',
+          ],
+          serializers: {
+            req: (request) => ({
+              method: request.method,
+              url: request.url.split('?')[0],
+            }),
+            res: (reply) => ({ statusCode: reply.statusCode }),
+          },
+        }
+      : false,
+  });
+  app.decorate('store', db);
+  const limiter = new RateLimiter(now);
+  const ctx = {
+    db,
+    config,
+    chain,
+    now,
+    limiter,
+    hash: (value) =>
+      createHmac('sha256', config.sessionSecret).update(value).digest('hex'),
+  };
+  ctx.chainCall = async (operation) => {
+    let timer;
+    try {
+      return await Promise.race([
+        Promise.resolve().then(operation),
+        new Promise((_, reject) => {
+          timer = setTimeout(
+            () =>
+              reject(
+                new ApiError(
+                  503,
+                  'CHAIN_UNAVAILABLE',
+                  'Confirmed position data is unavailable.',
+                ),
+              ),
+            Math.min(30000, config.timeoutMs * 4),
+          );
+        }),
+      ]);
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      if (error.code === 'POSITION_NOT_FOUND')
+        fail(404, 'POSITION_NOT_FOUND', 'The position was not found.');
+      if (error.code === 'INVALID_TOKEN_ID')
+        fail(400, 'INVALID_TOKEN_ID', 'The token ID is invalid.');
+      if (['INVALID_PAGINATION', 'INVALID_CURSOR'].includes(error.code))
+        fail(400, 'INVALID_PAGINATION', 'The ownership cursor is invalid.');
+      fail(503, 'CHAIN_UNAVAILABLE', 'Confirmed position data is unavailable.');
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+  const checkPosition = (position, id) => {
+    try {
+      if (
+        position?.tokenId !== tokenId(id) ||
+        position.id !== `kittenswap-${id}` ||
+        position.marketId !== 'kittenswap' ||
+        typeof position.owner !== 'string' ||
+        address(position.owner) !== position.owner ||
+        ![position.lockedAmountRaw, position.votingPowerRaw].every(
+          (value) =>
+            typeof value === 'string' && /^(0|[1-9][0-9]{0,77})$/.test(value),
+        ) ||
+        !Number.isSafeInteger(position.blockNumber) ||
+        position.blockNumber < 0 ||
+        !/^0x[0-9a-fA-F]{64}$/.test(position.blockHash) ||
+        !Number.isFinite(Date.parse(position.lockedUntil)) ||
+        !Number.isFinite(Date.parse(position.observedAt))
+      )
+        throw new Error('Invalid adapter response');
+    } catch {
+      fail(503, 'CHAIN_UNAVAILABLE', 'Confirmed position data is unavailable.');
+    }
+    return Object.fromEntries(
+      [
+        'id',
+        'tokenId',
+        'marketId',
+        'owner',
+        'lockedAmountRaw',
+        'lockedUntil',
+        'votingPowerRaw',
+        'blockNumber',
+        'blockHash',
+        'observedAt',
+      ].map((key) => [key, position[key]]),
+    );
+  };
+  ctx.checkPosition = checkPosition;
+  ctx.freshPosition = async (id) =>
+    checkPosition(await ctx.chainCall(() => chain.getPosition(id)), id);
+  ctx.freshPositions = async (ids) => {
+    if (typeof chain.getPositions !== 'function')
+      return Promise.all(
+        ids.map(async (id) => {
+          try {
+            return await ctx.freshPosition(id);
+          } catch (error) {
+            if (error.code === 'POSITION_NOT_FOUND') return null;
+            throw error;
+          }
+        }),
+      );
+    const result = [];
+    for (let offset = 0; offset < ids.length; offset += 50) {
+      const chunk = ids.slice(offset, offset + 50);
+      const positions = await ctx.chainCall(() => chain.getPositions(chunk));
+      if (!Array.isArray(positions) || positions.length !== chunk.length)
+        fail(
+          503,
+          'CHAIN_UNAVAILABLE',
+          'Confirmed position data is unavailable.',
+        );
+      result.push(
+        ...positions.map((position, index) =>
+          position === null ? null : checkPosition(position, chunk[index]),
+        ),
+      );
+    }
+    return result;
+  };
+
+  app.addHook('onRequest', async (request, reply) => {
+    reply.header('x-request-id', request.id);
+    reply.header('x-content-type-options', 'nosniff');
+    reply.header('referrer-policy', 'same-origin');
+    reply.header(
+      'permissions-policy',
+      'camera=(), microphone=(), geolocation=()',
+    );
+    reply.header('cross-origin-opener-policy', 'same-origin-allow-popups');
+    reply.header(
+      'content-security-policy',
+      `default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'${config.production ? '; upgrade-insecure-requests' : ''}`,
+    );
+    if (config.production)
+      reply.header('strict-transport-security', 'max-age=31536000');
+    const path = request.url.split('?')[0];
+    if (!path.startsWith('/') || path.length > 2048)
+      fail(400, 'NON_CANONICAL_PATH', 'Use a canonical application path.');
+    let decoded = path;
+    try {
+      for (let depth = 0; depth < 8 && decoded.includes('%'); depth++)
+        decoded = decodeURIComponent(decoded);
+    } catch {
+      reply.header('cache-control', 'no-store');
+      fail(400, 'NON_CANONICAL_PATH', 'Use a canonical application path.');
+    }
+    const normalized = new URL(
+      decoded.replaceAll('\\', '/').replace(/\/+/g, '/'),
+      config.origin,
+    ).pathname;
+    const protectedPath =
+      /^\/(?:api|health)(?:\/|$)/.test(normalized) ||
+      /^\/(?:api|health)(?:\/|$)/.test(path);
+    if (protectedPath || decoded.includes('%'))
+      reply.header('cache-control', 'no-store');
+    // Fastify can match decoded path segments. Reject aliases before any API
+    // handler, including auth and disabled settlement, can observe the request.
+    if (
+      decoded.includes('%') ||
+      (protectedPath && (path !== normalized || path.includes('%')))
+    )
+      fail(400, 'NON_CANONICAL_PATH', 'Use a canonical application path.');
+    if (path === '/health/ready')
+      limiter.take(`readiness:${request.ip}`, 30, 60000);
+    if (path.startsWith('/api/')) {
+      reply.header('cache-control', 'no-store');
+      if (path === '/api/v1/settlement' && request.method === 'POST')
+        fail(
+          503,
+          'SMART_CONTRACTS_DISABLED',
+          'Smart-contract settlement is disabled. No funds or tokens have moved.',
+        );
+      limiter.take(`api:${request.ip}`, 180, 60000);
+      if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
+        if (request.headers.origin !== config.origin)
+          fail(403, 'ORIGIN_REJECTED', 'The request origin is not allowed.');
+        limiter.take(`mutation:${request.ip}`, 60, 60000);
+        fields(request.query, []);
+      }
+      if (path.startsWith('/api/v1/auth/') && request.method === 'POST')
+        limiter.take(`auth:${request.ip}`, 20, 300000);
+    }
+  });
+  app.setErrorHandler((error, request, reply) => {
+    let status = 500;
+    let code = 'INTERNAL_ERROR';
+    let message = 'The request could not be completed.';
+    if (error instanceof ApiError) ({ status, code, message } = error);
+    else if (error.code === 'FST_ERR_CTP_BODY_TOO_LARGE') {
+      status = 413;
+      code = 'REQUEST_TOO_LARGE';
+      message = 'The request body is too large.';
+    } else if (error.code === 'FST_ERR_CTP_INVALID_MEDIA_TYPE') {
+      status = 415;
+      code = 'UNSUPPORTED_MEDIA_TYPE';
+      message = 'Use application/json for request bodies.';
+    } else if (error.statusCode === 400) {
+      status = 400;
+      code = 'INVALID_REQUEST';
+      message = 'The request is invalid.';
+    } else if (error.code?.startsWith('SQLITE_CONSTRAINT')) {
+      status = 409;
+      code = 'ACTIVE_ORDER_EXISTS';
+      message = 'An active order conflicts with this request.';
+    }
+    if (status >= 500)
+      request.log.error({ requestId: request.id, code }, 'Request failed');
+    reply
+      .code(status)
+      .send({ error: { code, message, requestId: request.id } });
+  });
+
+  app.get('/api/v1/status', async (request) => {
+    fields(request.query, []);
+    return {
+      mode: 'connected',
+      chainId: 999,
+      marketId: 'kittenswap',
+      settlementEnabled: false,
+      capabilities: {
+        walletSignIn: true,
+        marketplace: true,
+        lending: true,
+        settlement: false,
+      },
+    };
+  });
+  app.get('/api/v1/markets', async (request) => {
+    fields(request.query, []);
+    return { markets: [market] };
+  });
+  app.get('/health/live', async () => ({ status: 'live' }));
+  let readinessCache;
+  let readinessFlight;
+  const probeReadiness = async () => {
+    let database = false;
+    try {
+      database = db.prepare('SELECT 1 AS ok').get().ok === 1;
+    } catch {
+      /* Redact storage errors. */
+    }
+    let health;
+    try {
+      health = await ctx.chainCall(() => chain.health());
+    } catch {
+      health = {
+        ready: false,
+        available: false,
+        chainId: 999,
+        errorCode: 'CHAIN_UNAVAILABLE',
+      };
+    }
+    const chainReady =
+      health?.ready === true &&
+      health?.available === true &&
+      health?.chainId === 999;
+    const safeHealth = {
+      ready: chainReady,
+      available: chainReady,
+      chainId: 999,
+      ...(Number.isSafeInteger(health?.blockNumber)
+        ? { blockNumber: health.blockNumber }
+        : {}),
+      ...(/^0x[0-9a-fA-F]{64}$/.test(health?.blockHash)
+        ? { blockHash: health.blockHash }
+        : {}),
+      ...(typeof health?.observedAt === 'string' &&
+      Number.isFinite(Date.parse(health.observedAt))
+        ? { observedAt: health.observedAt }
+        : {}),
+      ...(!chainReady ? { errorCode: 'CHAIN_UNAVAILABLE' } : {}),
+    };
+    const ready = database && chainReady;
+    return {
+      ready,
+      database: database ? 'ready' : 'unavailable',
+      chain: safeHealth,
+    };
+  };
+  app.get('/health/ready', async (_request, reply) => {
+    let result;
+    if (readinessCache && readinessCache.until > now())
+      result = readinessCache.result;
+    else {
+      if (!readinessFlight)
+        readinessFlight = probeReadiness()
+          .then((value) => {
+            readinessCache = { until: now() + 5000, result: value };
+            return value;
+          })
+          .finally(() => {
+            readinessFlight = undefined;
+          });
+      result = await readinessFlight;
+    }
+    return reply.code(result.ready ? 200 : 503).send(result);
+  });
+  registerAuth(app, ctx);
+  registerOrders(app, ctx);
+  registerStatic(app, config);
+  let interval;
+  app.addHook('onReady', async () => {
+    const cleanup = () => {
+      expireRecords(db, now());
+      pruneAuth(db, now());
+      limiter.prune();
+    };
+    cleanup();
+    interval = setInterval(() => {
+      try {
+        cleanup();
+      } catch {
+        app.log.error({ code: 'MAINTENANCE_FAILED' }, 'Maintenance failed');
+      }
+    }, 60000);
+    interval.unref();
+  });
+  app.addHook('onClose', async () => {
+    clearInterval(interval);
+    try {
+      db.pragma('wal_checkpoint(TRUNCATE)');
+    } finally {
+      db.close();
+    }
+  });
+  try {
+    await app.ready();
+    return app;
+  } catch (error) {
+    await app.close();
+    throw error;
+  }
+}

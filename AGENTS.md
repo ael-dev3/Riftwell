@@ -4,6 +4,8 @@ Keep the interface focused on Lending and Marketplace. Use dark surfaces, the se
 
 Contract prototypes are experimental and must not be deployed live without explicit release authorization and the required evidence. Preserve the 0.5% fee basis, exact accounting and custody boundaries. Retain upstream license notices. Do not add private research, counterparties, personal identifiers or credentials to this public repository.
 
+Connected mode uses a same-origin server and durable SQLite. Keep wallet keys and custody out of the service, settlement disabled until its separate release, and Pages explicitly in preview mode. Fail closed on public ownership verification errors; creators must be able to cancel their own off-chain records during RPC outages. Validate frontend and server locally and keep deployment evidence separate from simulations. Preserve exact accounting, single-use authentication, Origin/CSRF checks and idempotency.
+
 ## Conservative GitHub Actions use
 
 Follow the current user approval policy for Actions budgets and exceptions. Validate locally first, inspect the diff and batch coherent changes before remote CI. Before any dispatch, rerun, push, pull-request creation/update, merge, or trigger change that can start Actions, inspect repository run history for the current UTC day using read-only tools. Include all workflows, branches and actors; queued, running and completed runs; and rerun attempts of older runs. Account for duplicate events, downstream chains, scheduled services and GitHub-generated workflows. Estimate runs and runner minutes. A skipped or cancelled job is not a daily cap. Coordinate parallel agents before acting.

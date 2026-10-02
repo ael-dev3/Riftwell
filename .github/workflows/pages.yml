@@ -11,6 +11,11 @@ on:
       - 'package-lock.json'
       - 'vite.config.ts'
       - 'tsconfig.json'
+      - 'server/**'
+      - 'scripts/**'
+      - 'deploy/**'
+      - 'Dockerfile'
+      - '.dockerignore'
       - '.github/workflows/pages.yml'
 
 permissions:
@@ -45,8 +50,26 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Test frontend
         run: npm run test
+      - name: Install server dependencies
+        run: npm ci --prefix server
+      - name: Test server
+        run: npm --prefix server test
       - name: Check formatting
         run: npm run format:check
+      - name: Build and smoke-test connected container
+        run: |
+          docker build --tag riftwell-ci .
+          trap 'docker rm --force --volumes riftwell-check >/dev/null 2>&1 || true' EXIT
+          docker run --detach --name riftwell-check --publish 127.0.0.1:8080:8080 \
+            --read-only --cap-drop ALL --security-opt no-new-privileges \
+            --tmpfs /tmp:size=16m,mode=1777 --mount type=volume,dst=/var/lib/riftwell \
+            --env APP_ORIGIN=https://riftwell.invalid \
+            --env SESSION_SECRET="$(openssl rand -hex 32)" \
+            --env HYPEREVM_RPC_URL=https://rpc.hyperliquid.xyz/evm riftwell-ci
+          curl --fail --silent --show-error --retry 10 --retry-connrefused --retry-delay 1 http://127.0.0.1:8080/health/live
+          curl --fail --silent --show-error http://127.0.0.1:8080/api/v1/status | node -e "let s='';process.stdin.on('data',c=>s+=c).on('end',()=>{const v=JSON.parse(s);if(v.mode!=='connected'||v.settlementEnabled!==false)process.exit(1)})"
+          docker restart riftwell-check
+          curl --fail --silent --show-error --retry 10 --retry-connrefused --retry-delay 1 http://127.0.0.1:8080/health/live
       - name: Build Pages frontend
         run: npm run build -- --base=/Riftwell/
       - name: Configure Pages
