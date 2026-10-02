@@ -2,7 +2,7 @@
 
 [Live preview → ael-dev3.github.io/Riftwell](https://ael-dev3.github.io/Riftwell/)
 
-Collateral credit lines, pooled USDC lending and a focused marketplace, starting with KittenSwap on HyperEVM. Dark surfaces, a light-green accent and a quiet portal theme.
+Collateral credit lines, a pooled USDC vault and a focused marketplace for veKITTEN positions, starting with KittenSwap on HyperEVM. Borrow, Earn and Marketplace views in dark or light, with a light-green accent and a quiet portal theme.
 
 ![Riftwell preview](docs/qa/preview.png)
 
@@ -10,8 +10,8 @@ Collateral credit lines, pooled USDC lending and a focused marketplace, starting
 
 Two build modes share the interface:
 
-- **Preview:** GitHub Pages uses labelled sample positions, local purchase receipts and a pooled lending simulation. Try depositing collateral, borrowing, repaying, supplying USDC and withdrawing vault shares.
-- **Connected:** the Node service supports wallet sign-in, confirmed veKITTEN ownership reads and persistent marketplace listings. The lending view reports its undeployed status without inventing liquidity, credit or yield.
+- **Preview:** GitHub Pages uses labelled sample positions and a local simulation saved in your browser. Deposit demo veKITTEN, borrow against it, simulate reward epochs, plan votes, supply and withdraw vault USDC, buy listings into your wallet or straight into your credit line, sweep several at once, list your own and model repayment in the simulator.
+- **Connected:** the Node service supports wallet sign-in, confirmed veKITTEN ownership reads and persistent marketplace listings. Borrow and Earn report their undeployed status without inventing liquidity, credit or yield.
 
 Marketplace listings are off-chain expressions of interest. Funded purchases and lending are unavailable until compatible contracts are separately released. No application route requests token approvals, transfers NFTs or sends transactions. Earlier unfunded lending requests/offers are retained only for history and cancellation.
 

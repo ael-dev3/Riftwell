@@ -1,47 +1,99 @@
 {
   "status": "passed",
-  "checkedAt": "2026-10-02T17:16:55.485Z",
+  "checkedAt": "2026-10-02T20:30:52.232Z",
   "browser": "isolated headless Chrome",
+  "suiteVersion": "interface-v2",
   "scope": "Built connected frontend + real HTTP/SQLite, simulated read-only chain and ephemeral EOA providers; no real funds, wallets or transactions",
   "checks": [
     "Liveness and security headers",
-    "Connected mode without demo records",
-    "KittenSwap remains sole selected market",
+    "Connected mode opens on Borrow",
+    "The saved theme applies before render under the service CSP",
+    "Accessibility: connected borrow light",
+    "KittenSwap remains the sole selected market",
+    "Supplied market logo and root accent are applied",
+    "Lending API reports an undeployed pool without invented accounting or terms",
+    "Connected lending and settlement capabilities are disabled",
+    "Accessibility: connected borrow signed out",
+    "Connected marketplace shows no demo records",
     "Accessibility: connected marketplace empty",
     "Confirmed ownership positions",
     "Session secret stays HttpOnly",
+    "Dialog mounts in body with selected market accent: connected account positions",
     "Accessibility: connected account positions",
     "Owned-position dialog fits at 320px",
+    "Dialog mounts in body with selected market accent: connected account mobile",
     "Accessibility: connected account mobile",
     "Nonexistent NFT rejected",
+    "Malformed marketplace money is rejected before a server mutation",
+    "Dialog mounts in body with selected market accent: verified listing form",
     "Accessibility: verified listing form",
     "Exact listing price retained",
+    "Accessibility: connected marketplace listing",
     "Purchase cannot settle or transfer assets",
+    "Marketplace review retains the exact seller-paid 0.5% fee",
+    "Dialog mounts in body with selected market accent: purchase blocked review",
     "Accessibility: purchase blocked review",
-    "Malformed money rejected before mutation",
-    "Accessibility: borrowing request form",
-    "Empty lender ownership state",
-    "Lender cannot change requested principal or duration",
-    "Accessibility: lender offer form",
-    "Borrower receives lender offer with agreed terms",
-    "Borrower cannot cancel another lender offer",
-    "Accessibility: received lending offers",
-    "Offer acceptance remains disabled",
-    "Accessibility: borrower offer review",
+    "Borrowing credit, debt and available cash remain unknown before launch",
+    "Wallet ownership is shown without claiming collateral was deposited",
+    "Accessibility: connected borrow positions",
+    "Collateral review cannot deposit or transfer the NFT",
+    "Dialog mounts in body with selected market accent: connected collateral review",
+    "Accessibility: connected collateral review",
+    "Voting waits for the lending launch",
+    "Connected vault has no fabricated liquidity, shares, withdrawals or APR",
+    "Lending has no APR, maturity, proposal or execution form",
+    "Accessibility: connected vault not launched",
+    "Connected undeployed vault fits at 320px",
+    "Accessibility: connected vault mobile",
+    "Service status states that lending and settlement are off",
+    "Dialog mounts in body with selected market accent: connected service status",
+    "Accessibility: connected service status",
+    "Accessibility: connected faq",
+    "Legacy records remain clearly separated from pool balances and credit lines",
+    "Borrower can cancel their request but cannot cancel the received offer",
+    "Dialog mounts in body with selected market accent: legacy lending history",
+    "Accessibility: legacy lending history",
+    "A lender account does not inherit borrower collateral ownership",
+    "The original lender retains a cancellation control for their historical unfunded offer",
     "Session and listing persist across service restart",
     "RPC outage never substitutes demo data",
+    "Accessibility: connected outage notice",
     "Creator can cancel off-chain intent during RPC outage",
-    "No horizontal overflow at 320px",
-    "No horizontal overflow at 390px",
-    "No horizontal overflow at 768px",
-    "No horizontal overflow at 1440px",
-    "No horizontal overflow at 1920px",
+    "Declining cancellation keeps the legacy request active",
+    "Legacy request cancellation remains available during RPC outage and invalidates its old offer",
+    "No horizontal overflow on borrow at 320px",
+    "No horizontal overflow on earn at 320px",
+    "No horizontal overflow on marketplace at 320px",
+    "No horizontal overflow on borrow at 390px",
+    "No horizontal overflow on earn at 390px",
+    "No horizontal overflow on marketplace at 390px",
+    "No horizontal overflow on borrow at 768px",
+    "No horizontal overflow on earn at 768px",
+    "No horizontal overflow on marketplace at 768px",
+    "No horizontal overflow on borrow at 1440px",
+    "No horizontal overflow on earn at 1440px",
+    "No horizontal overflow on marketplace at 1440px",
+    "No horizontal overflow on borrow at 1920px",
+    "No horizontal overflow on earn at 1920px",
+    "No horizontal overflow on marketplace at 1920px",
     "Accessibility: connected mobile marketplace",
+    "Cancelled marketplace listing stays absent after a second service restart",
+    "Cancelled legacy history persists without becoming a pool position",
     "Wallet disconnect clears authenticated UI",
     "Only account reads and personal sign reached test wallet",
-    "No browser runtime exceptions"
+    "No retired lending creation or financial execution endpoint was requested",
+    "No external service or chain RPC reached the browser",
+    "No browser runtime exceptions or console errors"
   ],
   "accessibility": [
+    {
+      "view": "connected borrow light",
+      "violations": []
+    },
+    {
+      "view": "connected borrow signed out",
+      "violations": []
+    },
     {
       "view": "connected marketplace empty",
       "violations": []
@@ -59,23 +111,43 @@
       "violations": []
     },
     {
+      "view": "connected marketplace listing",
+      "violations": []
+    },
+    {
       "view": "purchase blocked review",
       "violations": []
     },
     {
-      "view": "borrowing request form",
+      "view": "connected borrow positions",
       "violations": []
     },
     {
-      "view": "lender offer form",
+      "view": "connected collateral review",
       "violations": []
     },
     {
-      "view": "received lending offers",
+      "view": "connected vault not launched",
       "violations": []
     },
     {
-      "view": "borrower offer review",
+      "view": "connected vault mobile",
+      "violations": []
+    },
+    {
+      "view": "connected service status",
+      "violations": []
+    },
+    {
+      "view": "connected faq",
+      "violations": []
+    },
+    {
+      "view": "legacy lending history",
+      "violations": []
+    },
+    {
+      "view": "connected outage notice",
       "violations": []
     },
     {
@@ -83,5 +155,53 @@
       "violations": []
     }
   ],
-  "errors": []
+  "errors": [],
+  "expectedHttpErrors": [
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+  ],
+  "apiMutations": [
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/challenge"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/verify"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/listings"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/challenge"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/verify"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/listings/b48c9074-1134-4d9b-af8f-9fa7f767bc72"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/loan-requests/47f8fb52-c0ba-4d15-90d6-25620b22763f"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/logout"
+    }
+  ],
+  "externalRequests": [],
+  "screenshots": [
+    "connected-market.jpg",
+    "connected-borrow.jpg",
+    "connected-mobile.jpg"
+  ]
 }
