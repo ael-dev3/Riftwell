@@ -2,6 +2,15 @@
 
 The frontend, service and contract prototypes have separate dependency trees. Frontend production dependencies are React, React DOM and Lucide; the server uses Fastify, ethers, Postgres.js and optional native SQLite. Contract/compiler tooling is not shipped with the application. Captured application audits are in `production-dependency-audit.json` and `server-production-dependency-audit.json`; those historical captures precede the PostgreSQL dependency.
 
+## PostgreSQL backup utility — 2 October 2026
+
+- 114 server tests pass with zero failures or skips, using real temporary SQLite and disposable loopback PostgreSQL. This includes the managed-database configuration regression tests and five backup checks with native PostgreSQL 18.6 tools against PostgreSQL 18.4.
+- The manual utility validates connections, enforces verified remote TLS, rejects inherited libpq overrides, and keeps credentials out of native command arguments and diagnostics. Its integration check confirms a custom archive from a consistent read-only snapshot, schema version 2, nine table counts, a streamed checksum, private file permissions, overwrite refusal and temporary credential cleanup on success and failure.
+- A separate native restore into an empty disposable database matches schema columns, all nine snapshot counts, and synthetic null, Unicode and exact large-integer text. A later source mutation is absent from the restored snapshot. Archives, credentials and disposable proof databases were removed, and the retained local test cluster was stopped. [Local recovery evidence](qa/postgres-backup-local.json).
+- Cancellation waits for the native process to close before archive and credential cleanup. A fixture that ignores SIGTERM verifies the forced-kill fallback and confirms the process is reaped before failure returns.
+- Server type checking, targeted formatting and diff checks pass. The tool adds no dependency or scheduled operation and does not change SQLite backup, service runtime, provider settings, workflow triggers or experimental contracts.
+- No production records were exported. Managed-provider backup retention, production recovery and actual-wallet release checks remain unverified. Local synthetic recovery evidence cannot establish those provider capabilities.
+
 ## Firebase and Deno migration — 2 October 2026
 
 - 160 frontend tests and 107 Node backend tests pass. Backend validation uses real temporary SQLite and PostgreSQL databases. It covers schema migrations, transactions and savepoints, concurrent single-use authentication, durable rate limits, exact-origin CORS, bearer/cookie separation, revocation, expiry, exact listing accounting and disabled settlement.

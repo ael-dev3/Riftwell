@@ -44,7 +44,7 @@ Store `SESSION_SECRET` and credential-bearing RPC settings as secrets. Productio
 
 The frontend keeps bearer sessions only in memory; refresh requires signing in again. Server sessions expire after eight hours by default (`SESSION_TTL_SECONDS=28800`). The API permits exactly `APP_ORIGIN` through CORS, answers supported preflights and preserves Origin and CSRF checks on mutations. Cookie mode remains available for a combined same-origin service; it is not used across these provider domains.
 
-PostgreSQL coordinates transactions and rate-limit windows across instances and cold starts. Run PostgreSQL integration tests with `TEST_DATABASE_URL` pointing to a disposable database, never the production database. The SQLite backup utility does not back up PostgreSQL. A manual PostgreSQL backup and isolated restore check are pending; automatic backup retention and point-in-time recovery have not been verified for this managed integration.
+PostgreSQL coordinates transactions and rate-limit windows across instances and cold starts. Run PostgreSQL integration tests with `TEST_DATABASE_URL` pointing to a disposable database, never the production database. The SQLite backup utility does not back up PostgreSQL. The [manual PostgreSQL utility](OPERATIONS.md#postgresql) passes local synthetic backup and isolated restore checks; no production records were exported. Production recovery, automatic backup retention and point-in-time recovery have not been verified for this managed integration.
 
 ## Build and review the Firebase preview
 

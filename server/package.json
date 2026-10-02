@@ -10,7 +10,8 @@
     "start": "node index.ts",
     "typecheck": "tsc -p tsconfig.json",
     "test": "node --test --test-concurrency=1 test/*.test.ts",
-    "backup": "node backup.ts"
+    "backup": "node backup.ts",
+    "backup:postgres": "node postgres-backup.ts"
   },
   "dependencies": {
     "better-sqlite3": "13.0.3",
