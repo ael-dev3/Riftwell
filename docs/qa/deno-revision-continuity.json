@@ -1,0 +1,102 @@
+{
+  "checkedAt": "2026-10-02T22:24:21.024Z",
+  "api": "https://riftwell.ael-dev3.deno.net",
+  "origin": "https://riftwell-ael.web.app",
+  "previousRevision": "9ggtjjp0m6mg",
+  "checks": [
+    {
+      "name": "Initial database and canonical-chain readiness",
+      "passed": true
+    },
+    {
+      "name": "Synthetic challenge persisted before deployment",
+      "passed": true
+    },
+    {
+      "name": "Synthetic bearer session issued before deployment",
+      "passed": true
+    },
+    {
+      "name": "Initial persisted session authenticated",
+      "passed": true
+    },
+    {
+      "name": "Unconsumed challenge persisted before deployment",
+      "passed": true
+    },
+    {
+      "name": "Different provider revision confirmed routed",
+      "passed": true
+    },
+    {
+      "name": "Pre-deployment bearer authenticates after new revision",
+      "passed": true
+    },
+    {
+      "name": "Session expiry and CSRF secret remain stable",
+      "passed": true
+    },
+    {
+      "name": "Private creator view authorizes surviving session",
+      "passed": true
+    },
+    {
+      "name": "CSRF protection retained across revision",
+      "passed": true
+    },
+    {
+      "name": "Previous CSRF token accepted while funded actions stay disabled",
+      "passed": true
+    },
+    {
+      "name": "Pre-deployment challenge consumed exactly once after revision",
+      "passed": true
+    },
+    {
+      "name": "Already-consumed challenge stays consumed across revision",
+      "passed": true
+    },
+    {
+      "name": "New revision database and canonical-chain readiness",
+      "passed": true
+    },
+    {
+      "name": "Synthetic session revoked after continuity test",
+      "passed": true
+    },
+    {
+      "name": "Revoked synthetic token no longer authenticates",
+      "passed": true
+    },
+    {
+      "name": "Synthetic session revoked after continuity test",
+      "passed": true
+    },
+    {
+      "name": "Revoked synthetic token no longer authenticates",
+      "passed": true
+    }
+  ],
+  "limitations": [
+    "Ephemeral EOA and new synthetic authentication records only; no production export, user wallet, owned-NFT listing or funded operation.",
+    "A routed provider revision plus stable-origin requests proves revision continuity, not an independently forced cold start or concurrent replica identity."
+  ],
+  "newRevision": "y91af7xr00p2",
+  "routedAt": "2026-10-02T22:25:56.429Z",
+  "afterRevisionRequestId": "b53273c9-b618-4209-8a02-c76d3ed108a3",
+  "afterRevisionTraceId": "304e78b768801c37954f8cd88986994f",
+  "finishedAt": "2026-10-02T22:26:52.113Z",
+  "successfulRunSessionsRevoked": true,
+  "initialAttempt": {
+    "revision": "9ggtjjp0m6mg",
+    "result": "No continuity conclusion: terminal stdin was closed. The confirmed test process was stopped before restarting with an interactive terminal.",
+    "syntheticSessionCleanup": "One initial synthetic session was not explicitly revoked; its raw token was discarded and it expires under the configured eight-hour TTL. No real wallet or funded access was involved."
+  },
+  "migration": [
+    {
+      "revision": "y91af7xr00p2",
+      "timestamp": "2026-10-02T22:25:56.249830151Z",
+      "message": "Riftwell PostgreSQL schema is ready."
+    }
+  ]
+}

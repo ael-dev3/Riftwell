@@ -2,6 +2,13 @@
 
 The frontend, service and contract prototypes have separate dependency trees. Frontend production dependencies are React, React DOM and Lucide; the server uses Fastify, ethers, Postgres.js and optional native SQLite. Contract/compiler tooling is not shipped with the application. Captured application audits are in `production-dependency-audit.json` and `server-production-dependency-audit.json`; those historical captures precede the PostgreSQL dependency.
 
+## Hosted revision continuity — 2 October 2026
+
+- The validated backend was uploaded directly to Deno, leaving GitHub and experimental contracts untouched. Current production revision `y91af7xr00p2` completed its PostgreSQL schema migration before routing, as confirmed by the fixed migration message in provider logs.
+- Eighteen HTTPS checks pass across rollout from revision `9ggtjjp0m6mg`. A bearer issued before rollout authenticates afterward with identical expiry and CSRF token, and authorizes its private creator view. Missing CSRF is rejected; contract-dependent lending stays disabled. A persisted challenge submitted concurrently afterward is consumed exactly once, while an already-consumed challenge stays rejected. Database and canonical-chain readiness remain valid.
+- Both sessions in the successful continuity trial were logged out and reject further authentication. An earlier harness could not accept input and was stopped; its initial synthetic token was discarded and remains subject to the configured eight-hour expiry. The evidence distinguishes this failed harness attempt from the successful trial. No user wallet, funds, NFT transfer or production database export was involved.
+- [Continuity report](qa/deno-revision-continuity.json) records provider revision/routing metadata and stable-origin behavior. It does not independently identify each serving replica or force a cold start. Actual-owner listing flows, production recovery and managed backup retention still require separate evidence.
+
 ## PostgreSQL backup utility — 2 October 2026
 
 - 114 server tests pass with zero failures or skips, using real temporary SQLite and disposable loopback PostgreSQL. This includes the managed-database configuration regression tests and five backup checks with native PostgreSQL 18.6 tools against PostgreSQL 18.4.
