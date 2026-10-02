@@ -1,11 +1,28 @@
 # Frontend hosting
 
-`npm run build` produces a static `dist/` directory. Deploy its contents to an HTTPS static host; no server secrets or user wallet keys exist in this frontend. The frontend uses hash navigation, so a server-side route rewrite is unnecessary.
+The frontend preview is hosted at [ael-dev3.github.io/Riftwell](https://ael-dev3.github.io/Riftwell/). Its collections, balances and actions remain illustrative; hosting does not enable wallet transactions or deploy contracts.
 
-The current Vite base targets the domain root. For subdirectory hosting, configure Vite's `base` and verify asset paths under that exact URL. A custom domain or root preview deployment works directly.
+## GitHub Pages
 
-Recommended HTTP headers: `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and an appropriate Content Security Policy permitting this site's locally bundled styles/scripts/assets. The portal uses local CSS/SVG; no font or media CDN allowance is necessary. Test a CSP against the deployed build before enabling it; React and the interface use style attributes for visual state.
+`.github/workflows/pages.yml` tests and builds the frontend, then publishes only `dist/` through the official GitHub Pages actions. It runs on changes to frontend source, assets, dependencies, build configuration or the workflow on `main`; unrelated prototype or documentation changes do not deploy the site. Actions are pinned to verified commit revisions. Deployment uses the repository's `github-pages` environment and GitHub's short-lived token, with no stored deployment secret.
 
-Cache hashed `/assets/` files immutably. Revalidate `index.html` so a new release cannot leave clients pointed at missing bundles. Enable compression at the host and verify mobile layout, keyboard dialogs and reduced motion at the public URL.
+The Pages build uses `/Riftwell/` as its Vite base. Runtime artwork and logo paths use `import.meta.env.BASE_URL`, so they work at that repository URL and with a root deployment. Hash navigation needs no server-side route rewrite.
 
-Deployment is intentionally separate from source publication. This repository introduces no GitHub Actions workflows, deployment credentials, contract deployment scripts or automatic funded release.
+To reproduce the Pages build locally:
+
+```sh
+npm ci --ignore-scripts
+npm run test
+npm run build -- --base=/Riftwell/
+npm run preview -- --base=/Riftwell/ --port 5192
+```
+
+Open `http://127.0.0.1:5192/Riftwell/`. Run the browser checks with `RIFTWELL_PREVIEW_URL=http://127.0.0.1:5192/Riftwell/ npm run test:ui`. Verify artwork, both hash routes, keyboard dialogs and mobile layouts at the final public URL after deployment.
+
+## Other static hosts
+
+`npm run build` defaults to the domain root and produces static `dist/` contents. No backend, API key, external media or user wallet key is needed. Set a matching Vite `--base` for other subdirectories.
+
+For hosts with configurable response headers, use `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin` and a tested Content Security Policy allowing the locally bundled scripts, styles and assets. React uses style attributes for visual state. GitHub Pages controls its own HTTP headers and caching; this repository does not claim custom header enforcement there.
+
+On a configurable host, cache hashed assets immutably and revalidate `index.html`. The Pages workflow deploys the frontend only; it never installs the prototype toolchain or runs a contract deployment.

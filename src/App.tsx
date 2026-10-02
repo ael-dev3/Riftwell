@@ -192,7 +192,12 @@ export default function App() {
           }}
         >
           <span className="brand-mark">
-            <img src="/riftwell.svg" alt="" width="37" height="37" />
+            <img
+              src={`${import.meta.env.BASE_URL}riftwell.svg`}
+              alt=""
+              width="37"
+              height="37"
+            />
           </span>
           <span className="brand-name">
             riftwell<span className="brand-period">.</span>
@@ -360,7 +365,12 @@ export default function App() {
           }}
         >
           <span className="brand-mark">
-            <img src="/riftwell.svg" alt="" width="24" height="24" />
+            <img
+              src={`${import.meta.env.BASE_URL}riftwell.svg`}
+              alt=""
+              width="24"
+              height="24"
+            />
           </span>
           <span className="brand-name">riftwell.</span>
         </a>

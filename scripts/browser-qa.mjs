@@ -4,7 +4,12 @@ import { createRequire } from 'node:module';
 import { chromium } from 'playwright';
 
 const require = createRequire(import.meta.url);
-const base = process.env.RIFTWELL_PREVIEW_URL ?? 'http://127.0.0.1:5191';
+const previewURL = new URL(
+  process.env.RIFTWELL_PREVIEW_URL ?? 'http://127.0.0.1:5191',
+);
+previewURL.hash = '';
+previewURL.search = '';
+const base = previewURL.href.replace(/\/+$/, '');
 const output = new URL('../docs/qa/', import.meta.url);
 await mkdir(output, { recursive: true });
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
@@ -77,7 +82,7 @@ async function close() {
   await dialog().waitFor({ state: 'hidden' });
 }
 try {
-  await page.goto(base, { waitUntil: 'networkidle' });
+  await page.goto(`${base}/`, { waitUntil: 'networkidle' });
   check(
     'Six sample NFT positions',
     (await page.locator('.asset-card').count()) === 6,
@@ -401,7 +406,7 @@ try {
     });
   });
   const restrictedPage = await restrictedContext.newPage();
-  await restrictedPage.goto(base, { waitUntil: 'networkidle' });
+  await restrictedPage.goto(`${base}/`, { waitUntil: 'networkidle' });
   check(
     'Storage unavailable notice',
     await restrictedPage.locator('.storage-notice').isVisible(),
