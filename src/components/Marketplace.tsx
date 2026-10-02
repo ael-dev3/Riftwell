@@ -180,7 +180,7 @@ export default function Marketplace({ assets, onDetails, onPurchase }: Props) {
       )}
       <p className="workspace-note">
         Fictional NFT positions and RIFT units. Values are illustrative; no
-        chain data or yield is shown. Seller fee: 0.5%.
+        chain data or yield is shown.
       </p>
     </>
   );

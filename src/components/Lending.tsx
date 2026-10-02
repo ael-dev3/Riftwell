@@ -76,17 +76,6 @@ export default function Lending({
                 : 'Review fictional USDC requests and propose an amount, APR and duration. APR is capped at 40% in this preview.'}
             </p>
           </div>
-          <div className="lending-stats">
-            <span>
-              {isBorrow ? 'One-time origination fee' : 'Platform fee to lender'}
-            </span>
-            <strong>{isBorrow ? '0.5%' : '0%'}</strong>
-            <small>
-              {isBorrow
-                ? 'Lender interest is separate'
-                : 'Borrower pays 0.5% origination'}
-            </small>
-          </div>
         </div>
         <div className="lending-table-wrap">
           <table className="lending-table">

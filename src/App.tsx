@@ -1,10 +1,4 @@
-import {
-  ArrowRight,
-  ArrowUpRight,
-  CircleUserRound,
-  Info,
-  MoveUpRight,
-} from 'lucide-react';
+import { ArrowRight, ArrowUpRight, CircleUserRound, Info } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { ASSETS } from './data';
 import {
@@ -290,27 +284,6 @@ export default function App() {
             </div>
           </div>
         </section>
-        <div className="summary-strip" aria-label="Preview features and fees">
-          <div className="summary-item">
-            <span className="summary-label">Two ways to explore</span>
-            <strong className="summary-value">
-              Trade &amp; borrow
-              <MoveUpRight size={19} aria-hidden="true" />
-            </strong>
-          </div>
-          <div className="summary-item">
-            <span className="summary-label">Marketplace seller fee</span>
-            <strong className="summary-value">
-              0.5%<small>per sale</small>
-            </strong>
-          </div>
-          <div className="summary-item">
-            <span className="summary-label">Borrow origination fee</span>
-            <strong className="summary-value">
-              0.5%<small>one time</small>
-            </strong>
-          </div>
-        </div>
         {storageIssue && (
           <div className="notice storage-notice" role="status">
             <Info size={18} aria-hidden="true" />
@@ -555,17 +528,6 @@ export default function App() {
                 <dd>
                   Saved to this browser’s local storage. Use Reset preview to
                   clear it.
-                </dd>
-              </div>
-              <div>
-                <dt>Marketplace fee</dt>
-                <dd>Seller pays 0.5% of the sale price.</dd>
-              </div>
-              <div>
-                <dt>Borrowing fee</dt>
-                <dd>
-                  One-time 0.5% of principal. Lender interest is calculated
-                  separately.
                 </dd>
               </div>
             </dl>
