@@ -2,15 +2,28 @@ import { useCallback, useEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { withViewTransition } from './motion';
 
-export type Page = 'borrow' | 'earn' | 'marketplace' | 'simulator' | 'faq';
+export type Page =
+  | 'borrow'
+  | 'earn'
+  | 'marketplace'
+  | 'simulator'
+  | 'faq'
+  | 'stats'
+  | 'brand'
+  | 'privacy'
+  | 'not-found';
 export type Route = { page: Page; item: string | null };
 
+/** Pages reachable by name. "not-found" is only ever a parse result. */
 export const PAGES: readonly Page[] = [
   'borrow',
   'earn',
   'marketplace',
   'simulator',
   'faq',
+  'stats',
+  'brand',
+  'privacy',
 ];
 export const PRIMARY_PAGES: readonly Page[] = ['borrow', 'earn', 'marketplace'];
 export const PAGE_LABELS: Readonly<Record<Page, string>> = {
@@ -19,46 +32,52 @@ export const PAGE_LABELS: Readonly<Record<Page, string>> = {
   marketplace: 'Marketplace',
   simulator: 'Simulator',
   faq: 'FAQ',
+  stats: 'Statistics',
+  brand: 'Brand kit',
+  privacy: 'Privacy',
+  'not-found': 'Not found',
 };
 const LEGACY: Readonly<Record<string, Page>> = { lending: 'borrow' };
 const ITEM = /^[a-z0-9-]{1,40}$/;
 
-/** Parse "#page" or "#page/item". Unknown routes return null. */
-export function parseHash(hash: string): Route | null {
-  const [name = '', item, extra] = hash.replace(/^#/, '').split('/');
-  if (extra !== undefined) return null;
+/**
+ * Parse "#page" or "#page/item". An empty hash opens the fallback page; an
+ * unknown or malformed hash becomes a not-found route that keeps its text.
+ */
+export function parseHash(hash: string, fallback: Page = 'borrow'): Route {
+  const path = hash.replace(/^#/, '');
+  if (!path) return { page: fallback, item: null };
+  const [name = '', item, extra] = path.split('/');
   const page = (PAGES as readonly string[]).includes(name)
     ? (name as Page)
     : LEGACY[name];
-  if (!page) return null;
-  if (item === undefined) return { page, item: null };
-  return page === 'marketplace' && ITEM.test(item) ? { page, item } : null;
+  if (page && extra === undefined) {
+    if (item === undefined) return { page, item: null };
+    if (page === 'marketplace' && ITEM.test(item)) return { page, item };
+  }
+  return { page: 'not-found', item: path.slice(0, 200) };
 }
 
 export const routeHash = (route: Route) =>
-  `#${route.page}${route.item ? `/${route.item}` : ''}`;
-
-function currentRoute(fallback: Page): Route {
-  return parseHash(window.location.hash) ?? { page: fallback, item: null };
-}
+  route.page === 'not-found'
+    ? `#${route.item ?? ''}`
+    : `#${route.page}${route.item ? `/${route.item}` : ''}`;
 
 /**
- * Hash routing that works on static hosting. Legacy and unknown hashes are
- * replaced (not pushed) so the back button never lands on a dead route.
+ * Hash routing that works on static hosting. Legacy hashes are replaced (not
+ * pushed) so the back button never lands on a retired route.
  */
 export function useHashRoute(fallback: Page = 'borrow') {
-  const [route, setRoute] = useState<Route>(() => currentRoute(fallback));
+  const [route, setRoute] = useState<Route>(() =>
+    parseHash(window.location.hash, fallback),
+  );
 
   useEffect(() => {
-    const canonical = routeHash(currentRoute(fallback));
+    const canonical = routeHash(parseHash(window.location.hash, fallback));
     if (window.location.hash !== canonical)
       window.history.replaceState(null, '', canonical);
     const sync = () => {
-      const next = parseHash(window.location.hash);
-      if (!next) {
-        window.history.replaceState(null, '', routeHash(route));
-        return;
-      }
+      const next = parseHash(window.location.hash, fallback);
       if (window.location.hash !== routeHash(next))
         window.history.replaceState(null, '', routeHash(next));
       // popstate and hashchange can both fire for one traversal.

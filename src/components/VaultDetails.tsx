@@ -1,4 +1,5 @@
 import { ArrowRight } from 'lucide-react';
+import { useState } from 'react';
 import { COLLATERAL_LIMITS } from '../data';
 import { formatMicros, roundAmount } from '../domain';
 import { usd } from '../format';
@@ -20,9 +21,11 @@ export default function VaultDetails({ market, lending, onClose }: Props) {
   const metrics = lending
     ? getLendingMetrics(lending, COLLATERAL_LIMITS)
     : null;
-  const epochs = lending
-    ? lending.activity.filter((entry) => entry.kind === 'epoch').slice(-13)
+  const [span, setSpan] = useState<4 | 13 | 0>(13);
+  const allEpochs = lending
+    ? lending.activity.filter((entry) => entry.kind === 'epoch')
     : [];
+  const epochs = span ? allEpochs.slice(-span) : allEpochs;
   const utilization = metrics ? metrics.utilizationBps / 100 : null;
   const lastRepaid = epochs.length
     ? BigInt(epochs[epochs.length - 1].rewardRepaidMicros)
@@ -58,13 +61,42 @@ export default function VaultDetails({ market, lending, onClose }: Props) {
           </div>
         </dl>
         <section className="detail-section" aria-labelledby="revenue-history">
-          <h3 id="revenue-history">
-            {lending ? 'Simulated revenue history' : 'Revenue history'}
-          </h3>
+          <div className="block-head">
+            <h3 id="revenue-history">
+              {lending ? 'Simulated revenue history' : 'Revenue history'}
+            </h3>
+            {allEpochs.length > 1 && (
+              <div
+                className="mini-toggle"
+                role="group"
+                aria-label="Epochs shown"
+              >
+                {(
+                  [
+                    [4, '4 epochs'],
+                    [13, '13 epochs'],
+                    [0, 'All'],
+                  ] as const
+                ).map(([value, label]) => (
+                  <button
+                    key={label}
+                    type="button"
+                    aria-pressed={span === value}
+                    onClick={() => setSpan(value)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           {epochs.length > 1 ? (
             <AreaChart
               ariaLabel={`Simulated lender revenue and reward repayments over your last ${epochs.length} epochs`}
-              labels={epochs.map((_, index) => `Epoch ${index + 1}`)}
+              labels={epochs.map(
+                (_, index) =>
+                  `Epoch ${allEpochs.length - epochs.length + index + 1}`,
+              )}
               format={(value) => `${usd(value)} USDC`}
               series={[
                 {

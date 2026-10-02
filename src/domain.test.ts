@@ -149,6 +149,7 @@ describe('stored marketplace previews', () => {
       JSON.stringify({ version: 3, receipts: [{ ...purchase, destination }] });
     expect(parsePortfolio(raw('wallet'), ids).receipts).toHaveLength(1);
     expect(parsePortfolio(raw('collateral'), ids).receipts).toHaveLength(1);
+    expect(parsePortfolio(raw('relayer'), ids).receipts).toHaveLength(1);
     expect(parsePortfolio(raw('vault'), ids).receipts).toHaveLength(0);
   });
   it('migrates purchases without treating old proposals or loans as pooled deposits', () => {

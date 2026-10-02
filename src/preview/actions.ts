@@ -1,7 +1,14 @@
 import type { Asset } from '../domain';
 
 export type LendingAction =
-  | { kind: 'deposit-collateral' | 'remove-collateral'; asset: Asset }
+  | {
+      kind:
+        | 'deposit-collateral'
+        | 'remove-collateral'
+        | 'relayer-deposit'
+        | 'relayer-withdraw';
+      asset: Asset;
+    }
   | { kind: 'borrow' | 'repay' | 'supply' | 'withdraw' | 'how' }
   | { kind: 'epoch'; rewardMicros?: string };
 
@@ -15,6 +22,8 @@ export const activityLabel: Readonly<Record<string, string>> = {
   redeem: 'Shares redeemed',
   epoch: 'Reward epoch simulated',
   purchase: 'Position purchased',
+  'relayer-deposit': 'Added to relayer',
+  'relayer-withdraw': 'Removed from relayer',
 };
 
 export const BORROW_KINDS = [
@@ -24,5 +33,7 @@ export const BORROW_KINDS = [
   'remove-collateral',
   'epoch',
   'purchase',
+  'relayer-deposit',
+  'relayer-withdraw',
 ] as const;
 export const VAULT_KINDS = ['supply', 'withdraw', 'redeem', 'epoch'] as const;

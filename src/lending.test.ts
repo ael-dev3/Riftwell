@@ -5,15 +5,18 @@ import {
   borrow,
   createLendingState,
   depositCollateral,
+  depositToRelayer,
   getLendingMetrics,
   parseLendingState,
   purchase,
   purchaseIntoCollateral,
+  purchaseIntoRelayer,
   redeem,
   removeCollateral,
   repay,
   supply,
   withdraw,
+  withdrawFromRelayer,
   type LendingState,
 } from './lending';
 
@@ -502,5 +505,111 @@ describe('marketplace purchases in the preview ledger', () => {
   it('round-trips purchase activity through saved state', () => {
     const state = purchase(createLendingState(), 'listed', '180000000');
     expect(parseLendingState(JSON.stringify(state), limits)).toEqual(state);
+  });
+});
+
+describe('relayer positions in the preview ledger', () => {
+  it('collects net rewards for relayer positions without credit or debt', () => {
+    const start = createLendingState();
+    const relayed = depositToRelayer(start, 'first', limits);
+    expect(relayed.relayerIds).toEqual(['first']);
+    expect(relayed.activity.at(-1)).toMatchObject({
+      kind: 'relayer-deposit',
+      collateralId: 'first',
+    });
+    expect(getLendingMetrics(relayed, limits).totalCreditMicros).toBe('0');
+    expect(() => borrow(relayed, '1000000', limits)).toThrowError(
+      expect.objectContaining({ code: 'INSUFFICIENT_CREDIT' }),
+    );
+    const paid = advanceEpoch(relayed, '0', '0', '40000000');
+    expect(units(paid, 'walletMicros') - units(relayed, 'walletMicros')).toBe(
+      40_000_000n,
+    );
+    expect(paid.activity.at(-1)).toMatchObject({
+      kind: 'epoch',
+      relayerRewardMicros: '40000000',
+      rewardRepaidMicros: '0',
+    });
+    expect(paid.debtMicros).toBe('0');
+    expectInvariants(paid);
+  });
+
+  it('keeps relayer and collateral positions apart', () => {
+    const relayed = depositToRelayer(createLendingState(), 'first', limits);
+    expect(() => depositCollateral(relayed, 'first', limits)).toThrowError(
+      expect.objectContaining({ code: 'IN_RELAYER' }),
+    );
+    expect(() => depositToRelayer(relayed, 'first', limits)).toThrowError(
+      expect.objectContaining({ code: 'ALREADY_IN_RELAYER' }),
+    );
+    const collateral = depositCollateral(
+      createLendingState(),
+      'second',
+      limits,
+    );
+    expect(() => depositToRelayer(collateral, 'second', limits)).toThrowError(
+      expect.objectContaining({ code: 'COLLATERAL_DEPOSITED' }),
+    );
+    expect(() =>
+      depositToRelayer(createLendingState(), 'unknown', limits),
+    ).toThrowError(expect.objectContaining({ code: 'INVALID_COLLATERAL' }));
+    expect(() =>
+      withdrawFromRelayer(createLendingState(), 'first'),
+    ).toThrowError(expect.objectContaining({ code: 'NOT_IN_RELAYER' }));
+    const released = withdrawFromRelayer(relayed, 'first');
+    expect(released.relayerIds).toEqual([]);
+    expect(released.activity.at(-1)?.kind).toBe('relayer-withdraw');
+    expect(depositCollateral(released, 'first', limits).collateralIds).toEqual([
+      'first',
+    ]);
+  });
+
+  it('pays relayer rewards only while positions are in the relayer', () => {
+    const state = advanceEpoch(createLendingState(), '0', '0', '40000000');
+    expect(state.walletMicros).toBe(createLendingState().walletMicros);
+    expect(state.activity.at(-1)?.relayerRewardMicros).toBe('0');
+    expect(() =>
+      advanceEpoch(
+        depositToRelayer(createLendingState(), 'first', limits),
+        '0',
+        '0',
+        '1000000001',
+      ),
+    ).toThrowError(expect.objectContaining({ code: 'INVALID_REWARD' }));
+  });
+
+  it('buys straight into the relayer and pays the seller from the wallet', () => {
+    const start = createLendingState();
+    const bought = purchaseIntoRelayer(start, 'third', '3100000000', limits);
+    expect(bought.relayerIds).toEqual(['third']);
+    expect(bought.collateralIds).toEqual([]);
+    expect(bought.activity.slice(-2).map((entry) => entry.kind)).toEqual([
+      'relayer-deposit',
+      'purchase',
+    ]);
+    expect(units(start, 'walletMicros') - units(bought, 'walletMicros')).toBe(
+      3_100_000_000n,
+    );
+    expect(() =>
+      purchaseIntoRelayer(start, 'third', '25000000001', limits),
+    ).toThrowError(expect.objectContaining({ code: 'INSUFFICIENT_WALLET' }));
+  });
+
+  it('upgrades previews saved before the relayer existed and rejects overlaps', () => {
+    const saved = advanceEpoch(
+      depositCollateral(createLendingState(), 'first', limits),
+      '10000000',
+      '0',
+    );
+    const legacy = JSON.parse(JSON.stringify(saved));
+    delete legacy.relayerIds;
+    for (const entry of legacy.activity) delete entry.relayerRewardMicros;
+    expect(parseLendingState(JSON.stringify(legacy), limits)).toEqual(saved);
+    const overlapping = { ...saved, relayerIds: ['first'] };
+    expect(parseLendingState(JSON.stringify(overlapping), limits)).toEqual(
+      createLendingState(),
+    );
+    const relayed = depositToRelayer(createLendingState(), 'second', limits);
+    expect(parseLendingState(JSON.stringify(relayed), limits)).toEqual(relayed);
   });
 });

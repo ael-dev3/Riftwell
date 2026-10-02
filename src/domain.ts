@@ -128,7 +128,7 @@ export function filterAssets(
 }
 
 type ReceiptBase = { id: string; assetId: string; createdAt: string };
-export type PurchaseDestination = 'wallet' | 'collateral';
+export type PurchaseDestination = 'wallet' | 'collateral' | 'relayer';
 export type PurchaseReceipt = ReceiptBase & {
   kind: 'purchase';
   price: number;
@@ -165,7 +165,8 @@ function validReceipt(value: unknown): value is PurchaseReceipt {
     entry.sellerFee === marketplaceFee(entry.price as number) &&
     (entry.destination === undefined ||
       entry.destination === 'wallet' ||
-      entry.destination === 'collateral')
+      entry.destination === 'collateral' ||
+      entry.destination === 'relayer')
   );
 }
 

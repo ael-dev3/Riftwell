@@ -1,5 +1,14 @@
-import { ArrowRight, Check, Copy, Layers3, Tag, Wallet } from 'lucide-react';
+import {
+  ArrowRight,
+  Check,
+  Copy,
+  Layers3,
+  RefreshCcw,
+  Tag,
+  Wallet,
+} from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
+import { assetLink, copyText } from '../app/links';
 import { useToast } from '../app/toast';
 import {
   COLLATERAL_LIMITS,
@@ -26,6 +35,7 @@ import {
 } from '../domain';
 import { getLendingMetrics, type LendingState } from '../lending';
 import {
+  buyerError,
   LISTING_EXPIRY_DAYS,
   listingPriceError,
   type PreviewListing,
@@ -35,12 +45,6 @@ import { AmountField, AssetSummary, Breakdown, Notice } from './ui/Bits';
 
 const min = (a: bigint, b: bigint) => (a < b ? a : b);
 const max = (a: bigint, b: bigint) => (a > b ? a : b);
-
-export function assetLink(asset: Asset) {
-  const url = new URL(window.location.href);
-  url.hash = `#marketplace/${asset.positionId}`;
-  return url.href;
-}
 
 export function AssetDetails({
   asset,
@@ -123,18 +127,16 @@ export function AssetDetails({
         <button
           type="button"
           className="button ghost"
-          onClick={() => {
-            const link = assetLink(asset);
-            void navigator.clipboard
-              ?.writeText(link)
-              .then(() => toast('Listing link copied.', 'info'))
-              .catch(() =>
-                toast(
-                  'Copy failed. The link is in the address bar.',
-                  'warning',
-                ),
-              );
-          }}
+          onClick={() =>
+            void copyText(assetLink(asset)).then((copied) =>
+              copied
+                ? toast('Listing link copied.', 'info')
+                : toast(
+                    'Copy failed. The link is in the address bar.',
+                    'warning',
+                  ),
+            )
+          }
         >
           <Copy size={15} aria-hidden="true" /> Copy link
         </button>
@@ -301,11 +303,40 @@ export function BuyDialog({ asset, lending, onClose, onBuy }: BuyProps) {
                 </small>
               </span>
             </label>
+            <label className="destination-option">
+              <input
+                type="radio"
+                name="destination"
+                value="relayer"
+                checked={destination === 'relayer'}
+                onChange={() => {
+                  setDestination('relayer');
+                  setError('');
+                }}
+              />
+              <span className="destination-icon" aria-hidden="true">
+                <RefreshCcw size={17} />
+              </span>
+              <span>
+                <strong>Reward relayer</strong>
+                <small>
+                  Automated reward collection · about{' '}
+                  {formatMicros(SAMPLE_REWARD_MICROS[asset.id])} per epoch, no
+                  borrowing
+                </small>
+              </span>
+            </label>
           </fieldset>
           {destination === 'collateral' && (
             <ol className="stepper" aria-label="Purchase steps">
               <li>Deposit</li>
               <li>Borrow{borrowMicros === 0n ? ' (none)' : ''}</li>
+              <li>Pay seller</li>
+            </ol>
+          )}
+          {destination === 'relayer' && (
+            <ol className="stepper" aria-label="Purchase steps">
+              <li>Add to relayer</li>
               <li>Pay seller</li>
             </ol>
           )}
@@ -368,7 +399,9 @@ export function BuyDialog({ asset, lending, onClose, onBuy }: BuyProps) {
           <button className="button primary" type="submit">
             {destination === 'collateral'
               ? 'Buy & deposit in preview'
-              : 'Buy in preview'}
+              : destination === 'relayer'
+                ? 'Buy into relayer in preview'
+                : 'Buy in preview'}
             <ArrowRight size={16} aria-hidden="true" />
           </button>
         </div>
@@ -483,19 +516,25 @@ export function SweepDialog({
 export function SellDialog({
   positions,
   initialId,
+  initialVisibility = 'public',
   onClose,
   onList,
 }: {
   positions: readonly Asset[];
   initialId?: string;
+  initialVisibility?: 'public' | 'private';
   onClose: () => void;
   onList: (draft: {
     assetId: string;
     price: string;
     expiryDays: number;
+    buyer?: string;
   }) => string | null;
 }) {
   const [assetId, setAssetId] = useState(initialId ?? positions[0]?.id ?? '');
+  const [visibility, setVisibility] = useState(initialVisibility);
+  const [buyer, setBuyer] = useState('');
+  const buyerRef = useRef<HTMLInputElement>(null);
   const selected = positions.find((asset) => asset.id === assetId);
   const [price, setPrice] = useState(() =>
     selected ? String(selected.price) : '',
@@ -516,7 +555,22 @@ export function SellDialog({
       priceRef.current?.focus();
       return;
     }
-    const result = onList({ assetId, price, expiryDays });
+    if (visibility === 'private') {
+      const buyerIssue = buyer.trim()
+        ? buyerError(buyer)
+        : 'Enter the buyer’s 0x address for a private listing.';
+      if (buyerIssue) {
+        setError(buyerIssue);
+        buyerRef.current?.focus();
+        return;
+      }
+    }
+    const result = onList({
+      assetId,
+      price,
+      expiryDays,
+      buyer: visibility === 'private' ? buyer : undefined,
+    });
     if (result) setError(result);
   }
 
@@ -614,6 +668,58 @@ export function SellDialog({
                   </select>
                 </div>
               </div>
+              <fieldset className="segmented compact">
+                <legend className="field-label">Visibility</legend>
+                {(
+                  [
+                    ['public', 'Public', 'Anyone can buy it'],
+                    ['private', 'Private (OTC)', 'Reserved for one buyer'],
+                  ] as const
+                ).map(([value, label, text]) => (
+                  <label key={value} className="segment">
+                    <input
+                      type="radio"
+                      name="listing-visibility"
+                      value={value}
+                      checked={visibility === value}
+                      onChange={() => {
+                        setVisibility(value);
+                        setError('');
+                      }}
+                    />
+                    <span>
+                      <strong>{label}</strong>
+                      <small>{text}</small>
+                    </span>
+                  </label>
+                ))}
+              </fieldset>
+              {visibility === 'private' && (
+                <div className="form-field">
+                  <label className="field-label" htmlFor="sell-buyer">
+                    Buyer address
+                  </label>
+                  <input
+                    ref={buyerRef}
+                    id="sell-buyer"
+                    className="input-control mono"
+                    autoComplete="off"
+                    spellCheck={false}
+                    placeholder="0x…"
+                    maxLength={42}
+                    value={buyer}
+                    aria-describedby="sell-buyer-hint sell-error"
+                    onChange={(event) => {
+                      setBuyer(event.target.value);
+                      setError('');
+                    }}
+                  />
+                  <p className="form-hint" id="sell-buyer-hint">
+                    Only this address will see the listing in its OTC tab. It
+                    stays off the public listings.
+                  </p>
+                </div>
+              )}
               <Breakdown
                 rows={[
                   {
@@ -719,6 +825,7 @@ export function SuccessDialog({
   const collateral = receipts.some(
     (receipt) => receipt.destination === 'collateral',
   );
+  const relayer = receipts.some((receipt) => receipt.destination === 'relayer');
   const total = receipts.reduce(
     (sum, receipt) => sum + priceMicros(receipt.price),
     0n,
@@ -739,7 +846,7 @@ export function SuccessDialog({
         </span>
         <p>
           {assets.length === 1
-            ? `${assets[0].name} is now ${collateral ? 'deposited as collateral' : 'in your demo wallet'}.`
+            ? `${assets[0].name} is now ${collateral ? 'deposited as collateral' : relayer ? 'in the reward relayer' : 'in your demo wallet'}.`
             : `${assets.length} positions are now in your demo wallet.`}
         </p>
         <div className="receipt-card">
@@ -773,7 +880,11 @@ export function SuccessDialog({
           Continue browsing
         </button>
         <button className="button primary" onClick={onBorrow}>
-          {collateral ? 'View credit line' : 'Deposit as collateral'}{' '}
+          {collateral
+            ? 'View credit line'
+            : relayer
+              ? 'View relayer'
+              : 'Deposit as collateral'}{' '}
           <ArrowRight size={16} aria-hidden="true" />
         </button>
       </div>

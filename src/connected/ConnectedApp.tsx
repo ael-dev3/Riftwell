@@ -39,9 +39,14 @@ import {
 import { apiMessage, usePages } from './usePages';
 import { CancellationDialog, ListingReview, RecordForm } from './RecordDialogs';
 import { ConnectedAccount, ConnectedMarket } from './ConnectedViews';
+import NotFoundPage from '../pages/NotFoundPage';
+import { useMinuteClock } from '../app/clock';
 
 const SimulatorPage = preloadable(() => import('../pages/SimulatorPage'));
 const FaqPage = preloadable(() => import('../pages/FaqPage'));
+const StatsPage = preloadable(() => import('../pages/StatsPage'));
+const BrandPage = preloadable(() => import('../pages/BrandPage'));
+const PrivacyPage = preloadable(() => import('../pages/PrivacyPage'));
 const VaultDetails = preloadable(() => import('../components/VaultDetails'));
 
 type Intent = {
@@ -63,6 +68,7 @@ type Modal =
 
 function ConnectedShell() {
   const { route, navigate } = useHashRoute('borrow');
+  const now = useMinuteClock();
   const [market, setMarket] = useState<Market>(DEFAULT_MARKET);
   const toast = useToast();
   const searchRef = useRef<HTMLInputElement>(null);
@@ -114,7 +120,18 @@ function ConnectedShell() {
     document.documentElement.style.setProperty('--accent', market.accentColor);
   }, [market]);
 
-  useEffect(() => preloadWhenIdle([SimulatorPage, FaqPage, VaultDetails]), []);
+  useEffect(
+    () =>
+      preloadWhenIdle([
+        SimulatorPage,
+        FaqPage,
+        StatsPage,
+        BrandPage,
+        PrivacyPage,
+        VaultDetails,
+      ]),
+    [],
+  );
 
   useEffect(() => {
     closeModal();
@@ -531,6 +548,37 @@ function ConnectedShell() {
       break;
     case 'faq':
       page = <FaqPage market={market} mode="connected" />;
+      break;
+    case 'stats':
+      page = (
+        <StatsPage
+          market={market}
+          now={now}
+          model={{
+            mode: 'connected',
+            vault: null,
+            rewards: null,
+            sales: null,
+            volumeSeries: null,
+            positions: lists.items.map((listing) => ({
+              balance: Number(
+                BigInt(listing.position.lockedAmountRaw) / 10n ** 18n,
+              ),
+              unlockMs: Date.parse(listing.position.lockedUntil),
+            })),
+            listed: lists.items.length,
+          }}
+        />
+      );
+      break;
+    case 'brand':
+      page = <BrandPage market={market} />;
+      break;
+    case 'privacy':
+      page = <PrivacyPage mode="connected" />;
+      break;
+    case 'not-found':
+      page = <NotFoundPage path={route.item} onNavigate={go} />;
       break;
   }
 

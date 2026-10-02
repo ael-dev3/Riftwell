@@ -139,6 +139,8 @@ export type Holdings = {
   owned: Asset[];
   wallet: Asset[];
   collateral: Asset[];
+  /** Positions in the reward relayer: collecting rewards, no credit. */
+  relayer: Asset[];
   listed: { asset: Asset; listing: PreviewListing }[];
   market: Asset[];
   purchasedIds: Set<string>;
@@ -165,18 +167,20 @@ export function useHoldings(
     const collateral = lending.collateralIds
       .map(assetById)
       .filter((asset): asset is Asset => asset !== undefined);
+    const relayer = lending.relayerIds
+      .map(assetById)
+      .filter((asset): asset is Asset => asset !== undefined);
+    const engaged = new Set([...lending.collateralIds, ...lending.relayerIds]);
     const listed = live.flatMap((listing) => {
       const asset = assetById(listing.assetId);
-      return asset && !lending.collateralIds.includes(asset.id)
-        ? [{ asset, listing }]
-        : [];
+      return asset && !engaged.has(asset.id) ? [{ asset, listing }] : [];
     });
     const wallet = owned.filter(
       (asset) =>
-        !lending.collateralIds.includes(asset.id) &&
+        !engaged.has(asset.id) &&
         !listed.some((item) => item.asset.id === asset.id),
     );
     const market = LISTINGS.filter((asset) => !purchasedIds.has(asset.id));
-    return { owned, wallet, collateral, listed, market, purchasedIds };
-  }, [portfolio, lending.collateralIds, listings, now]);
+    return { owned, wallet, collateral, relayer, listed, market, purchasedIds };
+  }, [portfolio, lending.collateralIds, lending.relayerIds, listings, now]);
 }

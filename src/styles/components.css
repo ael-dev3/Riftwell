@@ -208,6 +208,12 @@
   color: var(--text-3);
 }
 
+.pill.violet {
+  color: var(--violet);
+  background: color-mix(in oklab, var(--violet) 12%, transparent);
+  border-color: color-mix(in oklab, var(--violet) 34%, transparent);
+}
+
 /* ---------- Panels ---------- */
 .panel {
   display: grid;
@@ -611,6 +617,16 @@ select.input-control.compact {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+
+.segmented.compact .segment {
+  padding: 10px 12px;
+}
+
+.input-control.mono {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0;
 }
 
 .segment,
@@ -1070,13 +1086,24 @@ select.input-control.compact {
   display: flex;
 }
 
+/* Equal tabs while they fit; on narrow screens each keeps its label on one
+   line and the strip scrolls instead of wrapping. */
 .tablist.band {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
   background: var(--surface-2);
-  border-bottom: 1px solid var(--line);
+  /* An inset rule rather than a border keeps the indicator in the scrollport. */
+  box-shadow: inset 0 -1px 0 var(--line);
+}
+
+.tablist.band::-webkit-scrollbar {
+  display: none;
 }
 
 .tablist.band .tab {
   flex: 1 1 0;
+  min-width: max-content;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1085,6 +1112,7 @@ select.input-control.compact {
   padding: 0 14px;
   font-size: 14px;
   font-weight: 620;
+  white-space: nowrap;
   color: var(--text-2);
   transition:
     color var(--t-fast) ease,
@@ -1106,7 +1134,7 @@ select.input-control.compact {
 
 .tablist.band .tab-indicator {
   position: absolute;
-  bottom: -1px;
+  bottom: 0;
   left: 0;
   width: var(--indicator-w, 0);
   height: 2px;
@@ -1906,4 +1934,65 @@ select.input-control.compact {
 
 .count-up {
   font-variant-numeric: tabular-nums;
+}
+
+/* ---------- What's new ---------- */
+.whats-new .popover {
+  width: min(360px, calc(100vw - 32px));
+  max-width: none;
+}
+
+.release-list {
+  display: grid;
+  gap: 2px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.release-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  padding: 10px 4px;
+  border-top: 1px solid var(--line);
+}
+
+.release-list li:first-child {
+  border-top: 0;
+}
+
+.release-body {
+  display: grid;
+  gap: 3px;
+}
+
+.release-body strong {
+  font-size: 14px;
+  font-weight: 640;
+}
+
+.release-body small {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-3);
+}
+
+.release-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.release-meta a {
+  font-weight: 620;
+  color: var(--accent-ink);
+  border-radius: 4px;
+}
+
+.release-meta a:hover {
+  text-decoration: underline;
 }

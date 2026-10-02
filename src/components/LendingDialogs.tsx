@@ -21,6 +21,7 @@ export type LendingActionInput = {
   amountMicros?: string;
   collateralRewardMicros?: string;
   poolYieldMicros?: string;
+  relayerRewardMicros?: string;
 };
 type Props = {
   action: LendingAction;
@@ -37,6 +38,8 @@ const titles: Readonly<Record<LendingAction['kind'], string>> = {
   withdraw: 'Withdraw USDC',
   epoch: 'Simulate a reward epoch',
   how: 'How pooled lending works',
+  'relayer-deposit': 'Add to the reward relayer',
+  'relayer-withdraw': 'Remove from the reward relayer',
 };
 const min = (a: bigint, b: bigint) => (a < b ? a : b);
 const ceilDiv = (a: bigint, b: bigint) => (a + b - 1n) / b;
@@ -74,16 +77,31 @@ export default function LendingActionDialog({
         : sampleReward,
     ),
   );
+  const relayerSample = state.relayerIds.reduce(
+    (sum, id) => sum + BigInt(SAMPLE_REWARD_MICROS[id] ?? '0'),
+    0n,
+  );
+  const [relayerReward, setRelayerReward] = useState(
+    microsToDecimal(relayerSample),
+  );
   const [poolYield, setPoolYield] = useState('200');
   const [error, setError] = useState('');
   const amountRef = useRef<HTMLInputElement>(null);
   const rewardRef = useRef<HTMLInputElement>(null);
+  const relayerRef = useRef<HTMLInputElement>(null);
   const poolYieldRef = useRef<HTMLInputElement>(null);
   const parsed = parseUSDCMicros(amount);
   const amountMicros = parsed !== null && parsed <= maximum ? parsed : 0n;
   const fee = (amountMicros * 5n) / 1000n;
   const rewardParsed = parseUSDCMicros(reward);
   const poolParsed = parseUSDCMicros(poolYield);
+  const relayerParsed = parseUSDCMicros(relayerReward);
+  const relayerMicros =
+    state.relayerIds.length &&
+    relayerParsed !== null &&
+    relayerParsed <= BigInt(MAX_EPOCH_INPUT_MICROS)
+      ? relayerParsed
+      : 0n;
   const rewardMicros =
     state.collateralIds.length &&
     rewardParsed !== null &&
@@ -101,7 +119,10 @@ export default function LendingActionDialog({
     action.kind === 'withdraw'
       ? (amountMicros * shares + assets - 1n) / assets
       : (amountMicros * shares) / assets;
-  const isCollateral = 'asset' in action;
+  const isCollateral =
+    action.kind === 'deposit-collateral' || action.kind === 'remove-collateral';
+  const isRelayer =
+    action.kind === 'relayer-deposit' || action.kind === 'relayer-withdraw';
   const isAmount = ['borrow', 'repay', 'supply', 'withdraw'].includes(
     action.kind,
   );
@@ -133,6 +154,17 @@ export default function LendingActionDialog({
         rewardRef.current?.focus();
         return;
       }
+      if (
+        state.relayerIds.length &&
+        (relayerParsed === null ||
+          relayerParsed > BigInt(MAX_EPOCH_INPUT_MICROS))
+      ) {
+        setError(
+          'Enter a relayer reward from 0 to 1,000 USDC, with up to six decimal places.',
+        );
+        relayerRef.current?.focus();
+        return;
+      }
       if (poolParsed === null || poolParsed > BigInt(MAX_EPOCH_INPUT_MICROS)) {
         setError(
           'Enter a pool reward from 0 to 1,000 USDC, with up to six decimal places.',
@@ -143,6 +175,7 @@ export default function LendingActionDialog({
       input = {
         collateralRewardMicros: rewardParsed.toString(),
         poolYieldMicros: poolParsed.toString(),
+        relayerRewardMicros: (relayerParsed ?? 0n).toString(),
       };
     }
     const issue = onApply(input);
@@ -222,13 +255,15 @@ export default function LendingActionDialog({
     >
       <form onSubmit={submit} noValidate>
         <div className="dialog-body">
-          {isCollateral && (
+          {'asset' in action && (
             <AssetSummary
               asset={action.asset}
               kicker={
-                action.kind === 'deposit-collateral'
-                  ? 'From your demo wallet'
-                  : 'Deposited collateral'
+                action.kind === 'remove-collateral'
+                  ? 'Deposited collateral'
+                  : action.kind === 'relayer-withdraw'
+                    ? 'In the reward relayer'
+                    : 'From your demo wallet'
               }
             />
           )}
@@ -291,6 +326,35 @@ export default function LendingActionDialog({
                       : 'Deposit collateral to simulate your rewards.'}
                   </p>
                 </div>
+                {state.relayerIds.length > 0 && (
+                  <div className="form-field">
+                    <label className="field-label" htmlFor="relayer-reward">
+                      Net relayer rewards
+                    </label>
+                    <div className="amount-input">
+                      <input
+                        ref={relayerRef}
+                        id="relayer-reward"
+                        className="input-control"
+                        inputMode="decimal"
+                        type="text"
+                        maxLength={24}
+                        value={relayerReward}
+                        onChange={(event) => {
+                          setRelayerReward(event.target.value);
+                          setError('');
+                        }}
+                        aria-describedby="relayer-reward-hint pooled-action-error"
+                      />
+                      <span className="amount-unit">USDC</span>
+                    </div>
+                    <p className="form-hint" id="relayer-reward-hint">
+                      Collected for {state.relayerIds.length} relayer{' '}
+                      {state.relayerIds.length === 1 ? 'position' : 'positions'}{' '}
+                      and paid to your demo balance. They never repay debt.
+                    </p>
+                  </div>
+                )}
                 <div className="form-field">
                   <label className="field-label" htmlFor="pool-reward">
                     Net lender revenue
@@ -347,6 +411,31 @@ export default function LendingActionDialog({
                 {
                   label: 'Existing debt',
                   value: formatMicros(state.debtMicros),
+                  total: true,
+                },
+              ]}
+            />
+          )}
+          {isRelayer && (
+            <Breakdown
+              rows={[
+                {
+                  label: 'Example net reward history',
+                  hint: 'Per 7-day epoch · not a forecast',
+                  value: formatMicros(SAMPLE_REWARD_MICROS[action.asset.id]),
+                  strong: true,
+                },
+                { label: 'Credit from this position', value: 'None' },
+                {
+                  label: 'Relayer positions after this change',
+                  value: String(
+                    state.relayerIds.length +
+                      (action.kind === 'relayer-deposit' ? 1 : -1),
+                  ),
+                },
+                {
+                  label: 'Rewards paid to',
+                  value: 'Your demo balance',
                   total: true,
                 },
               ]}
@@ -466,6 +555,15 @@ export default function LendingActionDialog({
                   value: formatMicros(rewardMicros - repaidReward),
                   strong: true,
                 },
+                ...(state.relayerIds.length
+                  ? [
+                      {
+                        label: 'Relayer rewards to demo balance',
+                        value: formatMicros(relayerMicros),
+                        strong: true,
+                      },
+                    ]
+                  : []),
                 {
                   label: 'Net lender revenue added to pool',
                   value: formatMicros(poolMicros),
@@ -498,6 +596,20 @@ export default function LendingActionDialog({
               No real NFT is transferred.
             </p>
           )}
+          {action.kind === 'relayer-deposit' && (
+            <p className="form-hint">
+              The relayer collects this position’s rewards every epoch and pays
+              them to your demo balance, with no borrowing. While it is in the
+              relayer it cannot back a loan or be listed. Simulated amounts are
+              net of any automation charge, which is set at launch.
+            </p>
+          )}
+          {action.kind === 'relayer-withdraw' && (
+            <p className="form-hint">
+              The position returns to your demo wallet, where you can deposit it
+              as collateral or list it. No real NFT is transferred.
+            </p>
+          )}
           <p className="form-error" id="pooled-action-error" role="alert">
             {error}
           </p>
@@ -515,15 +627,19 @@ export default function LendingActionDialog({
               ? 'Apply example rewards'
               : action.kind === 'deposit-collateral'
                 ? 'Deposit in preview'
-                : action.kind === 'remove-collateral'
-                  ? 'Remove in preview'
-                  : action.kind === 'borrow'
-                    ? 'Borrow in preview'
-                    : action.kind === 'repay'
-                      ? 'Repay in preview'
-                      : action.kind === 'supply'
-                        ? 'Supply in preview'
-                        : 'Withdraw in preview'}
+                : action.kind === 'relayer-deposit'
+                  ? 'Add to relayer in preview'
+                  : action.kind === 'relayer-withdraw'
+                    ? 'Remove from relayer in preview'
+                    : action.kind === 'remove-collateral'
+                      ? 'Remove in preview'
+                      : action.kind === 'borrow'
+                        ? 'Borrow in preview'
+                        : action.kind === 'repay'
+                          ? 'Repay in preview'
+                          : action.kind === 'supply'
+                            ? 'Supply in preview'
+                            : 'Withdraw in preview'}
             <ArrowRight size={16} aria-hidden="true" />
           </button>
         </div>

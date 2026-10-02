@@ -510,6 +510,8 @@
 }
 
 @media (max-width: 560px) {
+  /* Phones reach release notes from the menu sheet instead. */
+  .whats-new,
   .account-label {
     display: none;
   }
@@ -535,5 +537,76 @@
 
   .page {
     padding-top: 22px;
+  }
+}
+
+/* ---------- Updates ticker ---------- */
+.ticker {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding-left: 18px;
+  font-size: 12.5px;
+  border-left: 1px solid var(--line);
+}
+
+.ticker-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 260px;
+  overflow: hidden;
+  font-weight: 600;
+  color: var(--text-2);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  border-radius: 4px;
+  animation: fade 260ms var(--ease) both;
+}
+
+a.ticker-title:hover {
+  color: var(--text);
+}
+
+.ticker-dots {
+  display: inline-flex;
+}
+
+/* Each dot keeps a full 24px target even though it draws small. */
+.ticker-dot {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+}
+
+.ticker-dot::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: var(--line-3);
+  border-radius: 999px;
+  transition:
+    width var(--t) var(--ease),
+    background-color var(--t-fast) ease;
+}
+
+.ticker-dot[aria-pressed='true']::before {
+  width: 14px;
+  background: var(--accent-ink);
+}
+
+/* The ticker and the absolute flip time do not both fit; the countdown stays. */
+@media (min-width: 1281px) {
+  .epoch-flip {
+    display: none;
+  }
+}
+
+@media (max-width: 1280px) {
+  .ticker {
+    display: none;
   }
 }

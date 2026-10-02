@@ -99,6 +99,8 @@ export default function SimulatorPage({ market }: { market: Market }) {
       }),
     [rewardValid, rewardMicros, epochs, borrowMicros, share, change],
   );
+  const weeklyReward = rewardValid ? rewardMicros : 0n;
+  const appliedReward = (weeklyReward * BigInt(share)) / 100n;
   const clock = epochAt(now);
   const points = thinSchedule(result.schedule, 60);
   const payoff =
@@ -300,6 +302,35 @@ export default function SimulatorPage({ market }: { market: Market }) {
               <dd>{formatMicros(result.totalRepaidMicros)}</dd>
             </div>
           </dl>
+          <section className="reward-split" aria-labelledby="split-title">
+            <div className="split-head">
+              <h3 id="split-title">Weekly reward split</h3>
+              <strong>{formatMicros(weeklyReward)}</strong>
+            </div>
+            <div className="split-bar" aria-hidden="true">
+              <span className="debt" style={{ width: `${share}%` }} />
+              <span className="other" style={{ width: `${100 - share}%` }} />
+            </div>
+            <dl className="split-legend">
+              <div>
+                <dt>
+                  <i className="debt" aria-hidden="true" /> Repays debt
+                </dt>
+                <dd>{formatMicros(appliedReward)}</dd>
+              </div>
+              <div>
+                <dt>
+                  <i className="other" aria-hidden="true" /> Lender and protocol
+                  shares
+                </dt>
+                <dd>{formatMicros(weeklyReward - appliedReward)}</dd>
+              </div>
+            </dl>
+            <p className="form-hint">
+              First epoch at your assumptions. Final revenue shares are set by
+              the deployed contracts.
+            </p>
+          </section>
           {result.principalMicros > 0n ? (
             <AreaChart
               ariaLabel={`Projected debt falling from ${formatMicros(result.principalMicros)} ${

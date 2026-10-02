@@ -1,10 +1,12 @@
 import {
+  BarChart3,
   BookOpen,
   Calculator,
   ChevronDown,
   CircleHelp,
   Clock3,
   Code2,
+  FileText,
   Keyboard,
   Menu,
   Moon,
@@ -39,8 +41,10 @@ import MarketSelector from '../MarketSelector';
 import PortalMark from '../PortalMark';
 import { Meter } from '../ui/Meter';
 import Popover from '../ui/Popover';
+import { ReleaseList, UpdatesTicker, WhatsNew } from './WhatsNew';
 
 export const SOURCE_URL = 'https://github.com/ael-dev3/Riftwell';
+export const DOCS_URL = `${SOURCE_URL}/tree/main/docs`;
 
 type ShellProps = {
   route: Route;
@@ -131,6 +135,12 @@ function ResourcesMenu({
       page: 'simulator' as const,
     },
     {
+      icon: BarChart3,
+      label: 'Statistics',
+      text: 'Vault, reward and market totals',
+      page: 'stats' as const,
+    },
+    {
       icon: CircleHelp,
       label: 'FAQ',
       text: 'How credit, rewards and fees work',
@@ -208,6 +218,23 @@ function ResourcesMenu({
           <li>
             <a
               className="menu-item"
+              href={DOCS_URL}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <FileText size={18} aria-hidden="true" />
+              <span>
+                <strong>Docs</strong>
+                <small>
+                  Lending model, API and operations
+                  <span className="sr-only"> (opens in a new tab)</span>
+                </small>
+              </span>
+            </a>
+          </li>
+          <li>
+            <a
+              className="menu-item"
               href={SOURCE_URL}
               target="_blank"
               rel="noreferrer"
@@ -232,7 +259,12 @@ function EpochStatus() {
   const now = useMinuteClock();
   const clock = epochAt(now);
   return (
-    <div className="epoch" role="group" aria-label="KittenSwap epoch">
+    <div
+      className="epoch"
+      role="group"
+      aria-label="KittenSwap epoch"
+      title={`Flips ${formatFlip(clock.endMs)}`}
+    >
       <Clock3 size={15} aria-hidden="true" />
       <span className="epoch-name">Epoch {clock.period}</span>
       <span className="epoch-time" aria-hidden="true">
@@ -273,19 +305,26 @@ function MobileMenu({
   return (
     <Dialog title="Menu" kicker="RIFTWELL" onClose={onClose} sheet>
       <nav className="dialog-body sheet-nav" aria-label="Mobile navigation">
-        {(['borrow', 'earn', 'marketplace', 'simulator', 'faq'] as const).map(
-          (page) => (
-            <a
-              key={page}
-              href={`#${page}`}
-              className="sheet-link"
-              aria-current={route.page === page ? 'page' : undefined}
-              onClick={go(page)}
-            >
-              {PAGE_LABELS[page]}
-            </a>
-          ),
-        )}
+        {(
+          [
+            'borrow',
+            'earn',
+            'marketplace',
+            'simulator',
+            'stats',
+            'faq',
+          ] as const
+        ).map((page) => (
+          <a
+            key={page}
+            href={`#${page}`}
+            className="sheet-link"
+            aria-current={route.page === page ? 'page' : undefined}
+            onClick={go(page)}
+          >
+            {PAGE_LABELS[page]}
+          </a>
+        ))}
         <hr />
         <button
           type="button"
@@ -311,6 +350,13 @@ function MobileMenu({
           <span>Theme</span>
           <ThemeToggle className="button secondary small" />
         </div>
+        <hr />
+        <section className="sheet-updates" aria-labelledby="sheet-updates">
+          <h3 id="sheet-updates" className="subhead">
+            What’s new
+          </h3>
+          <ReleaseList />
+        </section>
       </nav>
     </Dialog>
   );
@@ -400,6 +446,7 @@ export default function AppShell({
               onShortcuts={onShortcuts}
               mode={mode}
             />
+            <WhatsNew />
             <ThemeToggle />
             {account}
             <button
@@ -430,6 +477,7 @@ export default function AppShell({
             <MarketSelector market={market} onChange={onMarketChange} />
           </nav>
           <EpochStatus />
+          <UpdatesTicker />
           <button type="button" className="status-pill" onClick={onAbout}>
             <span className="status-dot" aria-hidden="true" />
             {mode === 'preview' ? 'Preview data' : 'Settlement off'}
@@ -481,8 +529,15 @@ export default function AppShell({
               >
                 Simulator
               </a>
+              <a href="#stats" onClick={linkHandler('stats', onNavigate)}>
+                Statistics
+              </a>
               <a href="#faq" onClick={linkHandler('faq', onNavigate)}>
                 FAQ
+              </a>
+              <a href={DOCS_URL} target="_blank" rel="noreferrer">
+                Docs
+                <span className="sr-only"> (opens in a new tab)</span>
               </a>
               <button
                 type="button"
@@ -494,6 +549,15 @@ export default function AppShell({
               <a href={SOURCE_URL} target="_blank" rel="noreferrer">
                 Source code
                 <span className="sr-only"> (opens in a new tab)</span>
+              </a>
+            </div>
+            <div>
+              <h2>About</h2>
+              <a href="#brand" onClick={linkHandler('brand', onNavigate)}>
+                Brand kit
+              </a>
+              <a href="#privacy" onClick={linkHandler('privacy', onNavigate)}>
+                Privacy
               </a>
             </div>
           </nav>

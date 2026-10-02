@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buyerError,
   cancelListing,
   createListing,
   emptyListingBook,
   isLive,
+  isPrivate,
   liveListings,
   listingPriceError,
   parseListingBook,
@@ -112,5 +114,64 @@ describe('preview seller listings', () => {
     expect(
       parseListingBook(raw, known).listings.map((item) => item.id),
     ).toEqual([valid.id, 'old']);
+  });
+});
+
+describe('private (OTC) listings', () => {
+  const buyer = '0xAbCdEf0123456789aBcDeF0123456789AbCdEf01';
+
+  it('reserves a listing for one normalized buyer address', () => {
+    const book = createListing(
+      emptyListingBook(),
+      { assetId: 'rift-041', price: '100', expiryDays: 7, buyer: ` ${buyer} ` },
+      known,
+      now,
+    );
+    expect(book.listings[0].buyer).toBe(buyer.toLowerCase());
+    expect(isPrivate(book.listings[0])).toBe(true);
+    const open = createListing(
+      emptyListingBook(),
+      { assetId: 'rift-018', price: '100', expiryDays: 7, buyer: '' },
+      known,
+      now,
+    );
+    expect(open.listings[0].buyer).toBeNull();
+    expect(isPrivate(open.listings[0])).toBe(false);
+  });
+
+  it('rejects malformed buyer addresses', () => {
+    for (const bad of [
+      '0x123',
+      'abcdef0123456789abcdef0123456789abcdef01',
+      `${buyer}0`,
+      '0xZZcdef0123456789abcdef0123456789abcdef01',
+    ])
+      expect(buyerError(bad)).not.toBeNull();
+    expect(buyerError('')).toBeNull();
+    expect(buyerError(buyer)).toBeNull();
+    expect(() =>
+      createListing(
+        emptyListingBook(),
+        { assetId: 'rift-041', price: '100', expiryDays: 7, buyer: '0x123' },
+        known,
+        now,
+      ),
+    ).toThrowError(expect.objectContaining({ code: 'INVALID_BUYER' }));
+  });
+
+  it('reads listings saved before private listings existed as public', () => {
+    const book = createListing(
+      emptyListingBook(),
+      { assetId: 'rift-041', price: '100', expiryDays: 7 },
+      known,
+      now,
+    );
+    const legacy = JSON.parse(JSON.stringify(book));
+    delete legacy.listings[0].buyer;
+    expect(parseListingBook(JSON.stringify(legacy), known)).toEqual(book);
+    legacy.listings[0].buyer = 'not-an-address';
+    expect(parseListingBook(JSON.stringify(legacy), known).listings).toEqual(
+      [],
+    );
   });
 });

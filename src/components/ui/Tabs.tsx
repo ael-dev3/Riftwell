@@ -41,6 +41,11 @@ export function Tabs<T extends string>({
       if (!list || !tab) return;
       list.style.setProperty('--indicator-x', `${tab.offsetLeft}px`);
       list.style.setProperty('--indicator-w', `${tab.offsetWidth}px`);
+      // Narrow strips scroll sideways; keep the active tab fully in view.
+      const end = tab.offsetLeft + tab.offsetWidth;
+      if (tab.offsetLeft < list.scrollLeft) list.scrollLeft = tab.offsetLeft;
+      else if (end > list.scrollLeft + list.clientWidth)
+        list.scrollLeft = end - list.clientWidth;
     };
     update();
     if (!list || typeof ResizeObserver === 'undefined') return;

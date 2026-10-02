@@ -106,7 +106,11 @@ function activityDetail(entry: LendingActivity): string {
   if (entry.kind === 'purchase')
     return `${asset?.name ?? 'Sample position'} · seller fee ${formatMicros(entry.feeMicros)}`;
   if (entry.kind === 'epoch')
-    return `Surplus ${formatMicros(entry.rewardSurplusMicros)} · lender revenue ${formatMicros(entry.poolYieldMicros)}`;
+    return `Surplus ${formatMicros(entry.rewardSurplusMicros)}${
+      BigInt(entry.relayerRewardMicros) > 0n
+        ? ` · relayer ${formatMicros(entry.relayerRewardMicros)}`
+        : ''
+    } · lender revenue ${formatMicros(entry.poolYieldMicros)}`;
   if (entry.kind === 'supply' || entry.kind === 'withdraw')
     return `${formatShares(entry.sharesRaw)} shares`;
   return asset?.name ?? 'Preview action';

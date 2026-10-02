@@ -2,15 +2,24 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Copy,
   History,
+  Lock,
   Search,
   ShoppingBag,
   Tag,
   X,
+  Zap,
 } from 'lucide-react';
 import { useMemo, useState, type CSSProperties, type RefObject } from 'react';
+import { assetLink, copyText } from '../app/links';
+import { useToast } from '../app/toast';
 import { EmptyState, PageHead } from '../components/page';
-import { BarChart } from '../components/ui/Charts';
+import { AreaChart, BarChart } from '../components/ui/Charts';
 import { TabPanel, Tabs } from '../components/ui/Tabs';
 import { CATEGORIES, SMALL_POSITION_KITTEN, assetById } from '../data';
 import {
@@ -24,16 +33,30 @@ import {
   formatMicros,
   lockDaysRemaining,
   priceMicros,
+  roundAmount,
   type Asset,
   type PurchaseReceipt,
   type SortOrder,
 } from '../domain';
-import { isLive, type ListingBook, type PreviewListing } from '../listings';
+import { plain, usd } from '../format';
+import {
+  isLive,
+  isPrivate,
+  type ListingBook,
+  type PreviewListing,
+} from '../listings';
+import {
+  marketSales,
+  marketSeries,
+  salesInRange,
+  summarize,
+  type SaleMetric,
+  type SaleRange,
+} from '../market';
 import type { Market } from '../markets';
 import type { Holdings } from '../preview/store';
-import { plain } from '../format';
 
-type Tab = 'listings' | 'yours' | 'history';
+type Tab = 'listings' | 'yours' | 'otc' | 'history';
 type Props = {
   market: Market;
   holdings: Holdings;
@@ -45,7 +68,7 @@ type Props = {
   onDetails: (asset: Asset, listing?: PreviewListing) => void;
   onBuy: (asset: Asset) => void;
   onSweep: (assets: Asset[]) => void;
-  onSell: (asset?: Asset) => void;
+  onSell: (asset?: Asset, options?: { private?: boolean }) => void;
   onCancel: (listing: PreviewListing) => void;
 };
 
@@ -57,12 +80,30 @@ const SORT_LABELS: Readonly<Record<SortOrder, string>> = {
   'balance-desc': 'Largest locked balance',
   'unlock-asc': 'Unlocking soonest',
 };
+const METRICS: readonly [SaleMetric, string][] = [
+  ['discount', 'Discount'],
+  ['sales', 'Sales'],
+  ['volume', 'Volume'],
+];
+const RANGES: readonly [SaleRange, string][] = [
+  ['7d', '7D'],
+  ['30d', '30D'],
+  ['all', 'All'],
+];
+const PAGE_SIZE = 10;
 
-const pricePerToken = (asset: Asset) =>
-  `${(asset.price / asset.underlyingBalance).toLocaleString('en-GB', {
+const pricePerToken = (price: number, balance: number) =>
+  (price / balance).toLocaleString('en-GB', {
     minimumFractionDigits: 4,
     maximumFractionDigits: 4,
-  })}`;
+  });
+const shortAddress = (address: string) =>
+  `${address.slice(0, 6)}…${address.slice(-4)}`;
+const soldOn = (ms: number) =>
+  `${formatDate(new Date(ms).toISOString())}, ${new Date(ms).toLocaleTimeString(
+    'en-GB',
+    { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' },
+  )} UTC`;
 
 function SortHeader({
   label,
@@ -107,6 +148,50 @@ function SortHeader({
   );
 }
 
+function ListingRow({
+  asset,
+  listing,
+  onCancel,
+}: {
+  asset: Asset;
+  listing: PreviewListing;
+  onCancel: (listing: PreviewListing) => void;
+}) {
+  return (
+    <li className="list-row">
+      <img
+        className="thumb"
+        src={asset.artwork}
+        alt=""
+        width="40"
+        height="40"
+      />
+      <span className="list-row-main">
+        <strong>{asset.name}</strong>
+        <small>
+          Listed {formatDate(listing.createdAt)} · expires{' '}
+          {formatDate(listing.expiresAt)}
+          {listing.buyer && (
+            <span className="pill violet">
+              <Lock size={11} aria-hidden="true" /> Private ·{' '}
+              {shortAddress(listing.buyer)}
+            </span>
+          )}
+        </small>
+      </span>
+      <strong>{formatMicros(listing.priceMicros)}</strong>
+      <button
+        type="button"
+        className="button secondary small"
+        aria-label={`Cancel listing for ${asset.name}`}
+        onClick={() => onCancel(listing)}
+      >
+        Cancel
+      </button>
+    </li>
+  );
+}
+
 export default function MarketPage({
   market,
   holdings,
@@ -121,25 +206,36 @@ export default function MarketPage({
   onSell,
   onCancel,
 }: Props) {
+  const toast = useToast();
   const [tab, setTab] = useState<Tab>('listings');
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<string>('All');
   const [sort, setSort] = useState<SortOrder>('curated');
   const [hideSmall, setHideSmall] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const [chart, setChart] = useState<'discount' | 'lock'>('discount');
+  const [metric, setMetric] = useState<SaleMetric>('discount');
+  const [range, setRange] = useState<SaleRange>('30d');
+  const [page, setPage] = useState(0);
 
+  // Public listings of yours appear in the table; private ones only in OTC.
   const own = useMemo(
     () =>
       new Map(
-        holdings.listed.map(({ asset, listing }) => [
-          asset.id,
-          {
-            asset: { ...asset, price: Number(listing.priceMicros) / 1e6 },
-            listing,
-          },
-        ]),
+        holdings.listed
+          .filter(({ listing }) => !isPrivate(listing))
+          .map(({ asset, listing }) => [
+            asset.id,
+            {
+              asset: { ...asset, price: Number(listing.priceMicros) / 1e6 },
+              listing,
+            },
+          ]),
       ),
     [holdings.listed],
+  );
+  const privateListings = holdings.listed.filter(({ listing }) =>
+    isPrivate(listing),
   );
   const pool = useMemo(
     () => [...holdings.market, ...[...own.values()].map((item) => item.asset)],
@@ -159,23 +255,26 @@ export default function MarketPage({
     (sum, asset) => sum + priceMicros(asset.price),
     0n,
   );
+  const sweepCount = selectable.filter((asset) =>
+    selected.has(asset.id),
+  ).length;
   const marketDiscounts = holdings.market.map((asset) => discountBps(asset));
   const floor = holdings.market.reduce<Asset | null>(
     (lowest, asset) => (!lowest || asset.price < lowest.price ? asset : lowest),
     null,
   );
-  const average = marketDiscounts.length
-    ? Math.round(
-        marketDiscounts.reduce((sum, value) => sum + value, 0) /
-          marketDiscounts.length,
-      )
-    : 0;
   const lockedListed = pool.reduce(
     (sum, asset) => sum + asset.underlyingBalance,
     0,
   );
-  const history = listings.listings.filter((listing) => !isLive(listing, now));
-  const [chart, setChart] = useState<'discount' | 'lock'>('discount');
+  const ended = listings.listings.filter((listing) => !isLive(listing, now));
+  const sales = useMemo(() => marketSales(receipts), [receipts]);
+  const monthVolume = summarize(salesInRange(sales, '30d', now)).volumeMicros;
+  const inRange = salesInRange(sales, range, now);
+  const summary = summarize(inRange);
+  const series = marketSeries(sales, range, metric, now);
+  const pages = Math.max(1, Math.ceil(sales.length / PAGE_SIZE));
+  const pageSales = sales.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   const discountBuckets = [
     ['Under 10%', 0, 1000],
     ['10–15%', 1000, 1500],
@@ -189,6 +288,9 @@ export default function MarketPage({
     ['12–18m', 365, 548],
     ['18–24m', 548, Infinity],
   ] as const;
+  const metricLabel = METRICS.find(([id]) => id === metric)![1];
+  const rangeLabel =
+    range === 'all' ? 'all time' : range === '7d' ? '7 days' : '30 days';
 
   function toggle(id: string) {
     setSelected((current) => {
@@ -197,6 +299,20 @@ export default function MarketPage({
       else next.add(id);
       return next;
     });
+  }
+
+  function sweepTo(count: number) {
+    setSelected(new Set(selectable.slice(0, count).map((asset) => asset.id)));
+  }
+
+  async function copy(asset: Asset) {
+    const copied = await copyText(assetLink(asset));
+    toast(
+      copied
+        ? `Link to ${asset.name} copied.`
+        : 'Copy failed. Open the listing to share its link.',
+      copied ? 'info' : 'warning',
+    );
   }
 
   const resetFilters = () => {
@@ -211,7 +327,7 @@ export default function MarketPage({
       <PageHead
         eyebrow={`${market.name} · ${market.chain}`}
         title={`${market.positionSymbol} marketplace`}
-        lede="Buy positions at a discount to their locked value, straight into your wallet or your credit line. List your own in a few seconds."
+        lede="Buy positions at a discount to their locked value, straight into your wallet, your credit line or the reward relayer. List your own publicly or privately."
         actions={
           <button
             type="button"
@@ -254,8 +370,11 @@ export default function MarketPage({
             </dd>
           </div>
           <div>
-            <dt>Average discount</dt>
-            <dd>{marketDiscounts.length ? formatBps(average) : '—'}</dd>
+            <dt>30-day volume</dt>
+            <dd>
+              {usd(roundAmount(monthVolume))}
+              <small> USDC · sample</small>
+            </dd>
           </div>
           <div>
             <dt>Listed</dt>
@@ -284,11 +403,8 @@ export default function MarketPage({
                 label: 'Your listings',
                 count: holdings.listed.length,
               },
-              {
-                id: 'history',
-                label: 'History',
-                count: receipts.length + history.length,
-              },
+              { id: 'otc', label: 'OTC', count: privateListings.length },
+              { id: 'history', label: 'History' },
             ]}
           />
           {tab === 'listings' && (
@@ -345,16 +461,41 @@ export default function MarketPage({
                       </button>
                     ))}
                   </div>
-                  <label className="switch">
-                    <input
-                      type="checkbox"
-                      role="switch"
-                      checked={hideSmall}
-                      onChange={(event) => setHideSmall(event.target.checked)}
-                    />
-                    <span className="switch-track" aria-hidden="true" />
-                    Hide small
-                  </label>
+                  <div className="toolbar-end">
+                    <label className="sweep-range">
+                      <Zap size={14} aria-hidden="true" />
+                      <span>Sweep</span>
+                      <input
+                        className="range"
+                        type="range"
+                        min={0}
+                        max={selectable.length}
+                        step={1}
+                        value={sweepCount}
+                        disabled={!selectable.length}
+                        aria-valuetext={`${sweepCount} of ${selectable.length} listings selected`}
+                        style={
+                          {
+                            '--fill': `${selectable.length ? (sweepCount / selectable.length) * 100 : 0}%`,
+                          } as CSSProperties
+                        }
+                        onChange={(event) =>
+                          sweepTo(Number(event.target.value))
+                        }
+                      />
+                      <output aria-hidden="true">{sweepCount}</output>
+                    </label>
+                    <label className="switch">
+                      <input
+                        type="checkbox"
+                        role="switch"
+                        checked={hideSmall}
+                        onChange={(event) => setHideSmall(event.target.checked)}
+                      />
+                      <span className="switch-track" aria-hidden="true" />
+                      Hide small
+                    </label>
+                  </div>
                 </div>
               </div>
               <p className="results-count" role="status">
@@ -421,7 +562,7 @@ export default function MarketPage({
                           onSort={setSort}
                         />
                         <th scope="col" className="numeric">
-                          <span className="sr-only">Action</span>
+                          <span className="sr-only">Actions</span>
                         </th>
                       </tr>
                     </thead>
@@ -429,6 +570,7 @@ export default function MarketPage({
                       {rows.map((asset, index) => {
                         const mine = own.get(asset.id);
                         const discount = discountBps(asset);
+                        const difference = asset.referenceValue - asset.price;
                         return (
                           <tr
                             key={asset.id}
@@ -487,6 +629,10 @@ export default function MarketPage({
                               >
                                 {formatBps(discount)}
                               </span>
+                              <small className="cell-sub">
+                                {plain(Math.abs(difference))} USDC{' '}
+                                {difference >= 0 ? 'off' : 'above'}
+                              </small>
                             </td>
                             <td
                               data-label={`Locked ${market.tokenSymbol}`}
@@ -506,29 +652,44 @@ export default function MarketPage({
                             <td data-label="Ask USDC" className="numeric">
                               <strong>{plain(asset.price)}</strong>
                               <small className="cell-sub">
-                                {pricePerToken(asset)} / {market.tokenSymbol}
+                                {pricePerToken(
+                                  asset.price,
+                                  asset.underlyingBalance,
+                                )}{' '}
+                                / {market.tokenSymbol}
                               </small>
                             </td>
                             <td className="numeric action-cell">
-                              {mine ? (
+                              <span className="row-actions">
                                 <button
                                   type="button"
-                                  className="button secondary small"
-                                  aria-label={`Cancel listing for ${asset.name}`}
-                                  onClick={() => onCancel(mine.listing)}
+                                  className="icon-button ghost small"
+                                  aria-label={`Copy link to ${asset.name}`}
+                                  title="Copy link"
+                                  onClick={() => void copy(asset)}
                                 >
-                                  Cancel
+                                  <Copy size={15} aria-hidden="true" />
                                 </button>
-                              ) : (
-                                <button
-                                  type="button"
-                                  className="button secondary small"
-                                  aria-label={`Buy ${asset.name}`}
-                                  onClick={() => onBuy(asset)}
-                                >
-                                  Buy
-                                </button>
-                              )}
+                                {mine ? (
+                                  <button
+                                    type="button"
+                                    className="button secondary small"
+                                    aria-label={`Cancel listing for ${asset.name}`}
+                                    onClick={() => onCancel(mine.listing)}
+                                  >
+                                    Cancel
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className="button secondary small"
+                                    aria-label={`Buy ${asset.name}`}
+                                    onClick={() => onBuy(asset)}
+                                  >
+                                    Buy
+                                  </button>
+                                )}
+                              </span>
                             </td>
                           </tr>
                         );
@@ -599,31 +760,12 @@ export default function MarketPage({
               {holdings.listed.length ? (
                 <ul className="row-list">
                   {holdings.listed.map(({ asset, listing }) => (
-                    <li key={listing.id} className="list-row">
-                      <img
-                        className="thumb"
-                        src={asset.artwork}
-                        alt=""
-                        width="40"
-                        height="40"
-                      />
-                      <span className="list-row-main">
-                        <strong>{asset.name}</strong>
-                        <small>
-                          Listed {formatDate(listing.createdAt)} · expires{' '}
-                          {formatDate(listing.expiresAt)}
-                        </small>
-                      </span>
-                      <strong>{formatMicros(listing.priceMicros)}</strong>
-                      <button
-                        type="button"
-                        className="button secondary small"
-                        aria-label={`Cancel listing for ${asset.name}`}
-                        onClick={() => onCancel(listing)}
-                      >
-                        Cancel
-                      </button>
-                    </li>
+                    <ListingRow
+                      key={listing.id}
+                      asset={asset}
+                      listing={listing}
+                      onCancel={onCancel}
+                    />
                   ))}
                 </ul>
               ) : (
@@ -644,85 +786,304 @@ export default function MarketPage({
                   you cancel it or it expires.
                 </EmptyState>
               )}
+              {ended.length > 0 && (
+                <section
+                  className="ended-listings"
+                  aria-labelledby="ended-title"
+                >
+                  <h3 id="ended-title" className="subhead">
+                    Ended listings
+                  </h3>
+                  <ul className="row-list">
+                    {ended
+                      .slice()
+                      .reverse()
+                      .map((listing) => {
+                        const asset = assetById(listing.assetId);
+                        if (!asset) return null;
+                        return (
+                          <li key={listing.id} className="list-row">
+                            <img
+                              className="thumb"
+                              src={asset.artwork}
+                              alt=""
+                              width="40"
+                              height="40"
+                            />
+                            <span className="list-row-main">
+                              <strong>{asset.name}</strong>
+                              <small>
+                                Listed {formatDate(listing.createdAt)}
+                                {listing.buyer ? ' · private' : ''}
+                              </small>
+                            </span>
+                            <strong>{formatMicros(listing.priceMicros)}</strong>
+                            <span className="pill muted">
+                              {listing.status === 'cancelled'
+                                ? 'Cancelled'
+                                : 'Expired'}
+                            </span>
+                          </li>
+                        );
+                      })}
+                  </ul>
+                </section>
+              )}
+            </TabPanel>
+          )}
+          {tab === 'otc' && (
+            <TabPanel idBase="market" id="otc">
+              <div className="otc-intro">
+                <p className="panel-text">
+                  Private listings are reserved for one buyer address and stay
+                  off the public listings. Share the position link with your
+                  buyer directly.
+                </p>
+                <button
+                  type="button"
+                  className="button secondary small"
+                  onClick={() => onSell(undefined, { private: true })}
+                >
+                  <Lock size={14} aria-hidden="true" /> Create private listing
+                </button>
+              </div>
+              <h3 className="subhead">Your private listings</h3>
+              {privateListings.length ? (
+                <ul className="row-list">
+                  {privateListings.map(({ asset, listing }) => (
+                    <ListingRow
+                      key={listing.id}
+                      asset={asset}
+                      listing={listing}
+                      onCancel={onCancel}
+                    />
+                  ))}
+                </ul>
+              ) : (
+                <EmptyState icon={Lock} title="No private listings." compact>
+                  Create one to offer a position to a single buyer.
+                </EmptyState>
+              )}
+              <h3 className="subhead">Reserved for you</h3>
+              <EmptyState icon={Tag} title="Nothing reserved for you." compact>
+                Private listings addressed to your account appear here. Sample
+                sellers in this preview only list publicly.
+              </EmptyState>
             </TabPanel>
           )}
           {tab === 'history' && (
             <TabPanel idBase="market" id="history">
-              {receipts.length + history.length ? (
-                <ul className="row-list">
-                  {receipts
-                    .slice()
-                    .reverse()
-                    .map((receipt) => {
-                      const asset = assetById(receipt.assetId);
-                      if (!asset) return null;
+              <p className="panel-text history-note">
+                Sample sales with fictional positions and prices, plus purchases
+                saved in this browser. No chain data is shown.
+              </p>
+              <div className="table-scroll">
+                <table className="data-table sales-table">
+                  <caption className="sr-only">
+                    Sample sales and your preview purchases, newest first
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Position</th>
+                      <th scope="col" className="numeric">
+                        Discount
+                      </th>
+                      <th scope="col" className="numeric">
+                        Per {market.tokenSymbol}
+                      </th>
+                      <th scope="col" className="numeric">
+                        Sale USDC
+                      </th>
+                      <th scope="col" className="numeric">
+                        Locked {market.tokenSymbol}
+                      </th>
+                      <th scope="col" className="numeric">
+                        Sold on
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pageSales.map((sale) => {
+                      const usdc = Number(sale.priceMicros) / 1e6;
                       return (
-                        <li key={receipt.id} className="list-row">
-                          <img
-                            className="thumb"
-                            src={asset.artwork}
-                            alt=""
-                            width="40"
-                            height="40"
-                          />
-                          <span className="list-row-main">
-                            <strong>{asset.name}</strong>
-                            <small>
-                              Bought {formatDate(receipt.createdAt)} ·{' '}
-                              {receipt.destination === 'collateral'
-                                ? 'into credit line'
-                                : 'to wallet'}
-                            </small>
-                          </span>
-                          <strong>{formatAmount(receipt.price)}</strong>
-                          <span className="pill accent">Purchase</span>
-                        </li>
+                        <tr key={sale.id}>
+                          <td data-label="Position">
+                            <span className="sale-position">
+                              <strong>{sale.label}</strong>
+                              <small>
+                                {sale.source === 'yours' ? (
+                                  <span className="pill accent">Yours</span>
+                                ) : (
+                                  <span className="pill muted">Sample</span>
+                                )}
+                                {sale.swept && (
+                                  <span className="pill violet">
+                                    <Zap size={11} aria-hidden="true" /> Sweep
+                                  </span>
+                                )}
+                              </small>
+                            </span>
+                          </td>
+                          <td data-label="Discount" className="numeric">
+                            <span
+                              className={
+                                sale.discountBps >= 2000
+                                  ? 'discount hot'
+                                  : 'discount'
+                              }
+                            >
+                              {formatBps(sale.discountBps)}
+                            </span>
+                          </td>
+                          <td
+                            data-label={`Per ${market.tokenSymbol}`}
+                            className="numeric"
+                          >
+                            {pricePerToken(usdc, sale.lockedKitten)}
+                          </td>
+                          <td data-label="Sale USDC" className="numeric">
+                            <strong>{plain(usdc)}</strong>
+                          </td>
+                          <td
+                            data-label={`Locked ${market.tokenSymbol}`}
+                            className="numeric"
+                          >
+                            {plain(sale.lockedKitten)}
+                          </td>
+                          <td data-label="Sold on" className="numeric">
+                            <time
+                              dateTime={new Date(sale.soldAt).toISOString()}
+                            >
+                              {soldOn(sale.soldAt)}
+                            </time>
+                          </td>
+                        </tr>
                       );
                     })}
-                  {history
-                    .slice()
-                    .reverse()
-                    .map((listing) => {
-                      const asset = assetById(listing.assetId);
-                      if (!asset) return null;
-                      return (
-                        <li key={listing.id} className="list-row">
-                          <img
-                            className="thumb"
-                            src={asset.artwork}
-                            alt=""
-                            width="40"
-                            height="40"
-                          />
-                          <span className="list-row-main">
-                            <strong>{asset.name}</strong>
-                            <small>
-                              Listed {formatDate(listing.createdAt)}
-                            </small>
-                          </span>
-                          <strong>{formatMicros(listing.priceMicros)}</strong>
-                          <span className="pill muted">
-                            {listing.status === 'cancelled'
-                              ? 'Cancelled'
-                              : 'Expired'}
-                          </span>
-                        </li>
-                      );
-                    })}
-                </ul>
-              ) : (
-                <EmptyState icon={History} title="No history yet." compact>
-                  Purchases and ended listings from this browser appear here.
-                </EmptyState>
-              )}
+                  </tbody>
+                </table>
+              </div>
+              <nav className="pager" aria-label="Sales pages">
+                <span>
+                  Page {page + 1} of {pages}
+                </span>
+                <span className="pager-buttons">
+                  <button
+                    type="button"
+                    className="icon-button ghost small"
+                    aria-label="First page"
+                    disabled={page === 0}
+                    onClick={() => setPage(0)}
+                  >
+                    <ChevronsLeft size={16} aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    className="icon-button ghost small"
+                    aria-label="Previous page"
+                    disabled={page === 0}
+                    onClick={() => setPage(page - 1)}
+                  >
+                    <ChevronLeft size={16} aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    className="icon-button ghost small"
+                    aria-label="Next page"
+                    disabled={page >= pages - 1}
+                    onClick={() => setPage(page + 1)}
+                  >
+                    <ChevronRight size={16} aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    className="icon-button ghost small"
+                    aria-label="Last page"
+                    disabled={page >= pages - 1}
+                    onClick={() => setPage(pages - 1)}
+                  >
+                    <ChevronsRight size={16} aria-hidden="true" />
+                  </button>
+                </span>
+              </nav>
             </TabPanel>
           )}
         </section>
 
         <aside className="market-side" aria-label="Market insights">
-          <section className="panel">
+          <section className="panel" aria-labelledby="market-stats-title">
             <div className="block-head">
-              <h2>Market stats</h2>
+              <h2 id="market-stats-title">Market stats</h2>
+              <div className="mini-toggle" role="group" aria-label="Range">
+                {RANGES.map(([id, label]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    aria-pressed={range === id}
+                    onClick={() => setRange(id)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="mini-toggle wide" role="group" aria-label="Metric">
+              {METRICS.map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={metric === id}
+                  onClick={() => setMetric(id)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className="stat-headline">
+              <strong>
+                {metric === 'discount'
+                  ? summary.discountBps === null
+                    ? '—'
+                    : formatBps(summary.discountBps)
+                  : metric === 'sales'
+                    ? summary.count
+                    : `${usd(roundAmount(summary.volumeMicros))} USDC`}
+              </strong>
+              <span>
+                {metric === 'discount'
+                  ? 'average discount'
+                  : metric === 'sales'
+                    ? summary.count === 1
+                      ? 'sale'
+                      : 'sales'
+                    : 'volume'}{' '}
+                · {rangeLabel}
+              </span>
+            </p>
+            {inRange.length ? (
+              <AreaChart
+                height={170}
+                ariaLabel={`${metricLabel} by ${range === 'all' ? 'epoch' : 'day'} over ${rangeLabel}, from sample sales and your purchases`}
+                labels={series.labels}
+                format={(value) =>
+                  metric === 'discount'
+                    ? `${value.toFixed(2)}%`
+                    : metric === 'sales'
+                      ? `${value} ${value === 1 ? 'sale' : 'sales'}`
+                      : `${usd(value)} USDC`
+                }
+                series={[{ label: metricLabel, values: series.values }]}
+              />
+            ) : (
+              <p className="panel-text">No sales in this range.</p>
+            )}
+            <p className="form-hint">
+              Sample sales and your preview purchases. Not live market data.
+            </p>
+          </section>
+          <section className="panel" aria-labelledby="distribution-title">
+            <div className="block-head">
+              <h2 id="distribution-title">Listings</h2>
               <div className="mini-toggle" role="group" aria-label="Chart">
                 <button
                   type="button"
@@ -772,9 +1133,9 @@ export default function MarketPage({
               other sellers.
             </p>
           </section>
-          <section className="panel">
+          <section className="panel" aria-labelledby="purchases-title">
             <div className="block-head">
-              <h2>Your purchases</h2>
+              <h2 id="purchases-title">Your purchases</h2>
               <span className="text-muted">This browser</span>
             </div>
             {receipts.length ? (
@@ -788,7 +1149,14 @@ export default function MarketPage({
                       <li key={receipt.id}>
                         <span>
                           <strong>{asset?.name ?? 'Sample position'}</strong>
-                          <small>{formatDate(receipt.createdAt)}</small>
+                          <small>
+                            {formatDate(receipt.createdAt)} ·{' '}
+                            {receipt.destination === 'collateral'
+                              ? 'into credit line'
+                              : receipt.destination === 'relayer'
+                                ? 'into relayer'
+                                : 'to wallet'}
+                          </small>
                         </span>
                         <span className="numeric">
                           {formatAmount(receipt.price)}
@@ -812,9 +1180,10 @@ export default function MarketPage({
         </aside>
       </div>
       <p className="page-note">
-        Demo {market.positionSymbol} positions and sample {market.tokenSymbol}{' '}
-        units. Discounts compare each ask with a fixed example reference value;
-        no chain data or yield is shown.
+        <History size={14} aria-hidden="true" /> Demo {market.positionSymbol}{' '}
+        positions, sample {market.tokenSymbol} units and sample sales. Discounts
+        compare each ask with a fixed example reference value; no chain data or
+        yield is shown.
       </p>
     </>
   );

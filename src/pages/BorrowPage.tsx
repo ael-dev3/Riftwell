@@ -6,6 +6,7 @@ import {
   Layers3,
   PiggyBank,
   Plus,
+  RefreshCcw,
   Sparkles,
   Store,
   Tag,
@@ -64,15 +65,15 @@ const ceilDiv = (a: bigint, b: bigint) => (a + b - 1n) / b;
 
 function PositionRow({
   asset,
-  deposited,
-  removable,
+  mode,
+  removable = true,
   now,
   onAction,
   onSell,
 }: {
   asset: Asset;
-  deposited: boolean;
-  removable: boolean;
+  mode: 'collateral' | 'relayer' | 'wallet';
+  removable?: boolean;
   now: number;
   onAction: (action: LendingAction) => void;
   onSell: (asset: Asset) => void;
@@ -106,11 +107,15 @@ function PositionRow({
         </div>
         <div>
           <dt>Credit</dt>
-          <dd>{formatMicros(COLLATERAL_LIMITS[asset.id])}</dd>
+          <dd>
+            {mode === 'relayer'
+              ? 'None'
+              : formatMicros(COLLATERAL_LIMITS[asset.id])}
+          </dd>
         </div>
       </dl>
       <div className="position-actions">
-        {deposited ? (
+        {mode === 'collateral' && (
           <>
             <span className="pill accent">Deposited</span>
             <button
@@ -131,7 +136,21 @@ function PositionRow({
               </span>
             )}
           </>
-        ) : (
+        )}
+        {mode === 'relayer' && (
+          <>
+            <span className="pill violet">Auto-collect</span>
+            <button
+              type="button"
+              className="button secondary small"
+              aria-label={`Remove ${asset.name} from the relayer`}
+              onClick={() => onAction({ kind: 'relayer-withdraw', asset })}
+            >
+              Remove <ArrowUpRight size={14} aria-hidden="true" />
+            </button>
+          </>
+        )}
+        {mode === 'wallet' && (
           <>
             <button
               type="button"
@@ -140,6 +159,14 @@ function PositionRow({
               onClick={() => onSell(asset)}
             >
               <Tag size={14} aria-hidden="true" /> List
+            </button>
+            <button
+              type="button"
+              className="button secondary small"
+              aria-label={`Add ${asset.name} to the relayer`}
+              onClick={() => onAction({ kind: 'relayer-deposit', asset })}
+            >
+              <RefreshCcw size={14} aria-hidden="true" /> Relayer
             </button>
             <button
               type="button"
@@ -362,7 +389,9 @@ export default function BorrowPage({
                 <button
                   type="button"
                   className="button ghost"
-                  disabled={!lending.collateralIds.length}
+                  disabled={
+                    !lending.collateralIds.length && !lending.relayerIds.length
+                  }
                   onClick={() => onAction({ kind: 'epoch' })}
                 >
                   <Clock3 size={16} aria-hidden="true" /> Simulate an epoch
@@ -419,7 +448,7 @@ export default function BorrowPage({
                     <PositionRow
                       key={asset.id}
                       asset={asset}
-                      deposited
+                      mode="collateral"
                       removable={
                         credit - BigInt(COLLATERAL_LIMITS[asset.id]) >= debt
                       }
@@ -437,6 +466,43 @@ export default function BorrowPage({
                 >
                   Deposit a demo position below to open your illustrative credit
                   limit.
+                </EmptyState>
+              )}
+            </section>
+
+            <section
+              className="positions-block"
+              aria-labelledby="relayer-title"
+            >
+              <div className="block-head">
+                <h3 id="relayer-title">
+                  <RefreshCcw size={17} aria-hidden="true" /> Reward relayer
+                </h3>
+                <span className="text-muted">
+                  Automated reward collection · no borrowing
+                </span>
+              </div>
+              {holdings.relayer.length ? (
+                <div className="position-list">
+                  {holdings.relayer.map((asset) => (
+                    <PositionRow
+                      key={asset.id}
+                      asset={asset}
+                      mode="relayer"
+                      now={now}
+                      onAction={onAction}
+                      onSell={onSell}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  icon={RefreshCcw}
+                  title="No positions in the relayer."
+                  compact
+                >
+                  Add a wallet position to collect its rewards every epoch
+                  without borrowing. You can take it back at any time.
                 </EmptyState>
               )}
             </section>
@@ -460,8 +526,7 @@ export default function BorrowPage({
                     <PositionRow
                       key={asset.id}
                       asset={asset}
-                      deposited={false}
-                      removable
+                      mode="wallet"
                       now={now}
                       onAction={onAction}
                       onSell={onSell}
@@ -474,8 +539,8 @@ export default function BorrowPage({
                   title="Nothing idle in your wallet."
                   compact
                 >
-                  Every position is deposited or listed. Buy another position in
-                  the marketplace to grow your credit.
+                  Every position is deposited, in the relayer or listed. Buy
+                  another position in the marketplace to grow your credit.
                 </EmptyState>
               )}
               {holdings.listed.length > 0 && (
@@ -530,6 +595,11 @@ export default function BorrowPage({
                   kinds: ['deposit-collateral', 'remove-collateral'],
                 },
                 { id: 'epochs', label: 'Epochs', kinds: ['epoch'] },
+                {
+                  id: 'relayer',
+                  label: 'Relayer',
+                  kinds: ['relayer-deposit', 'relayer-withdraw'],
+                },
                 { id: 'purchases', label: 'Purchases', kinds: ['purchase'] },
               ]}
               empty={

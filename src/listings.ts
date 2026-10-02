@@ -8,6 +8,8 @@ export type PreviewListing = {
   createdAt: string;
   expiresAt: string;
   status: 'active' | 'cancelled';
+  /** Private (OTC) listings are reserved for this lowercase address. */
+  buyer: string | null;
 };
 export type ListingBook = { version: 1; listings: PreviewListing[] };
 
@@ -17,6 +19,7 @@ export const MIN_LISTING_MICROS = 1_000_000n;
 export const MAX_LISTING_MICROS = 1_000_000_000_000n;
 const MAX_LISTINGS = 200;
 const DAY_MS = 86_400_000;
+const ADDRESS = /^0x[0-9a-f]{40}$/;
 const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
 
 export class ListingError extends Error {
@@ -60,9 +63,17 @@ function validListing(value: unknown): value is PreviewListing {
     isoDate(entry.createdAt) &&
     isoDate(entry.expiresAt) &&
     Date.parse(entry.expiresAt) > Date.parse(entry.createdAt) &&
-    (entry.status === 'active' || entry.status === 'cancelled')
+    (entry.status === 'active' || entry.status === 'cancelled') &&
+    (entry.buyer === null ||
+      (typeof entry.buyer === 'string' && ADDRESS.test(entry.buyer)))
   );
 }
+
+// Listings saved before private listings existed are public.
+const upgrade = (value: unknown) =>
+  value && typeof value === 'object' && !('buyer' in value)
+    ? { ...value, buyer: null }
+    : value;
 
 /** Keep valid listings for known positions; at most one active listing per position. */
 export function parseListingBook(
@@ -80,6 +91,7 @@ export function parseListingBook(
     const ids = new Set<string>();
     const listings = value.listings
       .slice(-MAX_LISTINGS)
+      .map(upgrade)
       .filter(validListing)
       .filter((entry) => {
         if (!knownAssetIds.includes(entry.assetId) || ids.has(entry.id))
@@ -107,7 +119,20 @@ export type ListingDraft = {
   assetId: string;
   price: string;
   expiryDays: number;
+  /** Optional buyer address for a private (OTC) listing. */
+  buyer?: string;
 };
+
+export const isPrivate = (listing: PreviewListing) => listing.buyer !== null;
+
+/** Validate an optional buyer address. Empty means a public listing. */
+export function buyerError(buyer: string): string | null {
+  const value = buyer.trim();
+  if (!value) return null;
+  return /^0x[0-9a-fA-F]{40}$/.test(value)
+    ? null
+    : 'Enter a full 0x address with 40 hexadecimal characters.';
+}
 
 /** Validate a draft into exact micros. Returns a message instead of throwing. */
 export function listingPriceError(price: string): string | null {
@@ -139,6 +164,9 @@ export function createListing(
   if (issue) throw new ListingError('INVALID_PRICE', issue);
   if (!(LISTING_EXPIRY_DAYS as readonly number[]).includes(draft.expiryDays))
     throw new ListingError('INVALID_EXPIRY', 'Choose 1, 7 or 30 days.');
+  const buyerIssue = buyerError(draft.buyer ?? '');
+  if (buyerIssue) throw new ListingError('INVALID_BUYER', buyerIssue);
+  const buyer = draft.buyer?.trim().toLowerCase() || null;
   const createdAt = new Date(now).toISOString();
   const listing: PreviewListing = {
     id: globalThis.crypto.randomUUID(),
@@ -147,6 +175,7 @@ export function createListing(
     createdAt,
     expiresAt: new Date(now + draft.expiryDays * DAY_MS).toISOString(),
     status: 'active',
+    buyer,
   };
   return {
     version: 1,

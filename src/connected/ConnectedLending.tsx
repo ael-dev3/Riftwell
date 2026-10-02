@@ -6,6 +6,7 @@ import {
   Landmark,
   Layers3,
   PiggyBank,
+  RefreshCcw,
   Vote,
   Wallet,
 } from 'lucide-react';
@@ -215,6 +216,26 @@ export function ConnectedBorrow({
                   deposited collateral or an approved credit limit.
                 </EmptyState>
               )}
+            </section>
+            <section
+              className="positions-block"
+              aria-labelledby="relayer-title"
+            >
+              <div className="block-head">
+                <h3 id="relayer-title">
+                  <RefreshCcw size={17} aria-hidden="true" /> Reward relayer
+                </h3>
+                <span className="pill muted">Not launched</span>
+              </div>
+              <EmptyState
+                icon={RefreshCcw}
+                title="Automated reward collection, no borrowing."
+                compact
+              >
+                The relayer launches with the lending contracts. Positions added
+                to it will have their rewards collected each epoch and paid to
+                you, without opening a credit line.
+              </EmptyState>
             </section>
             <details className="faq-item">
               <summary>

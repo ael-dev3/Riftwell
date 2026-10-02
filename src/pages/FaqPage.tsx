@@ -26,6 +26,29 @@ export default function FaqPage({
       ),
     },
     {
+      question: 'What is a veNFT?',
+      answer: (
+        <>
+          A vote-escrowed NFT holds tokens locked for a set time. The lock gives
+          it voting power over where the exchange directs its token emissions,
+          and each weekly epoch the position earns trading fees and incentives
+          from the pools it votes for. A {market.positionSymbol} position locks{' '}
+          {market.tokenSymbol} on {market.name}. Riftwell lends against that
+          reward stream rather than the position’s market price.
+        </>
+      ),
+    },
+    {
+      question: 'Which positions and networks are supported?',
+      answer: (
+        <>
+          {market.positionSymbol} on {market.chain} (chain 999) is the only
+          market today, and the vault lends USDC. More markets may follow; each
+          will launch with its own published terms.
+        </>
+      ),
+    },
+    {
       question: 'How is my credit limit calculated?',
       answer: (
         <>
@@ -103,6 +126,38 @@ export default function FaqPage({
           position is deposited as collateral, you can borrow against it, and
           the borrowed USDC helps pay the ask in one step. Its rewards then
           repay that balance.
+        </>
+      ),
+    },
+    {
+      question: 'What is the reward relayer?',
+      answer: (
+        <>
+          A way to automate reward collection without borrowing. Add a position
+          and its rewards are collected every epoch and paid to you. While it is
+          in the relayer it cannot back a loan or be listed; take it back at any
+          time. Any automation charge is published at launch.
+        </>
+      ),
+    },
+    {
+      question: 'What is a private (OTC) listing?',
+      answer: (
+        <>
+          A listing reserved for one buyer address. It stays off the public
+          listings and appears in that buyer’s OTC tab. Like every listing it is
+          an off-chain intent: it never transfers, escrows or approves your
+          position.
+        </>
+      ),
+    },
+    {
+      question: 'Has Riftwell been audited?',
+      answer: (
+        <>
+          Not yet. The contract prototypes in the repository are experimental,
+          unaudited and not deployed. Funded lending, vault deposits and
+          purchase settlement launch only after independent review.
         </>
       ),
     },

@@ -34,6 +34,8 @@ type Props = {
 function status(asset: Asset, holdings: Holdings) {
   if (holdings.collateral.some((item) => item.id === asset.id))
     return { label: 'Collateral', tone: 'accent' };
+  if (holdings.relayer.some((item) => item.id === asset.id))
+    return { label: 'Relayer', tone: 'violet' };
   if (holdings.listed.some((item) => item.asset.id === asset.id))
     return { label: 'Listed', tone: 'warning' };
   return { label: 'In wallet', tone: 'muted' };

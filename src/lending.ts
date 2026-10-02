@@ -8,7 +8,9 @@ export type LendingActivityKind =
   | 'borrow'
   | 'repay'
   | 'epoch'
-  | 'purchase';
+  | 'purchase'
+  | 'relayer-deposit'
+  | 'relayer-withdraw';
 export type LendingActivity = {
   id: string;
   kind: LendingActivityKind;
@@ -20,6 +22,8 @@ export type LendingActivity = {
   rewardRepaidMicros: string;
   rewardSurplusMicros: string;
   poolYieldMicros: string;
+  /** Net rewards collected for relayer positions and paid to the wallet. */
+  relayerRewardMicros: string;
 };
 export type LendingState = {
   version: 1;
@@ -31,6 +35,8 @@ export type LendingState = {
   debtMicros: string;
   platformFeesMicros: string;
   collateralIds: string[];
+  /** Positions deposited for automated reward collection, without credit. */
+  relayerIds: string[];
   epoch: number;
   activity: LendingActivity[];
 };
@@ -63,6 +69,8 @@ const ACTIVITY_KINDS: readonly string[] = [
   'repay',
   'epoch',
   'purchase',
+  'relayer-deposit',
+  'relayer-withdraw',
 ];
 
 export class LendingError extends Error {
@@ -118,7 +126,19 @@ function validActivity(value: unknown): value is LendingActivity {
         value.collateralId.length <= 100)) &&
     raw(value.rewardRepaidMicros) &&
     raw(value.rewardSurplusMicros) &&
-    raw(value.poolYieldMicros)
+    raw(value.poolYieldMicros) &&
+    raw(value.relayerRewardMicros)
+  );
+}
+
+function validIds(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) &&
+    value.length <= MAX_COLLATERAL &&
+    value.every(
+      (id) => typeof id === 'string' && id.length > 0 && id.length <= 100,
+    ) &&
+    new Set(value).size === value.length
   );
 }
 
@@ -140,12 +160,12 @@ function validState(value: unknown): value is LendingState {
       SEED_SHARES &&
     BigInt(value.poolCashMicros) + BigInt(value.poolOutstandingMicros) <=
       MAX_MONEY &&
-    Array.isArray(value.collateralIds) &&
-    value.collateralIds.length <= MAX_COLLATERAL &&
-    value.collateralIds.every(
-      (id) => typeof id === 'string' && id.length > 0 && id.length <= 100,
+    validIds(value.collateralIds) &&
+    validIds(value.relayerIds) &&
+    // Both lists were validated above; a position is in at most one of them.
+    !value.relayerIds.some((id) =>
+      (value.collateralIds as string[]).includes(id),
     ) &&
-    new Set(value.collateralIds).size === value.collateralIds.length &&
     typeof value.epoch === 'number' &&
     Number.isSafeInteger(value.epoch) &&
     value.epoch >= 0 &&
@@ -206,6 +226,7 @@ function finish(
     rewardRepaidMicros: '0',
     rewardSurplusMicros: '0',
     poolYieldMicros: '0',
+    relayerRewardMicros: '0',
     ...activity,
   };
   const next = {
@@ -232,8 +253,25 @@ export function createLendingState(): LendingState {
     debtMicros: '0',
     platformFeesMicros: '0',
     collateralIds: [],
+    relayerIds: [],
     epoch: 0,
     activity: [],
+  };
+}
+
+/** Fill fields added after a preview was first saved, before validation. */
+function upgrade(value: unknown): unknown {
+  if (!object(value)) return value;
+  return {
+    ...value,
+    relayerIds: value.relayerIds ?? [],
+    activity: Array.isArray(value.activity)
+      ? value.activity.map((entry: unknown) =>
+          object(entry) && entry.relayerRewardMicros === undefined
+            ? { ...entry, relayerRewardMicros: '0' }
+            : entry,
+        )
+      : value.activity,
   };
 }
 
@@ -243,7 +281,7 @@ export function parseLendingState(
 ): LendingState {
   try {
     if (!rawState || rawState.length > 200_000) return createLendingState();
-    const value: unknown = JSON.parse(rawState);
+    const value = upgrade(JSON.parse(rawState));
     if (!validState(value) || BigInt(value.debtMicros) > credit(value, limits))
       return createLendingState();
     return value;
@@ -364,6 +402,11 @@ export function depositCollateral(
   limitFor(id, limits);
   if (state.collateralIds.includes(id))
     fail('COLLATERAL_ALREADY_DEPOSITED', 'This position is already deposited.');
+  if (state.relayerIds.includes(id))
+    fail(
+      'IN_RELAYER',
+      'Withdraw this position from the relayer before using it as collateral.',
+    );
   return finish(
     state,
     { collateralIds: [...state.collateralIds, id] },
@@ -508,17 +551,77 @@ export function purchaseIntoCollateral(
   return purchase(next, assetId, priceMicros);
 }
 
+/**
+ * Deposit a position for automated reward collection. It earns no credit and
+ * cannot back a loan; each epoch its net rewards are paid to the wallet.
+ */
+export function depositToRelayer(
+  state: LendingState,
+  id: string,
+  limits: CollateralLimits,
+): LendingState {
+  checked(state);
+  limitFor(id, limits);
+  if (state.relayerIds.includes(id))
+    fail('ALREADY_IN_RELAYER', 'This position is already in the relayer.');
+  if (state.collateralIds.includes(id))
+    fail(
+      'COLLATERAL_DEPOSITED',
+      'Remove this position from your collateral before adding it to the relayer.',
+    );
+  return finish(
+    state,
+    { relayerIds: [...state.relayerIds, id] },
+    'relayer-deposit',
+    { collateralId: id },
+  );
+}
+
+export function withdrawFromRelayer(
+  state: LendingState,
+  id: string,
+): LendingState {
+  checked(state);
+  if (!state.relayerIds.includes(id))
+    fail('NOT_IN_RELAYER', 'This position is not in the relayer.');
+  return finish(
+    state,
+    { relayerIds: state.relayerIds.filter((item) => item !== id) },
+    'relayer-withdraw',
+    { collateralId: id },
+  );
+}
+
+/** Buy a position straight into the relayer, then pay the seller. */
+export function purchaseIntoRelayer(
+  state: LendingState,
+  assetId: string,
+  priceMicros: string,
+  limits: CollateralLimits,
+): LendingState {
+  return purchase(
+    depositToRelayer(state, assetId, limits),
+    assetId,
+    priceMicros,
+  );
+}
+
 export function advanceEpoch(
   state: LendingState,
   collateralRewardMicros = '50000000',
   poolYieldMicros = '200000000',
+  relayerRewardMicros = '0',
 ): LendingState {
   checked(state);
-  // Both inputs are illustrative NET amounts after any upstream reward fees.
-  // This ledger does not assume a gross reward rate or introduce a reward fee.
-  // The inputs are scenario values, not a forecast or reward claim.
+  // Every input is an illustrative NET amount after any upstream reward fees
+  // or automation charges. This ledger does not assume a gross reward rate or
+  // introduce a fee. The inputs are scenario values, not a forecast or claim.
   const maximum = BigInt(MAX_EPOCH_INPUT_MICROS);
-  if (!raw(collateralRewardMicros, maximum) || !raw(poolYieldMicros, maximum))
+  if (
+    !raw(collateralRewardMicros, maximum) ||
+    !raw(poolYieldMicros, maximum) ||
+    !raw(relayerRewardMicros, maximum)
+  )
     fail(
       'INVALID_REWARD',
       'Enter an illustrative epoch amount from 0 to 1,000 USDC.',
@@ -526,13 +629,20 @@ export function advanceEpoch(
   const collateralReward = state.collateralIds.length
     ? BigInt(collateralRewardMicros)
     : 0n;
+  const relayerReward = state.relayerIds.length
+    ? BigInt(relayerRewardMicros)
+    : 0n;
   const poolYield = BigInt(poolYieldMicros);
   const repaid = min(collateralReward, BigInt(state.debtMicros));
   const surplus = collateralReward - repaid;
   return finish(
     state,
     {
-      walletMicros: (BigInt(state.walletMicros) + surplus).toString(),
+      walletMicros: (
+        BigInt(state.walletMicros) +
+        surplus +
+        relayerReward
+      ).toString(),
       poolCashMicros: (
         BigInt(state.poolCashMicros) +
         repaid +
@@ -550,6 +660,7 @@ export function advanceEpoch(
       rewardRepaidMicros: repaid.toString(),
       rewardSurplusMicros: surplus.toString(),
       poolYieldMicros: poolYield.toString(),
+      relayerRewardMicros: relayerReward.toString(),
     },
   );
 }

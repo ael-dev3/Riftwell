@@ -24,13 +24,17 @@ import {
   advanceEpoch,
   borrow,
   depositCollateral,
+  depositToRelayer,
+  getLendingMetrics,
   LendingError,
   purchase,
   purchaseIntoCollateral,
+  purchaseIntoRelayer,
   removeCollateral,
   repay,
   supply,
   withdraw,
+  withdrawFromRelayer,
 } from './lending';
 import {
   cancelListing,
@@ -38,6 +42,7 @@ import {
   ListingError,
   type PreviewListing,
 } from './listings';
+import { marketSales, marketSeries, summarize } from './market';
 import { DEFAULT_MARKET, type Market } from './markets';
 import { activityLabel, type LendingAction } from './preview/actions';
 import { useHoldings, usePreviewStore } from './preview/store';
@@ -45,9 +50,14 @@ import { isDefaultVotePlan, type VotePlan } from './vote';
 import BorrowPage from './pages/BorrowPage';
 import EarnPage from './pages/EarnPage';
 import MarketPage from './pages/MarketPage';
+import NotFoundPage from './pages/NotFoundPage';
+import type { StatsModel } from './pages/StatsPage';
 
 const SimulatorPage = preloadable(() => import('./pages/SimulatorPage'));
 const FaqPage = preloadable(() => import('./pages/FaqPage'));
+const StatsPage = preloadable(() => import('./pages/StatsPage'));
+const BrandPage = preloadable(() => import('./pages/BrandPage'));
+const PrivacyPage = preloadable(() => import('./pages/PrivacyPage'));
 const AccountDialog = preloadable(() => import('./components/AccountDialog'));
 const LendingActionDialog = preloadable(
   () => import('./components/LendingDialogs'),
@@ -75,6 +85,9 @@ const SuccessDialog = preloadable(() =>
 const DEFERRED = [
   SimulatorPage,
   FaqPage,
+  StatsPage,
+  BrandPage,
+  PrivacyPage,
   AccountDialog,
   LendingActionDialog,
   VaultDetails,
@@ -89,7 +102,7 @@ const DEFERRED = [
 type Modal =
   | { type: 'buy'; asset: Asset }
   | { type: 'sweep'; assets: Asset[] }
-  | { type: 'sell'; assetId?: string }
+  | { type: 'sell'; assetId?: string; private?: boolean }
   | { type: 'cancel-listing'; listing: PreviewListing }
   | { type: 'lending'; action: LendingAction }
   | { type: 'vault' }
@@ -181,6 +194,14 @@ function PreviewApp() {
         case 'remove-collateral':
           next = removeCollateral(current, action.asset.id, COLLATERAL_LIMITS);
           break;
+        case 'relayer-deposit':
+          if (!holdings.wallet.some((asset) => asset.id === action.asset.id))
+            return 'This position is no longer in your demo wallet.';
+          next = depositToRelayer(current, action.asset.id, COLLATERAL_LIMITS);
+          break;
+        case 'relayer-withdraw':
+          next = withdrawFromRelayer(current, action.asset.id);
+          break;
         case 'borrow':
           next = borrow(current, input.amountMicros ?? '0', COLLATERAL_LIMITS);
           break;
@@ -198,6 +219,7 @@ function PreviewApp() {
             current,
             input.collateralRewardMicros ?? '0',
             input.poolYieldMicros ?? '0',
+            input.relayerRewardMicros ?? '0',
           );
           break;
         case 'how':
@@ -250,7 +272,9 @@ function PreviewApp() {
               borrowMicros,
               COLLATERAL_LIMITS,
             )
-          : purchase(current, asset.id, price);
+          : destination === 'relayer'
+            ? purchaseIntoRelayer(current, asset.id, price, COLLATERAL_LIMITS)
+            : purchase(current, asset.id, price);
       const receipt = receiptFor(asset, destination);
       store.setLending(next);
       store.setPortfolio((portfolio) => ({
@@ -261,7 +285,9 @@ function PreviewApp() {
       toast(
         destination === 'collateral'
           ? `${asset.name} bought and deposited in your preview.`
-          : `${asset.name} bought in your preview.`,
+          : destination === 'relayer'
+            ? `${asset.name} bought into the relayer in your preview.`
+            : `${asset.name} bought in your preview.`,
       );
       return null;
     } catch (error) {
@@ -302,6 +328,7 @@ function PreviewApp() {
     assetId: string;
     price: string;
     expiryDays: number;
+    buyer?: string;
   }): string | null {
     try {
       store.setListings(
@@ -311,7 +338,11 @@ function PreviewApp() {
           holdings.wallet.map((asset) => asset.id),
         ),
       );
-      toast('Listing saved in your preview.');
+      toast(
+        draft.buyer
+          ? 'Private listing saved in your preview.'
+          : 'Listing saved in your preview.',
+      );
       closeModal();
       return null;
     } catch (error) {
@@ -345,6 +376,7 @@ function PreviewApp() {
   const accountCount =
     store.portfolio.receipts.length +
     store.lending.collateralIds.length +
+    store.lending.relayerIds.length +
     (BigInt(store.lending.shareBalanceRaw) > 0n ? 1 : 0) +
     holdings.listed.length;
   const canReset =
@@ -376,6 +408,42 @@ function PreviewApp() {
       )}
     </div>
   );
+
+  function statsModel(): StatsModel {
+    const lending = store.lending;
+    const metrics = getLendingMetrics(lending, COLLATERAL_LIMITS);
+    const epochs = lending.activity.filter((entry) => entry.kind === 'epoch');
+    const sales = marketSales(store.portfolio.receipts);
+    const totals = summarize(sales);
+    return {
+      mode: 'preview',
+      vault: {
+        assetsMicros: BigInt(metrics.totalAssetsMicros),
+        outstandingMicros: BigInt(lending.poolOutstandingMicros),
+        cashMicros: BigInt(lending.poolCashMicros),
+        utilizationBps: metrics.utilizationBps,
+      },
+      rewards: {
+        micros: epochs.reduce(
+          (sum, entry) =>
+            sum +
+            BigInt(entry.rewardRepaidMicros) +
+            BigInt(entry.rewardSurplusMicros) +
+            BigInt(entry.relayerRewardMicros) +
+            BigInt(entry.poolYieldMicros),
+          0n,
+        ),
+        epochs: epochs.length,
+      },
+      sales: { count: totals.count, volumeMicros: totals.volumeMicros },
+      volumeSeries: marketSeries(sales, 'all', 'volume', now),
+      positions: [...holdings.market, ...holdings.owned].map((asset) => ({
+        balance: asset.underlyingBalance,
+        unlockMs: Date.parse(asset.unlockDate),
+      })),
+      listed: holdings.market.length + holdings.listed.length,
+    };
+  }
 
   let page;
   switch (route.page) {
@@ -420,7 +488,13 @@ function PreviewApp() {
           }
           onBuy={(asset) => setModal({ type: 'buy', asset })}
           onSweep={(assets) => setModal({ type: 'sweep', assets })}
-          onSell={(asset) => setModal({ type: 'sell', assetId: asset?.id })}
+          onSell={(asset, options) =>
+            setModal({
+              type: 'sell',
+              assetId: asset?.id,
+              private: options?.private,
+            })
+          }
           onCancel={(listing) => setModal({ type: 'cancel-listing', listing })}
         />
       );
@@ -430,6 +504,18 @@ function PreviewApp() {
       break;
     case 'faq':
       page = <FaqPage market={market} mode="preview" />;
+      break;
+    case 'stats':
+      page = <StatsPage market={market} model={statsModel()} now={now} />;
+      break;
+    case 'brand':
+      page = <BrandPage market={market} />;
+      break;
+    case 'privacy':
+      page = <PrivacyPage mode="preview" />;
+      break;
+    case 'not-found':
+      page = <NotFoundPage path={route.item} onNavigate={go} />;
       break;
   }
 
@@ -522,6 +608,7 @@ function PreviewApp() {
           <SellDialog
             positions={holdings.wallet}
             initialId={modal.assetId}
+            initialVisibility={modal.private ? 'private' : 'public'}
             onClose={closeModal}
             onList={list}
           />
