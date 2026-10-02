@@ -1,18 +1,15 @@
 import { ArrowRight, ArrowUpRight, CircleUserRound, Info } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { ASSETS, COLLATERAL_LIMITS } from './data';
+import {
+  ASSETS,
+  ALL_MARKET_ASSETS,
+  OWNED_MARKET_ASSETS,
+  COLLATERAL_LIMITS,
+} from './data';
 import { DEFAULT_MARKET, type Market } from './markets';
 import MarketSelector from './components/MarketSelector';
 import PortalMark from './components/PortalMark';
-import {
-  emptyPortfolio,
-  parsePortfolio,
-  STORAGE_KEY,
-  LEGACY_STORAGE_KEY,
-  type Asset,
-  type Portfolio,
-  type Receipt,
-} from './domain';
+import { parsePortfolio, STORAGE_KEY, LEGACY_STORAGE_KEY } from './domain';
 import AccountDialog, { type AccountTab } from './components/AccountDialog';
 import Dialog from './components/Dialog';
 import Lending, {
@@ -36,25 +33,35 @@ import {
   withdraw,
   type LendingState,
 } from './lending';
-import Marketplace from './components/Marketplace';
+import Marketplace, { type MarketplaceAction } from './components/Marketplace';
+import MarketplaceActionDialog, {
+  type MarketplaceActionInput,
+} from './components/MarketplaceDialogs';
 import {
-  AssetDetails,
-  PurchaseDialog,
-  SuccessDialog,
-} from './components/TradeDialogs';
+  createMarketplaceState,
+  parseMarketplaceState,
+  migrateMarketplacePurchases,
+  listAsset,
+  editListing,
+  cancelListing,
+  buyListings,
+  MarketplaceError,
+  MARKETPLACE_STORAGE_KEY,
+  PREVIEW_ADDRESS,
+  type MarketplaceState,
+} from './marketplace';
 
 type Section = 'lending' | 'marketplace';
 type Modal =
-  | { type: 'details' | 'purchase'; asset: Asset }
+  | { type: 'market-action'; action: MarketplaceAction }
   | { type: 'lending-action'; action: LendingAction }
   | { type: 'account'; tab?: AccountTab }
   | { type: 'reset' | 'about' }
-  | { type: 'success'; receipt: Receipt; asset: Asset }
   | null;
 
 const LENDING_STORAGE_KEY = 'riftwell.pooled-lending-preview.v1';
 function initialPortfolio(): {
-  portfolio: Portfolio;
+  marketplace: MarketplaceState;
   lending: LendingState;
   readIssue: boolean;
   migrated: boolean;
@@ -63,21 +70,35 @@ function initialPortfolio(): {
     const current = localStorage.getItem(STORAGE_KEY);
     const legacy =
       current === null ? localStorage.getItem(LEGACY_STORAGE_KEY) : null;
+    const owned = OWNED_MARKET_ASSETS.map((asset) => asset.id);
+    const savedMarket = localStorage.getItem(MARKETPLACE_STORAGE_KEY);
+    const old = parsePortfolio(
+      current ?? legacy,
+      ASSETS.map((asset) => asset.id),
+    );
+    const marketplace =
+      savedMarket === null
+        ? migrateMarketplacePurchases(
+            createMarketplaceState(ALL_MARKET_ASSETS, owned),
+            old.receipts,
+            ALL_MARKET_ASSETS,
+          )
+        : parseMarketplaceState(savedMarket, ALL_MARKET_ASSETS, owned);
     return {
-      portfolio: parsePortfolio(
-        current ?? legacy,
-        ASSETS.map((asset) => asset.id),
-      ),
+      marketplace,
       lending: parseLendingState(
         localStorage.getItem(LENDING_STORAGE_KEY),
         COLLATERAL_LIMITS,
       ),
       readIssue: false,
-      migrated: legacy !== null,
+      migrated: savedMarket === null && (current !== null || legacy !== null),
     };
   } catch {
     return {
-      portfolio: emptyPortfolio(),
+      marketplace: createMarketplaceState(
+        ALL_MARKET_ASSETS,
+        OWNED_MARKET_ASSETS.map((asset) => asset.id),
+      ),
       lending: createLendingState(),
       readIssue: true,
       migrated: false,
@@ -92,7 +113,11 @@ export default function App() {
   );
   const [lendingTab, setLendingTab] = useState<LendingTab>('borrow');
   const [initial] = useState(initialPortfolio);
-  const [portfolio, setPortfolio] = useState<Portfolio>(initial.portfolio);
+  const [marketplace, setMarketplace] = useState<MarketplaceState>(
+    initial.marketplace,
+  );
+  const marketplaceRef = useRef(marketplace);
+  marketplaceRef.current = marketplace;
   const [lending, setLending] = useState<LendingState>(initial.lending);
   const lendingRef = useRef(lending);
   lendingRef.current = lending;
@@ -130,24 +155,21 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(portfolio));
+      localStorage.setItem(
+        MARKETPLACE_STORAGE_KEY,
+        JSON.stringify(marketplace),
+      );
       localStorage.setItem(LENDING_STORAGE_KEY, JSON.stringify(lending));
       setStorageIssue(initial.readIssue);
     } catch {
       setStorageIssue(true);
     }
-  }, [portfolio, lending, initial.readIssue]);
+  }, [marketplace, lending, initial.readIssue]);
 
-  const purchasedIds = new Set(
-    portfolio.receipts
-      .filter((receipt) => receipt.kind === 'purchase')
-      .map((receipt) => receipt.assetId),
-  );
-  const availableAssets = ASSETS.filter(
-    (asset) => asset.marketId === market.id && !purchasedIds.has(asset.id),
-  );
   const accountCount =
-    portfolio.receipts.length +
+    Object.values(marketplace.ownerByAsset).filter(
+      (owner) => owner.toLowerCase() === PREVIEW_ADDRESS.toLowerCase(),
+    ).length +
     lending.collateralIds.length +
     (BigInt(lending.shareBalanceRaw) > 0n ? 1 : 0);
 
@@ -176,21 +198,55 @@ export default function App() {
     });
   }
 
-  function saveReceipt(receipt: Receipt) {
-    setPortfolio((current) => {
-      const duplicate = current.receipts.some(
-        (item) =>
-          item.kind === receipt.kind &&
-          item.assetId === receipt.assetId &&
-          item.kind === 'purchase',
+  function applyMarketplaceAction(
+    action: MarketplaceAction,
+    input: MarketplaceActionInput,
+  ): string | null {
+    try {
+      const current = marketplaceRef.current;
+      let next = current;
+      if (action.kind === 'list' && input.assetId && input.terms)
+        next = listAsset(
+          current,
+          input.assetId,
+          input.terms,
+          ALL_MARKET_ASSETS,
+        );
+      else if (action.kind === 'edit' && input.terms)
+        next = editListing(
+          current,
+          action.listing.id,
+          action.listing.revision,
+          input.terms,
+          ALL_MARKET_ASSETS,
+        );
+      else if (action.kind === 'cancel')
+        next = cancelListing(
+          current,
+          action.listing.id,
+          action.listing.revision,
+          ALL_MARKET_ASSETS,
+        );
+      else if (
+        (action.kind === 'buy' || action.kind === 'sweep') &&
+        input.quotes
+      )
+        next = buyListings(current, input.quotes, ALL_MARKET_ASSETS);
+      else return 'Review the required listing details first.';
+      marketplaceRef.current = next;
+      setMarketplace(next);
+      setAnnouncement(
+        action.kind === 'buy' || action.kind === 'sweep'
+          ? 'Preview purchase completed.'
+          : 'Preview listing updated.',
       );
-      return duplicate
-        ? current
-        : { ...current, receipts: [...current.receipts, receipt] };
-    });
-    const asset = ASSETS.find((item) => item.id === receipt.assetId);
-    if (asset) setModal({ type: 'success', receipt, asset });
-    setAnnouncement('Your preview receipt has been saved.');
+      closeModal();
+      return null;
+    } catch (error) {
+      return error instanceof MarketplaceError
+        ? error.message
+        : 'This preview action could not be completed. Try again.';
+    }
   }
 
   function applyLendingAction(
@@ -251,7 +307,7 @@ export default function App() {
           selectSection(section, true);
         }}
       >
-        Skip to explore
+        Skip to workspace
       </a>
       <header className="site-header">
         <a
@@ -319,63 +375,6 @@ export default function App() {
         </div>
       </header>
       <main className="page-main">
-        <section className="hero" aria-labelledby="hero-title">
-          <div className="hero-copy">
-            <p className="eyebrow">
-              <span className="eyebrow-dot" />
-              {market.name} · {market.chain}
-            </p>
-            <h1 className="hero-title" id="hero-title">
-              A new orbit
-              <br />
-              for your <span className="accent-text">assets.</span>
-            </h1>
-            <p className="hero-description">
-              Trade {market.positionSymbol} positions. Borrow against collateral
-              or supply USDC to a pooled lending vault. Explore the{' '}
-              {market.name}
-              market in one simple space.
-            </p>
-            <div className="hero-actions">
-              <button
-                className="button primary"
-                onClick={() => selectSection('marketplace', true)}
-              >
-                Explore positions <ArrowUpRight size={18} aria-hidden="true" />
-              </button>
-              <button
-                className="button ghost"
-                onClick={() => selectSection('lending', true)}
-              >
-                Try lending <ArrowRight size={16} aria-hidden="true" />
-              </button>
-            </div>
-            <p className="hero-note">
-              <span />
-              An interactive preview. No wallet required.
-            </p>
-          </div>
-          <div className="hero-visual" aria-hidden="true">
-            <div className="portal-scene">
-              <div className="portal-aura" />
-              <div className="portal-orbit orbit-one" />
-              <div className="portal-orbit orbit-two" />
-              <div className="portal-orbit orbit-three" />
-              <div className="portal-core" />
-              <div className="portal-plinth" />
-              <div className="portal-caption">
-                <span className="portal-caption-dot" />
-                {market.name.toUpperCase()} / {market.chain.toUpperCase()}
-              </div>
-              <div className="portal-coordinate top">
-                {market.positionSymbol} / RW
-              </div>
-              <div className="portal-coordinate bottom">
-                {market.tokenSymbol} POSITIONS
-              </div>
-            </div>
-          </div>
-        </section>
         {storageIssue && (
           <div className="notice storage-notice" role="status">
             <Info size={18} aria-hidden="true" />
@@ -389,9 +388,8 @@ export default function App() {
           <div className="notice storage-notice" role="status">
             <Info size={18} aria-hidden="true" />
             <p>
-              Your sample purchases were retained. Lending now uses a fresh
-              pooled-vault preview; older unfunded proposals were not converted
-              into balances.
+              Your saved sample purchases were retained in the marketplace
+              preview.
             </p>
           </div>
         )}
@@ -406,7 +404,7 @@ export default function App() {
           }
           tabIndex={-1}
         >
-          {announcement && section === 'lending' && (
+          {announcement && (
             <p className="pooled-feedback" role="status">
               {announcement}
             </p>
@@ -414,9 +412,8 @@ export default function App() {
           {section === 'marketplace' ? (
             <Marketplace
               market={market}
-              assets={availableAssets}
-              onDetails={(asset) => setModal({ type: 'details', asset })}
-              onPurchase={(asset) => setModal({ type: 'purchase', asset })}
+              state={marketplace}
+              onAction={(action) => setModal({ type: 'market-action', action })}
             />
           ) : (
             <Lending
@@ -476,20 +473,13 @@ export default function App() {
       <div className="sr-only" aria-live="polite" aria-atomic="true">
         {announcement}
       </div>
-      {modal?.type === 'details' && (
-        <AssetDetails
-          key="details"
-          asset={modal.asset}
+      {modal?.type === 'market-action' && (
+        <MarketplaceActionDialog
+          key={modal.action.kind}
+          action={modal.action}
+          state={marketplace}
           onClose={closeModal}
-          onPurchase={() => setModal({ type: 'purchase', asset: modal.asset })}
-        />
-      )}
-      {modal?.type === 'purchase' && (
-        <PurchaseDialog
-          key="purchase"
-          asset={modal.asset}
-          onClose={closeModal}
-          onSave={saveReceipt}
+          onApply={(input) => applyMarketplaceAction(modal.action, input)}
         />
       )}
       {modal?.type === 'lending-action' && (
@@ -501,21 +491,10 @@ export default function App() {
           onApply={(input) => applyLendingAction(modal.action, input)}
         />
       )}
-      {modal?.type === 'success' && (
-        <SuccessDialog
-          key="success"
-          receipt={modal.receipt}
-          asset={modal.asset}
-          onClose={closeModal}
-          onAccount={() =>
-            setModal({ type: 'account', tab: modal.receipt.kind })
-          }
-        />
-      )}
       {modal?.type === 'account' && (
         <AccountDialog
           key="account"
-          receipts={portfolio.receipts}
+          marketplace={marketplace}
           lending={lending}
           initialTab={modal.tab}
           onClose={closeModal}
@@ -560,7 +539,17 @@ export default function App() {
                 } catch {
                   setStorageIssue(true);
                 }
-                setPortfolio(emptyPortfolio());
+                try {
+                  localStorage.removeItem(STORAGE_KEY);
+                } catch {
+                  setStorageIssue(true);
+                }
+                const freshMarket = createMarketplaceState(
+                  ALL_MARKET_ASSETS,
+                  OWNED_MARKET_ASSETS.map((asset) => asset.id),
+                );
+                marketplaceRef.current = freshMarket;
+                setMarketplace(freshMarket);
                 const freshLending = createLendingState();
                 lendingRef.current = freshLending;
                 setLending(freshLending);

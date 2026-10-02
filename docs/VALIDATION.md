@@ -2,7 +2,27 @@
 
 The frontend, Node service and contract prototypes have separate dependency trees. Frontend production dependencies are React, React DOM and Lucide; the server uses Fastify, ethers and better-sqlite3. Contract/compiler tooling is not shipped with the application. Captured application audits are in `production-dependency-audit.json` and `server-production-dependency-audit.json`.
 
+## Marketplace and TypeScript migration — 2 October 2026
+
+- All first-party application, server, QA and experimental tooling source uses TypeScript 7.0.2. The application, server and QA tools pass strict type checking with separate runtime and compiler boundaries. Node 24 runs server and tooling entry points through native type stripping; type stripping does not replace the compiler check. The frontend also checks unchecked indexed access and exact optional properties.
+- 121 frontend tests pass, including fixed and cubic Dutch pricing, reserved buyers, seller revisions, ownership, expiry, stale quotes, exact USDC accounting and all-or-nothing preview sweeps. Existing pooled lending and connected client checks remain included.
+- 65 server tests pass on Node 24 with real SQLite. Coverage includes fixed/Dutch listing validation, reserved recipients, atomic revisions, creator-only management, scoped idempotency, ownership revalidation, bounded pagination, batched chain reads, authentication, Origin/CSRF, persistence, backup and outage recovery.
+- Native TypeScript server startup was smoke-tested against the connected production build: HTTP 200 health, connected mode, disabled settlement, and successful HTML/compiled-asset delivery. The optional RPC setting was unset; no external chain request was made.
+- Both production frontend modes build successfully. Preview JavaScript is approximately 95 kB compressed; connected mode approximately 90 kB; CSS approximately 10 kB. Docker is unavailable on this host, so the updated TypeScript container entry point has not been rebuilt locally.
+- Manual browser checks exercised listing, editing and cancellation; fixed and Dutch purchase reviews; reserved-buyer validation; multiple-item purchase accounting; reload persistence; history; and independent marketplace/lending balances. Rendered widths of 433 and 1422 CSS pixels were inspected without page overflow. A fresh final preview tab reported no browser console errors. Screenshots: [desktop marketplace](qa/marketplace-desktop.png), [narrow marketplace](qa/marketplace-narrow.png).
+- The connected marketplace was inspected using a temporary local HTTP/SQLite fixture service with simulated read-only chain data. Purchase review fetched a fresh listing and confirmed block data while its funded action remained disabled. Signed browser account flows were covered by client/server tests, but were not manually exercised in this inspection.
+
+The updated TypeScript browser QA scripts were type-checked but **not executed**. Older automated browser/accessibility reports below remain historical evidence. No live NFT purchases, approvals, lending or smart-contract deployment occurred. The Solidity prototype source is unchanged; application listing records remain off-chain expressions of interest until a separate contract release.
+
+The separate prototype toolchain compiles 19 deployable original/mock artifacts and emits browser-compatible modules successfully. Its full default suite passes 102 checks with one opt-in remote fork skipped: 68 contract checks, 15 event-indexer checks and 19 model/mocked-RPC checks. All 184 installed Solidity source files matched their pre-migration hashes; generated TypeScript ABI interfaces describe the existing contracts. The migrated read-only collectors and discovery entry points were type/syntax-checked without fetching new evidence. Historical JSON observations and source hashes remain historical; the public manifest separately identifies current collector source.
+
+### Publication status
+
+This correction is retained locally. The GitHub Pages check for run `37044531914` did not start: GitHub reported failed recent account payments or an exhausted spending limit. A read-only check of all six repository runs on 2 October UTC found no queued or in-progress runs, alternate workflows or rerun attempts. A normal push would trigger one Pages job, estimated at 1–3 runner minutes; monthly usage is unknown. No additional push or rerun was triggered while billing blocks the required checks. The live Pages preview still shows an earlier release.
+
 ## Pooled lending correction — 2 October 2026
+
+These results precede the marketplace replacement and full TypeScript migration above.
 
 - 96 frontend tests pass: 23 pooled-accounting tests, eight marketplace/domain tests and 65 connected client/wallet tests. Coverage includes exact share rounding, cash-limited withdrawals, debt and credit limits, collateral release, net reward repayment, zero-reward epochs, persisted-state validation and undeployed API responses.
 - 48 server tests pass on Node 24 with real SQLite. The corrected lending status returns null accounting and terms; funded actions remain disabled. Retired request/offer creation returns HTTP 410 while private historical records and creator-only cancellation remain available. Authentication, Origin/CSRF, idempotency, ownership, outage recovery, database persistence and read-only chain checks pass.
@@ -44,6 +64,6 @@ The following results describe the former request/offer preview, not the replace
 - 10 tested views passed automated WCAG A/AA accessibility checks with no reported violations. Desktop and mobile layouts were inspected; no horizontal overflow was found at 320, 390, 768, 1440 or 1920 pixels.
 - No browser runtime/console errors or external requests were observed in those flows. Corrupt and unavailable browser storage were checked separately.
 
-The reproducible browser script is `scripts/browser-qa.mjs`; its results are in [qa/browser-report.json](qa/browser-report.json). Screenshots in `qa/` show the KittenSwap light-green theme, demo veKITTEN positions and USDC interface. The checks use local sample data, not a wallet or live lending integration.
+The reproducible browser script is `scripts/browser-qa.ts`; its results are in [qa/browser-report.json](qa/browser-report.json). Screenshots in `qa/` show the KittenSwap light-green theme, demo veKITTEN positions and USDC interface. The checks use local sample data, not a wallet or live lending integration.
 
 Automated checks cover the tested views and browser only; they do not establish universal accessibility or security of future integrations. Production hosting must still be verified at its final URL, including HTTPS, response headers and cache behavior. The frontend is ready for static hosting as a preview; the contracts and funded protocol are not a production release.

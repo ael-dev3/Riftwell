@@ -59,3 +59,34 @@ export function validateOfferTerms(
     return `Offer an APR of ${request.aprBps / 100}% or lower, as requested by the borrower.`;
   return null;
 }
+
+/** Quote calculation is integer-only; fresh server reads remain authoritative. */
+export function listingAskMicros(
+  listing: Pick<
+    import('./api').Listing,
+    | 'kind'
+    | 'startPriceMicros'
+    | 'endPriceMicros'
+    | 'startsAt'
+    | 'auctionEndsAt'
+  >,
+  now = Date.now(),
+): string {
+  if (listing.kind === 'fixed') return listing.startPriceMicros;
+  const start = Date.parse(listing.startsAt);
+  const end = Date.parse(listing.auctionEndsAt!);
+  const duration = BigInt(end - start);
+  const remaining = BigInt(
+    Math.min(Math.max(Math.trunc(end - now), 0), end - start),
+  );
+  const scale = 10n ** 18n;
+  const fraction = (remaining * scale) / duration;
+  const squared = (fraction * fraction) / scale;
+  const cubed = (squared * fraction) / scale;
+  return (
+    BigInt(listing.endPriceMicros) +
+    ((BigInt(listing.startPriceMicros) - BigInt(listing.endPriceMicros)) *
+      cubed) /
+      scale
+  ).toString();
+}

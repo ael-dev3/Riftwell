@@ -38,6 +38,14 @@ export type Position = {
 };
 export type OrderStatus = 'active' | 'cancelled' | 'expired' | 'invalidated';
 export type Listing = {
+  kind: 'fixed' | 'dutch';
+  startPriceMicros: string;
+  endPriceMicros: string;
+  startsAt: string;
+  auctionEndsAt: string | null;
+  recipient: string | null;
+  revision: number;
+  updatedAt: string;
   id: string;
   marketId: MarketId;
   tokenId: string;
@@ -83,7 +91,13 @@ export type Account = {
   receivedOffers: Offer[];
   historyTruncated?: boolean;
 };
-export type CreateListingInput = {
+export type ListingTermsInput = {
+  kind?: 'fixed' | 'dutch';
+  endPriceMicros?: string;
+  auctionEndsAt?: string | null;
+  recipient?: string | null;
+};
+export type CreateListingInput = ListingTermsInput & {
   tokenId: string;
   priceMicros: string;
   expiresAt: string;
@@ -130,10 +144,10 @@ export type ApiClientOptions = {
   fetch?: typeof globalThis.fetch;
 };
 type RequestOptions = {
-  method?: 'GET' | 'POST' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   body?: unknown;
   csrf?: string;
-  signal?: AbortSignal;
+  signal?: AbortSignal | undefined;
 };
 
 function object(value: unknown): value is Record<string, unknown> {
@@ -270,6 +284,14 @@ function order(value: Record<string, unknown>): boolean {
 function listing(value: unknown): value is Listing {
   return (
     fields(value, [
+      'kind',
+      'startPriceMicros',
+      'endPriceMicros',
+      'startsAt',
+      'auctionEndsAt',
+      'recipient',
+      'revision',
+      'updatedAt',
       'id',
       'marketId',
       'tokenId',
@@ -281,7 +303,31 @@ function listing(value: unknown): value is Listing {
       'position',
     ]) &&
     order(value) &&
-    money(value.priceMicros)
+    typeof value.revision === 'number' &&
+    Number.isSafeInteger(value.revision) &&
+    value.revision > 0 &&
+    isoDate(value.updatedAt) &&
+    Date.parse(value.updatedAt) >= Date.parse(value.createdAt as string) &&
+    money(value.priceMicros) &&
+    money(value.startPriceMicros) &&
+    money(value.endPriceMicros) &&
+    BigInt(value.endPriceMicros) <= BigInt(value.priceMicros) &&
+    BigInt(value.priceMicros) <= BigInt(value.startPriceMicros) &&
+    isoDate(value.startsAt) &&
+    Date.parse(value.startsAt) >= Date.parse(value.createdAt as string) &&
+    Date.parse(value.startsAt) < Date.parse(value.expiresAt as string) &&
+    (value.recipient === null ||
+      (address(value.recipient) &&
+        !/^0x0{40}$/i.test(value.recipient) &&
+        value.recipient.toLowerCase() !== String(value.owner).toLowerCase())) &&
+    (value.kind === 'fixed'
+      ? value.auctionEndsAt === null &&
+        value.startPriceMicros === value.endPriceMicros
+      : value.kind === 'dutch' &&
+        isoDate(value.auctionEndsAt) &&
+        Date.parse(value.auctionEndsAt) > Date.parse(value.startsAt) &&
+        Date.parse(value.auctionEndsAt) <=
+          Date.parse(value.expiresAt as string))
   );
 }
 
@@ -559,8 +605,9 @@ export class ApiClient {
         method: options.method ?? 'GET',
         credentials: 'include',
         headers,
-        body:
-          options.body === undefined ? undefined : JSON.stringify(options.body),
+        ...(options.body === undefined
+          ? {}
+          : { body: JSON.stringify(options.body) }),
         signal: controller.signal,
       });
       let value: unknown;
@@ -611,7 +658,7 @@ export class ApiClient {
 
   private mutate<T>(
     path: string,
-    method: 'POST' | 'DELETE',
+    method: 'POST' | 'PATCH' | 'DELETE',
     csrf: string,
     validate: Validator<T>,
     body?: unknown,
@@ -632,8 +679,18 @@ export class ApiClient {
     return this.request<{ markets: Market[] }>('/markets', markets, { signal });
   }
 
-  listings(market: MarketId, cursor?: string | null, signal?: AbortSignal) {
-    const query = new URLSearchParams({ market, limit: '24' });
+  listings(
+    market: MarketId,
+    cursor?: string | null,
+    signal?: AbortSignal,
+    filters: {
+      seller?: string;
+      tokenId?: string;
+      minPriceMicros?: string;
+      maxPriceMicros?: string;
+    } = {},
+  ) {
+    const query = new URLSearchParams({ market, limit: '24', ...filters });
     if (cursor) query.set('cursor', cursor);
     return this.request<Page<Listing>>(`/listings?${query}`, page(listing), {
       signal,
@@ -684,6 +741,33 @@ export class ApiClient {
 
   createListing(body: CreateListingInput, csrf: string) {
     return this.mutate<Listing>('/listings', 'POST', csrf, listing, body);
+  }
+
+  listing(id: string, signal?: AbortSignal) {
+    return this.request<Listing>(
+      `/listings/${encodeURIComponent(id)}`,
+      listing,
+      { signal },
+    );
+  }
+
+  updateListing(
+    id: string,
+    body: ListingTermsInput & {
+      priceMicros: string;
+      expiresAt: string;
+      expectedRevision: number;
+      idempotencyKey: string;
+    },
+    csrf: string,
+  ) {
+    return this.mutate<Listing>(
+      `/listings/${encodeURIComponent(id)}`,
+      'PATCH',
+      csrf,
+      listing,
+      body,
+    );
   }
 
   cancelListing(id: string, csrf: string) {

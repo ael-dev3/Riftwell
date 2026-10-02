@@ -31,9 +31,9 @@ export function ConnectedLending({
       <div className="section-heading">
         <div>
           <p className="section-eyebrow">veKITTEN LENDING</p>
-          <h2 className="section-title">
+          <h1 className="section-title">
             {borrowing ? 'Let your position work.' : 'Supply the shared vault.'}
-          </h2>
+          </h1>
           <p className="section-description">
             {borrowing
               ? 'Collateral earns rewards. Rewards help repay your USDC credit line.'

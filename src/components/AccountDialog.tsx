@@ -1,20 +1,20 @@
 import { ArrowRight, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
-import { ASSETS, COLLATERAL, COLLATERAL_LIMITS } from '../data';
 import {
-  formatDate,
-  formatAmount,
-  formatMicros,
-  microsToDecimal,
-  type PurchaseReceipt,
-} from '../domain';
+  ALL_MARKET_ASSETS,
+  COLLATERAL,
+  COLLATERAL_LIMITS,
+  collateralLimitMicros,
+} from '../data';
+import { formatDate, formatMicros, microsToDecimal } from '../domain';
 import { getLendingMetrics, type LendingState } from '../lending';
 import Dialog from './Dialog';
+import { PREVIEW_ADDRESS, type MarketplaceState } from '../marketplace';
 import { activityLabel, type LendingAction, type LendingTab } from './Lending';
 
 export type AccountTab = 'purchase' | 'borrow' | 'lend';
 type Props = {
-  receipts: PurchaseReceipt[];
+  marketplace: MarketplaceState;
   lending: LendingState;
   onClose: () => void;
   onReset: () => void;
@@ -23,11 +23,11 @@ type Props = {
     section: 'marketplace' | 'lending',
     lendingTab?: LendingTab,
   ) => void;
-  initialTab?: AccountTab;
+  initialTab?: AccountTab | undefined;
 };
 
 export default function AccountDialog({
-  receipts,
+  marketplace,
   lending,
   onClose,
   onReset,
@@ -37,6 +37,11 @@ export default function AccountDialog({
 }: Props) {
   const [tab, setTab] = useState<AccountTab>(initialTab);
   const metrics = getLendingMetrics(lending, COLLATERAL_LIMITS);
+  const owned = ALL_MARKET_ASSETS.filter(
+    (asset) =>
+      marketplace.ownerByAsset[asset.id]?.toLowerCase() ===
+      PREVIEW_ADDRESS.toLowerCase(),
+  );
   return (
     <Dialog
       title="Preview account"
@@ -47,8 +52,8 @@ export default function AccountDialog({
       <div className="dialog-body pooled-account">
         <div className="portfolio-summary">
           <div>
-            <strong>{receipts.length.toString().padStart(2, '0')}</strong>
-            <span>Sample purchases</span>
+            <strong>{owned.length.toString().padStart(2, '0')}</strong>
+            <span>Marketplace positions</span>
           </div>
           <div>
             <strong>
@@ -64,8 +69,9 @@ export default function AccountDialog({
           </div>
         </div>
         <p className="form-hint">
-          Local simulations, not real ownership, custody or funds. Your demo
-          USDC balance is {formatMicros(lending.walletMicros)}.
+          Local simulations, not real ownership, custody or funds. Marketplace
+          balance: {formatMicros(marketplace.balanceMicros)}. Lending balance:{' '}
+          {formatMicros(lending.walletMicros)}.
         </p>
         <div
           className="segmented-control portfolio-tabs"
@@ -86,67 +92,30 @@ export default function AccountDialog({
             </button>
           ))}
         </div>
-        {tab === 'purchase' &&
-          (receipts.length ? (
-            <div className="portfolio-list">
-              {receipts
-                .slice()
-                .reverse()
-                .map((receipt) => {
-                  const asset = ASSETS.find(
-                    (item) => item.id === receipt.assetId,
-                  );
-                  if (!asset) return null;
-                  return (
-                    <article className="portfolio-item" key={receipt.id}>
-                      <div className="portfolio-item-main">
-                        <img
-                          className="row-thumb"
-                          src={asset.artwork}
-                          alt=""
-                          width="52"
-                          height="52"
-                        />
-                        <div>
-                          <strong>{asset.name}</strong>
-                          <span>
-                            {formatDate(receipt.createdAt)} · Preview purchase
-                          </span>
-                        </div>
-                      </div>
-                      <div className="portfolio-item-value">
-                        <strong>{formatAmount(receipt.price)}</strong>
-                        <span className="status-pill">Sample position</span>
-                      </div>
-                      <details className="receipt-details">
-                        <summary>Purchase receipt</summary>
-                        <dl className="details-list">
-                          <div>
-                            <dt>Receipt</dt>
-                            <dd>RW-{receipt.id.slice(0, 8).toUpperCase()}</dd>
-                          </div>
-                          <div>
-                            <dt>Price paid in preview</dt>
-                            <dd>{formatAmount(receipt.price)}</dd>
-                          </div>
-                        </dl>
-                      </details>
-                    </article>
-                  );
-                })}
-            </div>
-          ) : (
-            <div className="empty-state">
-              <h3>No sample purchases yet.</h3>
-              <p>Review a marketplace position to save a sample receipt.</p>
-              <button
-                className="button secondary"
-                onClick={() => onExplore('marketplace')}
-              >
-                Explore positions <ArrowRight size={16} aria-hidden="true" />
-              </button>
-            </div>
-          ))}
+        {tab === 'purchase' && (
+          <div className="portfolio-list">
+            {owned.map((asset) => (
+              <article className="portfolio-item" key={asset.id}>
+                <div className="portfolio-item-main">
+                  <div>
+                    <strong>veKITTEN #{asset.positionId}</strong>
+                    <span>
+                      {asset.underlyingBalance.toLocaleString('en-GB')} KITTEN ·
+                      unlocks {formatDate(asset.unlockDate)}
+                    </span>
+                  </div>
+                </div>
+                <span className="status-pill">Preview owned</span>
+              </article>
+            ))}
+            <button
+              className="button secondary"
+              onClick={() => onExplore('marketplace')}
+            >
+              Manage marketplace <ArrowRight size={16} aria-hidden="true" />
+            </button>
+          </div>
+        )}
         {tab === 'borrow' && (
           <>
             <div className="pooled-summary pooled-account-metrics">
@@ -184,7 +153,7 @@ export default function AccountDialog({
                     </div>
                     <div className="portfolio-item-value">
                       <strong>
-                        {formatMicros(COLLATERAL_LIMITS[asset.id])}
+                        {formatMicros(collateralLimitMicros(asset.id))}
                       </strong>
                       <span>Example credit</span>
                     </div>
@@ -284,7 +253,9 @@ export default function AccountDialog({
       <div className="dialog-footer">
         <button
           className="button ghost"
-          disabled={receipts.length === 0 && lending.activity.length === 0}
+          disabled={
+            marketplace.history.length === 0 && lending.activity.length === 0
+          }
           onClick={onReset}
         >
           <RotateCcw size={15} aria-hidden="true" /> Reset preview

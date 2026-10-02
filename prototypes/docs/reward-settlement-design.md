@@ -56,28 +56,28 @@ Reproducible local evidence:
 - [Exact RPC request/response records](evidence/reward-settlement/rpc-requests.json).
 - [Decoded historical swaps, rebase events, implementation hashes and selectors](evidence/reward-settlement/supplement-evidence.json).
 - [Supplement RPC records](evidence/reward-settlement/supplement-rpc-requests.json).
-- [Read-only collector](evidence/reward-settlement/collect.mjs) and
-  [supplement collector](evidence/reward-settlement/collect-supplement.mjs).
+- [Read-only collector](evidence/reward-settlement/collect.ts) and
+  [supplement collector](evidence/reward-settlement/collect-supplement.ts).
 
 ## Current addresses and matching
 
-| Component | HyperEVM address |
-| --- | --- |
-| Algebra factory | `0x5f95E92c338e6453111Fc55ee66D4AafccE661A7` |
-| Swap router | `0x4e73E421480a7E0C24fB3c11019254edE194f736` |
-| QuoterV2 | `0xc58874216AFe47779ADED27B8AAd77E8Bd6eBEBb` |
-| Pool deployer, returned by router/quoter/factory | `0x88813b47D2687ceA50DBfd644EeFE17294E10303` |
-| WHYPE, 18 decimals | `0x5555555555555555555555555555555555555555` |
-| KITTEN, 18 decimals | `0x618275F8EFE54c2afa87bfB9F210A52F0fF89364` |
-| Native USDC, 6 decimals | `0xb88339CB7199b77E23DB6E890353E22632Ba630f` |
-| WHYPE/USDC base pool | `0x12Df9913E9E08453440e3C4B1aE73819160b513E` |
-| KITTEN/WHYPE base pool | `0x71d1FDE797e1810711E4C9abcFcA6Ef04C266196` |
+| Component                                           | HyperEVM address                             |
+| --------------------------------------------------- | -------------------------------------------- |
+| Algebra factory                                     | `0x5f95E92c338e6453111Fc55ee66D4AafccE661A7` |
+| Swap router                                         | `0x4e73E421480a7E0C24fB3c11019254edE194f736` |
+| QuoterV2                                            | `0xc58874216AFe47779ADED27B8AAd77E8Bd6eBEBb` |
+| Pool deployer, returned by router/quoter/factory    | `0x88813b47D2687ceA50DBfd644EeFE17294E10303` |
+| WHYPE, 18 decimals                                  | `0x5555555555555555555555555555555555555555` |
+| KITTEN, 18 decimals                                 | `0x618275F8EFE54c2afa87bfB9F210A52F0fF89364` |
+| Native USDC, 6 decimals                             | `0xb88339CB7199b77E23DB6E890353E22632Ba630f` |
+| WHYPE/USDC base pool                                | `0x12Df9913E9E08453440e3C4B1aE73819160b513E` |
+| KITTEN/WHYPE base pool                              | `0x71d1FDE797e1810711E4C9abcFcA6Ef04C266196` |
 | KITTEN/USDC base pool, inactive liquidity at sample | `0xdf99bADEEA1C9B81c5d4134E644e939244C1Fb1C` |
-| WHYPE/USDC plugin | `0x84510Aa9ed5b356f2b223aa10B930cF6a9604943` |
-| KITTEN/WHYPE plugin | `0x9cC23759073bA914943445BbcA3A2D665F73E7Bb` |
-| veKITTEN escrow | `0x29d3A21fF35a519E00cF6d272f2aD897b109BD84` |
-| Voter | `0xb7F7053F7e6c210e6777D5BA758E4b3ECa6C88A0` |
-| RebaseReward | `0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36` |
+| WHYPE/USDC plugin                                   | `0x84510Aa9ed5b356f2b223aa10B930cF6a9604943` |
+| KITTEN/WHYPE plugin                                 | `0x9cC23759073bA914943445BbcA3A2D665F73E7Bb` |
+| veKITTEN escrow                                     | `0x29d3A21fF35a519E00cF6d272f2aD897b109BD84` |
+| Voter                                               | `0xb7F7053F7e6c210e6777D5BA758E4b3ECa6C88A0` |
+| RebaseReward                                        | `0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36` |
 
 The factory's `poolByPair(address,address)` returned these pools. Their
 `token0()/token1()` and factory getters were checked, and both usable pools had
@@ -138,12 +138,12 @@ fee-on-transfer entry point. The adapter should expose none of those powers.
 
 ## Quoted route and actual historical execution
 
-| Sample input | Pinned-block quoted output | Evidence |
-| --- | --- | --- |
-| 1 WHYPE | 90.258710 USDC | `quoteExactInputSingle`, raw output `90258710` |
-| 10,000 KITTEN | 0.158326529799033279 WHYPE | `quoteExactInputSingle` |
-| 10,000 KITTEN, two hops | 14.290666 USDC | `quoteExactInput`, raw last output `14290666` |
-| 10,000 KITTEN, direct USDC | Reverted: `Zero liquidity swap` | Direct pool active liquidity was zero |
+| Sample input               | Pinned-block quoted output      | Evidence                                       |
+| -------------------------- | ------------------------------- | ---------------------------------------------- |
+| 1 WHYPE                    | 90.258710 USDC                  | `quoteExactInputSingle`, raw output `90258710` |
+| 10,000 KITTEN              | 0.158326529799033279 WHYPE      | `quoteExactInputSingle`                        |
+| 10,000 KITTEN, two hops    | 14.290666 USDC                  | `quoteExactInput`, raw last output `14290666`  |
+| 10,000 KITTEN, direct USDC | Reverted: `Zero liquidity swap` | Direct pool active liquidity was zero          |
 
 Both quoted hops returned fee **500**, which is **0.05%** in Algebra's
 millionth units. This is a sampled swap fee, not a fixed future promise. The

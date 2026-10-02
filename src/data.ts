@@ -4,7 +4,7 @@ import { DEFAULT_MARKET } from './markets';
 // Fictional veKITTEN positions with illustrative KITTEN balances, not live listings.
 // Stable preview IDs preserve existing local receipts across presentation changes.
 // USDC prices and references are illustrative, with no price feed.
-export const ASSETS: readonly Asset[] = [
+export const ASSETS: readonly [Asset, Asset, Asset, Asset, Asset, Asset] = [
   {
     id: 'rift-041',
     name: 'Demo veKITTEN #041',
@@ -124,13 +124,84 @@ export const SAMPLE_REWARD_MICROS: Readonly<Record<string, string>> = {
   'rift-018': '80000000',
   'rift-012': '100000000',
 };
+export function sampleRewardMicros(assetId: string): string {
+  const value = SAMPLE_REWARD_MICROS[assetId];
+  if (value === undefined)
+    throw new RangeError('Unknown sample reward position.');
+  return value;
+}
+export function collateralLimitMicros(assetId: string): string {
+  const value = COLLATERAL_LIMITS[assetId];
+  if (value === undefined)
+    throw new RangeError('Unknown sample collateral position.');
+  return value;
+}
 export const SAMPLE_CREDIT_EPOCHS = 40;
 export const COLLATERAL_LIMITS: Readonly<Record<string, string>> =
   Object.fromEntries(
     COLLATERAL.map((asset) => [
       asset.id,
       (
-        BigInt(SAMPLE_REWARD_MICROS[asset.id]) * BigInt(SAMPLE_CREDIT_EPOCHS)
+        BigInt(sampleRewardMicros(asset.id)) * BigInt(SAMPLE_CREDIT_EPOCHS)
       ).toString(),
     ]),
   );
+
+// Owned marketplace positions are distinct from public listings and lending collateral.
+export const OWNED_MARKET_ASSETS: readonly [Asset, Asset, Asset] = [
+  {
+    id: 'market-owned-101',
+    name: 'Demo veKITTEN #101',
+    collection: 'KittenSwap',
+    marketId: DEFAULT_MARKET.id,
+    underlyingSymbol: DEFAULT_MARKET.tokenSymbol,
+    category: 'Short lock',
+    artwork: `${import.meta.env.BASE_URL}artwork-1.svg`,
+    price: 1200,
+    referenceValue: 1500,
+    underlyingBalance: 15000,
+    lockTerm: '6 months',
+    unlockDate: '2027-04-02',
+    positionId: '101',
+    description:
+      'A fictional owned marketplace position with 15,000 sample KITTEN units.',
+  },
+  {
+    id: 'market-owned-202',
+    name: 'Demo veKITTEN #202',
+    collection: 'KittenSwap',
+    marketId: DEFAULT_MARKET.id,
+    underlyingSymbol: DEFAULT_MARKET.tokenSymbol,
+    category: 'Long lock',
+    artwork: `${import.meta.env.BASE_URL}artwork-3.svg`,
+    price: 2000,
+    referenceValue: 2400,
+    underlyingBalance: 24000,
+    lockTerm: '18 months',
+    unlockDate: '2028-04-02',
+    positionId: '202',
+    description:
+      'A fictional owned marketplace position with 24,000 sample KITTEN units.',
+  },
+  {
+    id: 'market-owned-303',
+    name: 'Demo veKITTEN #303',
+    collection: 'KittenSwap',
+    marketId: DEFAULT_MARKET.id,
+    underlyingSymbol: DEFAULT_MARKET.tokenSymbol,
+    category: 'Max lock',
+    artwork: `${import.meta.env.BASE_URL}artwork-5.svg`,
+    price: 5100,
+    referenceValue: 6000,
+    underlyingBalance: 60000,
+    lockTerm: '24 months',
+    unlockDate: '2028-10-01',
+    positionId: '303',
+    description:
+      'A fictional owned marketplace position with 60,000 sample KITTEN units.',
+  },
+];
+export const ALL_MARKET_ASSETS: readonly Asset[] = [
+  ...ASSETS,
+  ...OWNED_MARKET_ASSETS,
+];

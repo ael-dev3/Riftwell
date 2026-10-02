@@ -43,16 +43,24 @@ Position {
 ## Marketplace
 
 - `GET /listings?market=kittenswap&limit=24&cursor=...` → active, unexpired, freshly ownership-verified `Listing` records. Ownership movement invalidates an off-chain listing. An RPC failure is an unavailable response, not a false claim that there are no listings.
-- `POST /listings`: `{ tokenId, priceMicros, expiresAt, idempotencyKey }` → `Listing`.
-- `DELETE /listings/:id` → cancelled `Listing`.
+- `GET /listings/:id` → a fresh active listing; expired or invalidated records return 409, and chain outages return 503.
+- `POST /listings`: `{ tokenId, priceMicros, expiresAt, idempotencyKey, kind?, endPriceMicros?, auctionEndsAt?, recipient? }` → `Listing`.
+- `PATCH /listings/:id`: `{ priceMicros, expiresAt, expectedRevision, idempotencyKey, kind?, endPriceMicros?, auctionEndsAt?, recipient? }` → updated `Listing`. The creator must still own the position. A concurrent revision change returns 409 `LISTING_CHANGED`.
+- `DELETE /listings/:id` → cancelled `Listing`, including during a chain outage.
 
 ```text
 Listing {
   id, marketId: "kittenswap", tokenId, owner, priceMicros,
+  kind: "fixed" | "dutch", startPriceMicros, endPriceMicros,
+  startsAt, auctionEndsAt: ISO | null, recipient: address | null,
   status: "active" | "cancelled" | "expired" | "invalidated",
-  expiresAt, createdAt, position: Position
+  expiresAt, createdAt, updatedAt, revision: positive integer, position: Position
 }
 ```
+
+Creation and edits replace the complete terms. Omitted kind means fixed, omitted floor equals the starting ask, and omitted auction end/recipient are null. A Dutch listing requires an explicit floor and auction end; it decays cubically using 1e18 staged integer floors, then holds its floor until expiry. `startsAt` is server-owned and resets on repricing. `priceMicros` in a response is the current ask; input `priceMicros` is the starting ask. Prices range from 1 to 1,000,000 USDC. A reserved buyer must be valid, nonzero and different from the seller. Reservations are public intent, not privacy or funded execution.
+
+Optional `seller`, `tokenId`, `minPriceMicros` and `maxPriceMicros` filters use exact raw amounts. Pagination cursors are bound to normalized query filters. Current-price filtering scans at most 150 newest records per request and advances over unmatched rows; an empty page can still carry a next cursor. Status changes and edits advance the listing revision.
 
 Creation verifies that the authenticated address currently owns the NFT. At most one active listing exists per NFT. Only its creator can cancel a listing. An ownership transfer never gives a new owner authority to edit the previous owner's off-chain intent. Cancellation does not need a chain transaction.
 
@@ -92,7 +100,7 @@ Cancellation remains possible during RPC outages and never transfers assets. Ano
 
 ## Mutation reliability
 
-Create requests carry a UUID `idempotencyKey`. Scope keys by authenticated account and operation; store a canonical request hash and result in the same transaction as the mutation. Repeating the same key and payload returns the original result; reusing a key for another payload returns 409. Authentication, ownership and state checks remain enforced. Concurrent active-order creation must be protected by database constraints. Append an audit event without secrets for every state change.
+Create and edit requests carry a UUID `idempotencyKey`. Scope keys by authenticated account and operation; store a canonical request hash and result in the same transaction as the mutation. Repeating the same key and payload returns the original result; reusing a key for another payload returns 409. Authentication, ownership and state checks remain enforced. Concurrent active-order creation must be protected by database constraints. Append an audit event without secrets for every state change.
 
 Unknown JSON fields, invalid addresses, malformed IDs, unsafe integers, oversized bodies and invalid dates are rejected. Clients must handle rejection, expired sessions, unavailable chain reads, user-rejected signatures, wallet/account changes and cancelled requests.
 

@@ -25,7 +25,7 @@ const USDC_SCALE = 1_000_000n;
 /** Parse decimal USDC exactly. Scientific notation, signs and fractional micros are rejected. */
 export function parseUSDCMicros(value: string): bigint | null {
   if (value.length > 32 || !/^\d+(?:\.\d{1,6})?$/.test(value)) return null;
-  const [whole, fraction = ''] = value.split('.');
+  const [whole = '', fraction = ''] = value.split('.');
   return BigInt(whole) * USDC_SCALE + BigInt(fraction.padEnd(6, '0'));
 }
 

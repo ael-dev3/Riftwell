@@ -54,6 +54,8 @@ jobs:
         run: npm ci --prefix server
       - name: Test server
         run: npm --prefix server test
+      - name: Check application and tooling types
+        run: npm run typecheck
       - name: Check formatting
         run: npm run format:check
       - name: Build and smoke-test connected container

@@ -23,9 +23,9 @@ WORKDIR /app
 RUN mkdir -p /var/lib/riftwell && chown node:node /var/lib/riftwell
 COPY --from=frontend --chown=node:node /build/dist ./dist
 COPY --from=service-dependencies --chown=node:node /build/server/node_modules ./server/node_modules
-COPY --chown=node:node server/*.mjs server/package.json ./server/
+COPY --chown=node:node server/*.ts server/package.json ./server/
 USER node
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:8080/health/live',{signal:AbortSignal.timeout(3000)}).then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
-CMD ["node", "server/index.mjs"]
+CMD ["node", "server/index.ts"]

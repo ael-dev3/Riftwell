@@ -4,13 +4,13 @@
 
 Collateral credit lines, pooled USDC lending and a focused marketplace, starting with KittenSwap on HyperEVM. Dark surfaces, a light-green accent and a quiet portal theme.
 
-![Riftwell preview](docs/qa/preview.png)
+![Riftwell marketplace](docs/qa/marketplace-desktop.png)
 
 ## Application
 
 Two build modes share the interface:
 
-- **Preview:** GitHub Pages uses labelled sample positions, local purchase receipts and a pooled lending simulation. Try depositing collateral, borrowing, repaying, supplying USDC and withdrawing vault shares.
+- **Preview:** GitHub Pages uses a listings table with sample NFTs, fixed-price and Dutch listings, seller management, purchase and sweep reviews, and a separate pooled lending simulation. All preview balances and ownership are local examples.
 - **Connected:** the Node service supports wallet sign-in, confirmed veKITTEN ownership reads and persistent marketplace listings. The lending view reports its undeployed status without inventing liquidity, credit or yield.
 
 Marketplace listings are off-chain expressions of interest. Funded purchases and lending are unavailable until compatible contracts are separately released. No application route requests token approvals, transfers NFTs or sends transactions. Earlier unfunded lending requests/offers are retained only for history and cancellation.
@@ -19,7 +19,7 @@ Lending uses a shared vault: borrowers draw against collateral reward income; su
 
 ## Run locally
 
-Use Node.js 24 and npm. Frontend and server dependencies have separate lockfiles.
+Use Node.js 24 and npm. The application and tooling use TypeScript 7.0.2 with strict checks. Frontend, server and experimental prototypes have separate lockfiles. Node runs the server and tools using native type stripping; CI checks types separately.
 
 ```sh
 npm ci --ignore-scripts
@@ -40,6 +40,13 @@ The development database is `server/data/riftwell.sqlite`. Authentication suppor
 npm run check
 npm --prefix server test
 npm run format:check
+```
+
+To check the separate prototype toolchain as well:
+
+```sh
+npm ci --prefix prototypes --ignore-scripts
+npm run typecheck:all
 ```
 
 Read [deployment and operations](docs/OPERATIONS.md), the [API contract](docs/API.md), [hosting modes](docs/HOSTING.md) and [validation scope](docs/VALIDATION.md). The Docker deployment supplies HTTPS configuration, persistent storage and health checks. A production host, domain and suitable RPC endpoint must still be configured and verified.

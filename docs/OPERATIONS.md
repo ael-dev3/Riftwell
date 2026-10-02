@@ -28,7 +28,7 @@ Images are pinned to manifest digests. The runtime uses a non-root user, read-on
 
 ## Native service
 
-Use Node 24, `npm ci --ignore-scripts` at the root and `npm ci --prefix server` for the native SQLite binding. Build `VITE_APP_MODE=connected npm run build`. Run `node server/index.mjs` under a service manager behind HTTPS.
+Use Node 24, `npm ci --ignore-scripts` at the root and `npm ci --prefix server` for the native SQLite binding. Build `VITE_APP_MODE=connected npm run build`. Run `node server/index.ts` under a service manager behind HTTPS.
 
 Production requires `NODE_ENV=production`, exact HTTPS `APP_ORIGIN`, absolute persistent `DB_PATH`, `SESSION_SECRET` of at least 32 bytes and `HYPEREVM_RPC_URL`. Set `DIST_PATH` to the frontend build. Missing settings or a temporary production database path prevent startup. `server/.env.example` documents optional settings; environment files must be loaded explicitly by a process manager or Node's `--env-file` flag.
 
@@ -48,7 +48,7 @@ The chain reader bounds concurrency, payloads and retries. It requires a fresh h
 Use the online backup command rather than copying an open database without its WAL. Choose a new destination; the command refuses overwriting files and verifies SQLite integrity.
 
 ```sh
-node server/backup.mjs /absolute/riftwell.sqlite /absolute/backup-20261002.sqlite
+node server/backup.ts /absolute/riftwell.sqlite /absolute/backup-20261002.sqlite
 ```
 
 For Docker, run this command via `docker compose exec app`, using `/var/lib/riftwell/` paths, then copy the backup off the container with `docker compose cp`. Encrypt backups off-host and restrict access: they include wallet addresses, records and authentication hashes. Store secrets separately. Test recovery periodically on an isolated service.

@@ -358,7 +358,7 @@ describe('durable preview ledger validation', () => {
       }),
     ).toEqual(initial);
     const badActivity = supply(initial, '1000000');
-    badActivity.activity[0].rewardRepaidMicros = '-1';
+    badActivity.activity[0]!.rewardRepaidMicros = '-1';
     expect(parseLendingState(JSON.stringify(badActivity), limits)).toEqual(
       initial,
     );

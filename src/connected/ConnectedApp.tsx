@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowRight, CircleUserRound, Info } from 'lucide-react';
+import { CircleUserRound, Info } from 'lucide-react';
 import { DEFAULT_MARKET, type Market } from '../markets';
 import MarketSelector from '../components/MarketSelector';
 import PortalMark from '../components/PortalMark';
@@ -27,19 +27,31 @@ import {
 import { shortAddress } from './amounts';
 import { ConnectedLending, CollateralReview } from './ConnectedLending';
 import { apiMessage, usePages } from './usePages';
-import { CancellationDialog, ListingReview, RecordForm } from './RecordDialogs';
-import { ConnectedAccount, PublicListings } from './ConnectedViews';
+import {
+  CancellationDialog,
+  ListingReview,
+  SweepReview,
+  ListingPicker,
+  RecordForm,
+} from './RecordDialogs';
+import { ConnectedAccount } from './ConnectedViews';
 
 type Section = 'marketplace' | 'lending';
-type Intent = {
-  type: 'form';
-  kind: 'listing';
-  position?: Position;
-};
+import ConnectedMarketplace from './ConnectedMarketplace';
+
+type Intent =
+  | { type: 'picker' }
+  | {
+      type: 'form';
+      kind: 'listing';
+      position?: Position;
+    };
 type Modal =
   | Intent
   | { type: 'signin' | 'account' }
   | { type: 'review'; listing: Listing }
+  | { type: 'sweep'; listings: Listing[] }
+  | { type: 'edit'; listing: Listing }
   | { type: 'collateral'; position: Position }
   | {
       type: 'cancel';
@@ -435,8 +447,8 @@ export default function ConnectedApp() {
       else await api.cancelOffer(record.id, session.csrfToken);
       lists.refresh();
       await refreshAccount();
-      setModal({ type: 'account' });
-      setMessage('The off-chain record was cancelled.');
+      closeModal();
+      setMessage('The listing was cancelled.');
     } catch (failure) {
       handleError(failure);
       throw failure;
@@ -444,7 +456,6 @@ export default function ConnectedApp() {
   }
 
   const publicError = section === 'marketplace' ? lists.error : '';
-  const publicLoading = lists.loading;
   const retry = () => {
     setServiceRevision((value) => value + 1);
     lists.refresh();
@@ -461,7 +472,7 @@ export default function ConnectedApp() {
           navigate(section, true);
         }}
       >
-        Skip to explore
+        Skip to workspace
       </a>
       <header className="site-header">
         <a
@@ -521,59 +532,6 @@ export default function ConnectedApp() {
         </div>
       </header>
       <main className="page-main">
-        <section className="hero" aria-labelledby="connected-hero-title">
-          <div className="hero-copy">
-            <p className="eyebrow">
-              <span className="eyebrow-dot" />
-              {market.name} · {market.chain}
-            </p>
-            <h1 className="hero-title" id="connected-hero-title">
-              A new orbit
-              <br />
-              for your <span className="accent-text">assets.</span>
-            </h1>
-            <p className="hero-description">
-              A marketplace for veKITTEN positions, with collateral credit lines
-              and pooled USDC lending prepared for launch.
-            </p>
-            <div className="hero-actions">
-              <button
-                className="button primary"
-                onClick={() => navigate('marketplace', true)}
-              >
-                Explore positions <ArrowRight size={16} aria-hidden="true" />
-              </button>
-              <button
-                className="button ghost"
-                onClick={() => navigate('lending', true)}
-              >
-                Explore lending <ArrowRight size={16} aria-hidden="true" />
-              </button>
-            </div>
-            <p className="hero-note">
-              <span />
-              Off-chain records. Contract settlement pending launch.
-            </p>
-          </div>
-          <div className="hero-visual" aria-hidden="true">
-            <div className="portal-scene">
-              <div className="portal-aura" />
-              <div className="portal-orbit orbit-one" />
-              <div className="portal-orbit orbit-two" />
-              <div className="portal-orbit orbit-three" />
-              <div className="portal-core" />
-              <div className="portal-plinth" />
-              <div className="portal-caption">
-                <span className="portal-caption-dot" />
-                KITTENSWAP / HYPEREVM
-              </div>
-              <div className="portal-coordinate top">veKITTEN / RW</div>
-              <div className="portal-coordinate bottom">
-                VERIFIED POSITION READS
-              </div>
-            </div>
-          </div>
-        </section>
         {(serviceError || publicError || accountError) && (
           <div className="notice storage-notice" role="alert">
             <Info size={18} aria-hidden="true" />
@@ -607,43 +565,35 @@ export default function ConnectedApp() {
           }
         >
           {section === 'marketplace' ? (
-            <>
-              <div className="section-heading">
-                <div>
-                  <p className="section-eyebrow">KittenSwap MARKETPLACE</p>
-                  <h2 className="section-title">List your NFT position.</h2>
-                  <p className="section-description">
-                    Ownership-verified listings. Purchases await contract
-                    settlement.
-                  </p>
-                </div>
-                <button
-                  className="button primary"
-                  disabled={!status}
-                  onClick={() => openIntent({ type: 'form', kind: 'listing' })}
-                >
-                  Create listing
-                </button>
-              </div>
-              {!publicError && (
-                <PublicListings
-                  items={lists.items}
-                  loading={lists.loading}
-                  onReview={(listing) => setModal({ type: 'review', listing })}
-                />
-              )}
-              {!publicError && lists.nextCursor && (
-                <div className="connected-pagination">
-                  <button
-                    className="button secondary"
-                    disabled={publicLoading}
-                    onClick={lists.loadMore}
-                  >
-                    {publicLoading ? 'Loading…' : 'Load more'}
-                  </button>
-                </div>
-              )}
-            </>
+            <ConnectedMarketplace
+              market={market}
+              items={lists.items}
+              loading={lists.loading}
+              error={publicError}
+              account={account}
+              signedIn={!!session}
+              accountLoading={accountBusy}
+              hasMore={!!lists.nextCursor}
+              onMore={lists.loadMore}
+              onRefresh={() => {
+                lists.refresh();
+                if (session) void refreshAccount();
+              }}
+              onList={() => {
+                openIntent({ type: 'picker' });
+                if (session) void refreshAccount();
+              }}
+              onAccount={() => {
+                setModal({ type: session ? 'account' : 'signin' });
+                if (session) void refreshAccount();
+              }}
+              onReview={(listing) => setModal({ type: 'review', listing })}
+              onSweep={(listings) => setModal({ type: 'sweep', listings })}
+              onEdit={(listing) => setModal({ type: 'edit', listing })}
+              onCancel={(listing) =>
+                setModal({ type: 'cancel', kind: 'listing', record: listing })
+              }
+            />
           ) : (
             <ConnectedLending
               status={lending}
@@ -729,6 +679,32 @@ export default function ConnectedApp() {
       )}
       {modal?.type === 'review' && (
         <ListingReview listing={modal.listing} onClose={closeModal} />
+      )}
+      {modal?.type === 'sweep' && (
+        <SweepReview listings={modal.listings} onClose={closeModal} />
+      )}
+      {modal?.type === 'picker' && session && (
+        <ListingPicker
+          account={account}
+          loading={accountBusy}
+          onClose={closeModal}
+          onChoose={(position) =>
+            setModal({ type: 'form', kind: 'listing', position })
+          }
+          onMore={() => void refreshAccount(true)}
+          onManual={() => setModal({ type: 'form', kind: 'listing' })}
+        />
+      )}
+      {modal?.type === 'edit' && session && (
+        <RecordForm
+          key={modal.listing.id}
+          listing={modal.listing}
+          position={modal.listing.position}
+          session={session}
+          onClose={closeModal}
+          onSaved={saved}
+          onError={handleError}
+        />
       )}
       {modal?.type === 'collateral' && (
         <CollateralReview position={modal.position} onClose={closeModal} />

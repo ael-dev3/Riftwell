@@ -2,8 +2,9 @@ import { ArrowRight, Info, Layers3 } from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
 import {
   COLLATERAL_LIMITS,
+  collateralLimitMicros,
+  sampleRewardMicros,
   SAMPLE_CREDIT_EPOCHS,
-  SAMPLE_REWARD_MICROS,
 } from '../data';
 import {
   formatBalance,
@@ -65,7 +66,7 @@ export default function LendingActionDialog({
     ),
   );
   const initialReward = state.collateralIds.reduce(
-    (sum, id) => sum + BigInt(SAMPLE_REWARD_MICROS[id] ?? '0'),
+    (sum, id) => sum + BigInt(sampleRewardMicros(id)),
     0n,
   );
   const [reward, setReward] = useState(microsToDecimal(initialReward));
@@ -358,7 +359,7 @@ export default function LendingActionDialog({
                     <small>Per 7-day epoch · not a forecast</small>
                   </span>
                   <strong>
-                    {formatMicros(SAMPLE_REWARD_MICROS[action.asset.id])}
+                    {formatMicros(sampleRewardMicros(action.asset.id))}
                   </strong>
                 </div>
                 <div className="breakdown-row">
@@ -376,7 +377,7 @@ export default function LendingActionDialog({
                     {formatMicros(
                       BigInt(metrics.totalCreditMicros) +
                         (action.kind === 'deposit-collateral' ? 1n : -1n) *
-                          BigInt(COLLATERAL_LIMITS[action.asset.id]),
+                          BigInt(collateralLimitMicros(action.asset.id)),
                     )}
                   </strong>
                 </div>

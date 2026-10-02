@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rewriteRelativeImportExtensions": true,
+    "outDir": "build/web",
+    "rootDir": "web",
+    "types": []
+  },
+  "include": [
+    "web/config.ts",
+    "web/model.ts",
+    "web/kitten-reader.ts",
+    "web/index-source.ts"
+  ],
+  "exclude": ["web/**/*.test.ts"]
+}

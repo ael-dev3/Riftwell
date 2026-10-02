@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   decimalAmount,
+  listingAskMicros,
   feeMicros,
   interestMicros,
   parseAmount,
@@ -51,5 +52,41 @@ describe('lending offer consent', () => {
     expect(validateOfferTerms('1000000001', 1000, 7, request)).toContain(
       'amount and duration',
     );
+  });
+});
+
+describe('connected Dutch quotes', () => {
+  const begin = Date.parse('2026-10-02T18:00:00.000Z');
+  const quote = {
+    kind: 'dutch' as const,
+    startPriceMicros: '900000000',
+    endPriceMicros: '100000000',
+    startsAt: new Date(begin).toISOString(),
+    auctionEndsAt: new Date(begin + 3600000).toISOString(),
+  };
+  it('holds the starting ask before creation and reaches the cubic midpoint', () => {
+    expect(listingAskMicros(quote, begin - 1)).toBe('900000000');
+    expect(listingAskMicros(quote, begin + 1800000)).toBe('200000000');
+  });
+  it('holds the floor after decay without rounding below it', () => {
+    expect(listingAskMicros(quote, begin + 3600000)).toBe('100000000');
+    expect(listingAskMicros(quote, begin + 86400000)).toBe('100000000');
+    expect(
+      BigInt(listingAskMicros(quote, begin + 3599999)),
+    ).toBeGreaterThanOrEqual(100000000n);
+  });
+  it('keeps fixed asks exact and independent of the client clock', () => {
+    expect(
+      listingAskMicros(
+        {
+          ...quote,
+          kind: 'fixed',
+          auctionEndsAt: null,
+          startPriceMicros: '1000000000000',
+          endPriceMicros: '1000000000000',
+        },
+        begin + 365 * 86400000,
+      ),
+    ).toBe('1000000000000');
   });
 });

@@ -23,13 +23,13 @@ the deployed loan vault. A separate buyer received 20 USDC through a real USDC
 transfer from the existing funded account, approved the sale price and bought a
 listing created by the borrower. An unrelated lender could not list collateral.
 
-| Settlement item | Raw USDC units | USDC |
-| --- | ---: | ---: |
-| Buyer payment | 1250000 | 1.250000 |
-| One 0.5% sale fee | 6250 | 0.006250 |
-| Debt paid into lender credit | 432311 | 0.432311 |
-| Residual in separate borrower credit | 811439 | 0.811439 |
-| Manager cash after settlement | 1243750 | 1.243750 |
+| Settlement item                      | Raw USDC units |     USDC |
+| ------------------------------------ | -------------: | -------: |
+| Buyer payment                        |        1250000 | 1.250000 |
+| One 0.5% sale fee                    |           6250 | 0.006250 |
+| Debt paid into lender credit         |         432311 | 0.432311 |
+| Residual in separate borrower credit |         811439 | 0.811439 |
+| Manager cash after settlement        |        1243750 | 1.243750 |
 
 The borrower and lender cash balances did not increase during settlement; their
 separate credits were backed by the manager's actual USDC. Both then withdrew
@@ -92,7 +92,7 @@ checks and all nine optional financed-sale checks passed.
 - [Exact report](evidence/kitten-fork/2026-10-02-anvil-financed-token18371.json)
 - [TAP test output](evidence/kitten-fork/2026-10-02-anvil-financed-token18371.tap)
 - [Companion manifest](evidence/kitten-fork/2026-10-02-anvil-financed-manifest.json)
-- [Harness](../test/kitten-fork.test.mjs)
+- [Harness](../test/kitten-fork.test.ts)
 
 The report captures source SHA-256 values before compilation, compiler version,
 optimizer settings, compiled bytecode identity, actual deployed manager/vault
@@ -116,7 +116,7 @@ RIFTWELL_KITTEN_FORK_BLOCK=47471441 \
 RIFTWELL_KITTEN_TOKEN_ID=18371 \
 RIFTWELL_KITTEN_CLOSED_PERIOD=2960 \
 RIFTWELL_KITTEN_EVIDENCE_FILE=/tmp/riftwell-financed-fork.json \
-node --test --test-reporter=tap test/kitten-fork.test.mjs
+node --test --test-reporter=tap test/kitten-fork.test.ts
 ```
 
 Anvil uses a local proxy enforcing a remote read-method allowlist and numeric

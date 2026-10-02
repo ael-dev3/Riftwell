@@ -10,8 +10,9 @@ import {
 import {
   COLLATERAL,
   COLLATERAL_LIMITS,
+  collateralLimitMicros,
+  sampleRewardMicros,
   SAMPLE_CREDIT_EPOCHS,
-  SAMPLE_REWARD_MICROS,
 } from '../data';
 import {
   formatBalance,
@@ -83,7 +84,8 @@ export default function Lending({
 
   function position(asset: Asset, isDeposited: boolean) {
     const remainingCredit =
-      BigInt(metrics.totalCreditMicros) - BigInt(COLLATERAL_LIMITS[asset.id]);
+      BigInt(metrics.totalCreditMicros) -
+      BigInt(collateralLimitMicros(asset.id));
     const canRemove = remainingCredit >= BigInt(state.debtMicros);
     return (
       <article className="pooled-position" key={asset.id}>
@@ -106,11 +108,11 @@ export default function Lending({
         <div className="pooled-position-data">
           <div>
             <span>Example net reward / epoch</span>
-            <strong>{formatMicros(SAMPLE_REWARD_MICROS[asset.id])}</strong>
+            <strong>{formatMicros(sampleRewardMicros(asset.id))}</strong>
           </div>
           <div>
             <span>Example credit limit</span>
-            <strong>{formatMicros(COLLATERAL_LIMITS[asset.id])}</strong>
+            <strong>{formatMicros(collateralLimitMicros(asset.id))}</strong>
           </div>
         </div>
         <div className="pooled-position-action">
@@ -151,11 +153,11 @@ export default function Lending({
           <p className="section-eyebrow">
             {market.positionSymbol} LENDING · PREVIEW
           </p>
-          <h2 className="section-title">
+          <h1 className="section-title">
             {isBorrow
               ? 'Borrow against your positions.'
               : 'Supply to the USDC vault.'}
-          </h2>
+          </h1>
           <p className="section-description">
             {isBorrow
               ? 'Deposit collateral, access credit and let example rewards reduce your debt.'
