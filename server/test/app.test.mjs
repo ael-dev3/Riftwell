@@ -211,6 +211,64 @@ const offer = (f, requestId, extra = {}) => ({
   idempotencyKey: randomUUID(),
   ...extra,
 });
+// Pre-retirement records are seeded directly: public APIs cannot create them.
+function seedLegacyRequest(f, extra = {}) {
+  const input = borrowing(f, extra);
+  const record = {
+    id: randomUUID(),
+    marketId: 'kittenswap',
+    owner: f.owner.address,
+    status: 'active',
+    createdAt: iso(f.time),
+    position: f.positions.get(input.tokenId),
+    ...input,
+  };
+  f.app.store
+    .prepare(
+      'INSERT INTO loan_requests(id,market,token_id,owner,principal_micros,apr_bps,duration_days,expires_at,created_at,updated_at,status,position_json) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
+    )
+    .run(
+      record.id,
+      record.marketId,
+      record.tokenId,
+      record.owner,
+      record.principalMicros,
+      record.aprBps,
+      record.durationDays,
+      Date.parse(record.expiresAt),
+      f.time,
+      f.time,
+      record.status,
+      JSON.stringify(record.position),
+    );
+  return record;
+}
+function seedLegacyOffer(f, requestId, extra = {}) {
+  const record = {
+    id: randomUUID(),
+    lender: f.lender.address,
+    status: 'proposed',
+    createdAt: iso(f.time),
+    ...offer(f, requestId, extra),
+  };
+  f.app.store
+    .prepare(
+      'INSERT INTO offers(id,request_id,lender,principal_micros,apr_bps,duration_days,expires_at,created_at,updated_at,status) VALUES (?,?,?,?,?,?,?,?,?,?)',
+    )
+    .run(
+      record.id,
+      record.requestId,
+      record.lender,
+      record.principalMicros,
+      record.aprBps,
+      record.durationDays,
+      Date.parse(record.expiresAt),
+      f.time,
+      f.time,
+      record.status,
+    );
+  return record;
+}
 function error(response, status, code) {
   assert.equal(response.statusCode, status, response.body);
   assert.equal(response.json().error.code, code);
@@ -231,7 +289,7 @@ test('status exposes only durable off-chain capabilities and all settlement requ
     capabilities: {
       walletSignIn: true,
       marketplace: true,
-      lending: true,
+      lending: false,
       settlement: false,
     },
   });
@@ -257,6 +315,190 @@ test('status exposes only durable off-chain capabilities and all settlement requ
   assert.equal(
     f.app.store.prepare('SELECT count(*) AS n FROM audit_events').get().n,
     0,
+  );
+});
+
+test('pooled lending exposes undeployed state without fabricated accounting, terms, addresses or RPC reads', async (t) => {
+  const f = await fixture(t);
+  f.unavailable(true);
+  const response = await send(f, 'GET', '/lending');
+  assert.equal(response.statusCode, 200, response.body);
+  assert.equal(response.headers['cache-control'], 'no-store');
+  assert.deepEqual(response.json(), {
+    model: 'pooled-revenue',
+    state: 'not-deployed',
+    marketId: 'kittenswap',
+    asset: 'USDC',
+    chainId: 999,
+    vaultAddress: null,
+    portfolioAddress: null,
+    accounting: null,
+    terms: null,
+    executionEnabled: false,
+  });
+  error(await send(f, 'GET', '/lending?market=unknown'), 400, 'UNKNOWN_FIELD');
+  assert.equal(f.reads, 0);
+  assert.equal(f.batches, 0);
+  assert.equal(
+    f.app.store.prepare('SELECT count(*) AS n FROM audit_events').get().n,
+    0,
+  );
+});
+
+test('pooled actions and retired lending mutations preserve Origin, session and CSRF guards without writes', async (t) => {
+  const f = await fixture(t);
+  const session = await login(f);
+  const before = Object.fromEntries(
+    ['loan_requests', 'offers', 'idempotency', 'audit_events'].map((table) => [
+      table,
+      f.app.store.prepare(`SELECT count(*) AS n FROM ${table}`).get().n,
+    ]),
+  );
+  for (const [path, payload, status, code] of [
+    [
+      '/lending/actions',
+      { action: 'supply', amountMicros: '1000000' },
+      503,
+      'SMART_CONTRACTS_DISABLED',
+    ],
+    ['/loan-requests', borrowing(f), 410, 'LEGACY_LENDING_RETIRED'],
+    ['/offers', offer(f, randomUUID()), 410, 'LEGACY_LENDING_RETIRED'],
+  ]) {
+    error(await send(f, 'POST', path, payload), 401, 'AUTH_REQUIRED');
+    error(
+      await send(f, 'POST', path, payload, session, {
+        origin: 'https://attacker.example',
+      }),
+      403,
+      'ORIGIN_REJECTED',
+    );
+    error(
+      await send(f, 'POST', path, payload, { cookie: session.cookie }),
+      403,
+      'CSRF_REJECTED',
+    );
+    error(
+      await send(f, 'POST', path, payload, session, {
+        'x-csrf-token': '0'.repeat(64),
+      }),
+      403,
+      'CSRF_REJECTED',
+    );
+    const response = await send(f, 'POST', path, payload, session);
+    error(response, status, code);
+    assert.equal(response.headers['cache-control'], 'no-store');
+    assert.ok(!response.body.includes('calldata'));
+  }
+  for (const action of [
+    'deposit-collateral',
+    'borrow',
+    'repay',
+    'withdraw',
+    'redeem',
+  ])
+    error(
+      await send(f, 'POST', '/lending/actions', { action }, session),
+      503,
+      'SMART_CONTRACTS_DISABLED',
+    );
+  error(
+    await send(
+      f,
+      'POST',
+      '/lending/actions',
+      { action: 'borrow', padding: 'x'.repeat(20000) },
+      session,
+    ),
+    413,
+    'REQUEST_TOO_LARGE',
+  );
+  assert.equal(f.reads, 0);
+  assert.equal(f.batches, 0);
+  for (const [table, count] of Object.entries(before))
+    assert.equal(
+      f.app.store.prepare(`SELECT count(*) AS n FROM ${table}`).get().n,
+      count,
+      table,
+    );
+});
+
+test('retirement suppresses public legacy requests and rejects retries without changing historical records', async (t) => {
+  const f = await fixture(t);
+  const owner = await login(f);
+  const lender = await login(f, f.lender);
+  const request = seedLegacyRequest(f);
+  const proposed = seedLegacyOffer(f, request.id);
+  f.app.store
+    .prepare(
+      'INSERT INTO idempotency(actor,operation,key,payload_hash,entity_id,response_json,created_at) VALUES (?,?,?,?,?,?,?)',
+    )
+    .run(
+      owner.address,
+      'loan-requests',
+      request.idempotencyKey,
+      'old-digest',
+      request.id,
+      JSON.stringify(request),
+      f.time,
+    );
+  const before = {
+    request: f.app.store
+      .prepare('SELECT * FROM loan_requests WHERE id = ?')
+      .get(request.id),
+    offer: f.app.store
+      .prepare('SELECT * FROM offers WHERE id = ?')
+      .get(proposed.id),
+    idempotency: f.app.store.prepare('SELECT * FROM idempotency').all(),
+    audit: f.app.store.prepare('SELECT * FROM audit_events').all(),
+  };
+  f.unavailable(true);
+  for (const suffix of ['', '?market=kittenswap&limit=24', '?cursor=invalid'])
+    error(
+      await send(f, 'GET', `/loan-requests${suffix}`),
+      410,
+      'LEGACY_LENDING_RETIRED',
+    );
+  for (const payload of [
+    borrowing(f, { idempotencyKey: request.idempotencyKey }),
+    borrowing(f, { aprBps: 99, durationDays: 8 }),
+  ])
+    error(
+      await send(f, 'POST', '/loan-requests', payload, owner),
+      410,
+      'LEGACY_LENDING_RETIRED',
+    );
+  error(
+    await send(f, 'POST', '/offers', offer(f, request.id), lender),
+    410,
+    'LEGACY_LENDING_RETIRED',
+  );
+  assert.deepEqual(
+    f.app.store
+      .prepare('SELECT * FROM loan_requests WHERE id = ?')
+      .get(request.id),
+    before.request,
+  );
+  assert.deepEqual(
+    f.app.store.prepare('SELECT * FROM offers WHERE id = ?').get(proposed.id),
+    before.offer,
+  );
+  assert.deepEqual(
+    f.app.store.prepare('SELECT * FROM idempotency').all(),
+    before.idempotency,
+  );
+  assert.deepEqual(
+    f.app.store.prepare('SELECT * FROM audit_events').all(),
+    before.audit,
+  );
+  assert.equal(f.reads, 0);
+  await f.restart();
+  const account = (await send(f, 'GET', '/account', undefined, owner)).json();
+  assert.equal(account.positionsUnavailable, true);
+  assert.equal(account.loanRequests[0].id, request.id);
+  assert.equal(account.receivedOffers[0].id, proposed.id);
+  assert.deepEqual(
+    f.app.store.prepare('SELECT * FROM idempotency').all(),
+    before.idempotency,
   );
 });
 
@@ -517,7 +759,7 @@ test('concurrent same-key retries return exactly one result; conflicting payload
   );
 });
 
-test('money stays exact and canonical; bounds, unsafe integers, malformed token IDs and invalid terms are rejected', async (t) => {
+test('marketplace money stays exact and canonical; bounds, unsafe integers, malformed token IDs and expiries are rejected', async (t) => {
   const f = await fixture(t);
   const session = await login(f);
   for (const priceMicros of [
@@ -567,22 +809,6 @@ test('money stays exact and canonical; bounds, unsafe integers, malformed token 
       ),
       400,
       'INVALID_EXPIRY',
-    );
-  for (const [field, value, code] of [
-    ['aprBps', 99, 'INVALID_APR'],
-    ['aprBps', 1200.1, 'INVALID_APR'],
-    ['durationDays', 8, 'INVALID_DURATION'],
-  ])
-    error(
-      await send(
-        f,
-        'POST',
-        '/loan-requests',
-        borrowing(f, { [field]: value }),
-        session,
-      ),
-      400,
-      code,
     );
   const created = await send(
     f,
@@ -673,97 +899,71 @@ test('listing pages use batch ownership proofs, signed cursors, exact limits and
   );
 });
 
-test('borrow requests require positive sufficient locks; unfunded offers obey borrower terms, no self-lending and lender-only cancellation', async (t) => {
+test('historical lending intents retain creator-only cancellation during RPC outages and across restart', async (t) => {
   const f = await fixture(t);
   const owner = await login(f);
   const lender = await login(f, f.lender);
   const outsider = await login(f, f.outsider);
-  f.positions.set(
-    '1',
-    f.position('1', f.owner.address, { lockedAmountRaw: '0' }),
-  );
-  error(
-    await send(f, 'POST', '/loan-requests', borrowing(f), owner),
-    400,
-    'LOCK_INELIGIBLE',
-  );
-  f.positions.set(
-    '1',
-    f.position('1', f.owner.address, {
-      lockedUntil: iso(f.time + 6 * 86400000),
-    }),
-  );
-  error(
-    await send(f, 'POST', '/loan-requests', borrowing(f), owner),
-    400,
-    'LOCK_INELIGIBLE',
-  );
-  f.positions.set('1', f.position('1'));
-  const created = await send(f, 'POST', '/loan-requests', borrowing(f), owner);
-  assert.equal(created.statusCode, 200, created.body);
-  const requestId = created.json().id;
-  error(
-    await send(f, 'POST', '/offers', offer(f, requestId), owner),
-    403,
-    'SELF_LENDING',
-  );
-  for (const extra of [
-    { principalMicros: '2000000000' },
-    { aprBps: 1300 },
-    { durationDays: 14 },
-    { expiresAt: iso(f.time + 3 * 86400000) },
-  ])
+  const request = seedLegacyRequest(f);
+  const proposed = seedLegacyOffer(f, request.id);
+  f.positions.set('1', f.position('1', f.outsider.address));
+  f.unavailable(true);
+  for (const session of [owner, outsider])
     error(
-      await send(f, 'POST', '/offers', offer(f, requestId, extra), lender),
-      400,
-      'OFFER_TERMS_REJECTED',
+      await send(f, 'DELETE', `/offers/${proposed.id}`, undefined, session),
+      403,
+      'FORBIDDEN',
     );
-  const payload = offer(f, requestId);
-  const proposed = await send(f, 'POST', '/offers', payload, lender);
-  assert.equal(proposed.statusCode, 200, proposed.body);
-  assert.equal(proposed.json().status, 'proposed');
-  assert.deepEqual(
-    (await send(f, 'POST', '/offers', payload, lender)).json(),
-    proposed.json(),
-  );
-  error(
-    await send(
-      f,
-      'DELETE',
-      `/offers/${proposed.json().id}`,
-      undefined,
-      outsider,
-    ),
-    403,
-    'FORBIDDEN',
-  );
-  assert.equal(
-    (
+  for (const session of [lender, outsider])
+    error(
       await send(
         f,
         'DELETE',
-        `/offers/${proposed.json().id}`,
+        `/loan-requests/${request.id}`,
         undefined,
-        lender,
-      )
+        session,
+      ),
+      403,
+      'FORBIDDEN',
+    );
+  assert.equal(
+    (
+      await send(f, 'DELETE', `/offers/${proposed.id}`, undefined, lender)
     ).json().status,
     'cancelled',
   );
-  const second = await send(f, 'POST', '/offers', offer(f, requestId), lender);
-  assert.equal(second.statusCode, 200);
+  const second = seedLegacyOffer(f, request.id);
   assert.equal(
     (
-      await send(f, 'DELETE', `/loan-requests/${requestId}`, undefined, owner)
+      await send(f, 'DELETE', `/loan-requests/${request.id}`, undefined, owner)
     ).json().status,
     'cancelled',
+  );
+  assert.equal(
+    f.app.store.prepare('SELECT status FROM offers WHERE id = ?').get(second.id)
+      .status,
+    'invalidated',
+  );
+  assert.equal(f.reads, 0);
+  await f.restart();
+  const account = (await send(f, 'GET', '/account', undefined, owner)).json();
+  assert.equal(account.loanRequests[0].status, 'cancelled');
+  assert.equal(
+    account.receivedOffers.find((item) => item.id === proposed.id).status,
+    'cancelled',
+  );
+  assert.equal(
+    account.receivedOffers.find((item) => item.id === second.id).status,
+    'invalidated',
   );
   assert.equal(
     f.app.store
-      .prepare('SELECT status FROM offers WHERE id = ?')
-      .get(second.json().id).status,
-    'invalidated',
+      .prepare(
+        "SELECT count(*) AS n FROM audit_events WHERE event IN ('loan-request.cancelled','offer.cancelled','offer.invalidated')",
+      )
+      .get().n,
+    3,
   );
-  assert.ok(!proposed.body.includes('funded'));
 });
 
 test('account reads fresh ownership, maintains explicit historical statuses and rejects bad ownership cursors', async (t) => {
@@ -793,7 +993,7 @@ test('account reads fresh ownership, maintains explicit historical statuses and 
   );
 });
 
-test('borrowers receive only proposals on their own requests and outage history permits authorized cancellation without chain writes', async (t) => {
+test('legacy borrowers receive only historical proposals on their own requests and outage history remains cancelable', async (t) => {
   const f = await fixture(t);
   const owner = await login(f);
   const lender = await login(f, f.lender);
@@ -801,12 +1001,8 @@ test('borrowers receive only proposals on their own requests and outage history 
   const listed = (
     await send(f, 'POST', '/listings', listing(f, '2'), owner)
   ).json();
-  const request = (
-    await send(f, 'POST', '/loan-requests', borrowing(f), owner)
-  ).json();
-  const proposed = (
-    await send(f, 'POST', '/offers', offer(f, request.id), lender)
-  ).json();
+  const request = seedLegacyRequest(f);
+  const proposed = seedLegacyOffer(f, request.id);
   const ownerAccount = (
     await send(f, 'GET', '/account', undefined, owner)
   ).json();
@@ -1020,7 +1216,7 @@ test('readiness fails on chain unavailability and never exposes RPC credentials;
   error(await send(f, 'GET', '/positions/1'), 503, 'CHAIN_UNAVAILABLE');
 });
 
-test('encoded API aliases cannot issue or consume challenges, read sessions or reach disabled settlement', async (t) => {
+test('encoded API aliases cannot bypass authentication, retirement or disabled financial actions', async (t) => {
   const f = await fixture(t);
   await f.app.listen({ host: '127.0.0.1', port: 0 });
   const port = f.app.server.address().port;
@@ -1120,6 +1316,11 @@ test('encoded API aliases cannot issue or consume challenges, read sessions or r
     verified.headers['set-cookie'].split(';')[0],
   );
   await rejectAliases('POST', '/settlement', { action: 'fund-loan' });
+  await rejectAliases('GET', '/lending');
+  await rejectAliases('POST', '/lending/actions', { action: 'supply' });
+  await rejectAliases('GET', '/loan-requests');
+  await rejectAliases('POST', '/loan-requests', borrowing(f));
+  await rejectAliases('POST', '/offers', offer(f, randomUUID()));
   for (const url of ['/api/v1/auth/%63hallenge', '/api/v1/%61uth/challenge'])
     error(
       await wireRequest('POST', url, {

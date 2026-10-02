@@ -9,6 +9,7 @@ import {
   ApiError,
   type Account,
   type Listing,
+  type LendingStatus,
   type LoanRequest,
   type Offer,
   type Position,
@@ -24,31 +25,22 @@ import {
   type WalletProvider,
 } from './wallet';
 import { shortAddress } from './amounts';
+import { ConnectedLending, CollateralReview } from './ConnectedLending';
 import { apiMessage, usePages } from './usePages';
-import {
-  CancellationDialog,
-  ListingReview,
-  OfferReview,
-  RecordForm,
-} from './RecordDialogs';
-import {
-  ConnectedAccount,
-  PublicListings,
-  PublicRequests,
-} from './ConnectedViews';
+import { CancellationDialog, ListingReview, RecordForm } from './RecordDialogs';
+import { ConnectedAccount, PublicListings } from './ConnectedViews';
 
 type Section = 'marketplace' | 'lending';
 type Intent = {
   type: 'form';
-  kind: 'listing' | 'request' | 'offer';
+  kind: 'listing';
   position?: Position;
-  request?: LoanRequest;
 };
 type Modal =
   | Intent
   | { type: 'signin' | 'account' }
   | { type: 'review'; listing: Listing }
-  | { type: 'offer-review'; offer: Offer; request?: LoanRequest }
+  | { type: 'collateral'; position: Position }
   | {
       type: 'cancel';
       kind: 'listing' | 'request' | 'offer';
@@ -63,6 +55,7 @@ export default function ConnectedApp() {
   );
   const [lendingTab, setLendingTab] = useState<'borrow' | 'lend'>('borrow');
   const [status, setStatus] = useState<Status | null>(null);
+  const [lending, setLending] = useState<LendingStatus | null>(null);
   const [serviceError, setServiceError] = useState('');
   const [serviceRevision, setServiceRevision] = useState(0);
   const [session, setSession] = useState<Session | null>(null);
@@ -90,10 +83,6 @@ export default function ConnectedApp() {
   const accountButtonRef = useRef<HTMLButtonElement>(null);
   const lists = usePages(
     (cursor, signal) => api.listings(market.id, cursor, signal),
-    market.id,
-  );
-  const requests = usePages(
-    (cursor, signal) => api.loanRequests(market.id, cursor, signal),
     market.id,
   );
 
@@ -135,8 +124,9 @@ export default function ConnectedApp() {
     void Promise.all([
       api.status(controller.signal),
       api.markets(controller.signal),
+      api.lending(controller.signal),
     ])
-      .then(([health, available]) => {
+      .then(([health, available, lendingState]) => {
         if (controller.signal.aborted) return;
         if (
           health.mode !== 'connected' ||
@@ -151,11 +141,13 @@ export default function ConnectedApp() {
             'This service does not match the supported KittenSwap market configuration.',
           );
         setStatus(health);
+        setLending(lendingState);
         setServiceError('');
       })
       .catch((failure: unknown) => {
         if (!controller.signal.aborted) {
           setStatus(null);
+          setLending(null);
           setServiceError(apiMessage(failure));
         }
       });
@@ -242,7 +234,10 @@ export default function ConnectedApp() {
         )
           return;
         setAccount((previous) =>
-          more && previous
+          more &&
+          previous &&
+          !previous.positionsUnavailable &&
+          !loaded.positionsUnavailable
             ? {
                 ...loaded,
                 positions: [
@@ -350,6 +345,8 @@ export default function ConnectedApp() {
       if (attempt !== signInAttempt.current || epoch !== authEpoch.current)
         return;
       const challenge = await api.challenge(address);
+      if (attempt !== signInAttempt.current || epoch !== authEpoch.current)
+        return;
       const signature = await signChallenge(wallet, address, challenge.message);
       const [currentAccounts, currentChain] = await Promise.all([
         wallet.request({ method: 'eth_accounts' }),
@@ -422,7 +419,6 @@ export default function ConnectedApp() {
     closeModal();
     setMessage(text);
     lists.refresh();
-    requests.refresh();
     void refreshAccount();
   }
 
@@ -438,7 +434,6 @@ export default function ConnectedApp() {
         await api.cancelLoanRequest(record.id, session.csrfToken);
       else await api.cancelOffer(record.id, session.csrfToken);
       lists.refresh();
-      requests.refresh();
       await refreshAccount();
       setModal({ type: 'account' });
       setMessage('The off-chain record was cancelled.');
@@ -448,13 +443,11 @@ export default function ConnectedApp() {
     }
   }
 
-  const publicError = section === 'marketplace' ? lists.error : requests.error;
-  const publicLoading =
-    section === 'marketplace' ? lists.loading : requests.loading;
+  const publicError = section === 'marketplace' ? lists.error : '';
+  const publicLoading = lists.loading;
   const retry = () => {
     setServiceRevision((value) => value + 1);
     lists.refresh();
-    requests.refresh();
     void refreshAccount();
   };
 
@@ -540,8 +533,8 @@ export default function ConnectedApp() {
               for your <span className="accent-text">assets.</span>
             </h1>
             <p className="hero-description">
-              List verified veKITTEN positions. Create borrowing requests and
-              unfunded lending offers in one space.
+              A marketplace for veKITTEN positions, with collateral credit lines
+              and pooled USDC lending prepared for launch.
             </p>
             <div className="hero-actions">
               <button
@@ -613,121 +606,61 @@ export default function ConnectedApp() {
               : 'Connected NFT lending'
           }
         >
-          <div className="section-heading">
-            <div>
-              <p className="section-eyebrow">
-                KittenSwap{' '}
-                {section === 'marketplace' ? 'MARKETPLACE' : 'LENDING'}
-              </p>
-              <h2 className="section-title">
-                {section === 'marketplace'
-                  ? 'List your NFT position.'
-                  : 'Borrowing begins with a request.'}
-              </h2>
-              <p className="section-description">
-                {section === 'marketplace'
-                  ? 'Ownership-verified listings. Purchases await contract settlement.'
-                  : 'Requests and offers are durable records. All remain unfunded.'}
-              </p>
-            </div>
-            <button
-              className="button primary"
-              disabled={!status}
-              onClick={() =>
-                openIntent({
-                  type: 'form',
-                  kind: section === 'marketplace' ? 'listing' : 'request',
-                })
-              }
-            >
-              {section === 'marketplace' ? 'Create listing' : 'Request a loan'}
-            </button>
-          </div>
           {section === 'marketplace' ? (
-            !publicError && (
-              <PublicListings
-                items={lists.items}
-                loading={lists.loading}
-                onReview={(listing) => setModal({ type: 'review', listing })}
-              />
-            )
-          ) : (
             <>
-              <div
-                className="segmented-control lending-tabs connected-lending-tabs"
-                aria-label="Lending view"
-              >
+              <div className="section-heading">
+                <div>
+                  <p className="section-eyebrow">KittenSwap MARKETPLACE</p>
+                  <h2 className="section-title">List your NFT position.</h2>
+                  <p className="section-description">
+                    Ownership-verified listings. Purchases await contract
+                    settlement.
+                  </p>
+                </div>
                 <button
-                  className={lendingTab === 'borrow' ? 'active' : ''}
-                  aria-pressed={lendingTab === 'borrow'}
-                  onClick={() => setLendingTab('borrow')}
+                  className="button primary"
+                  disabled={!status}
+                  onClick={() => openIntent({ type: 'form', kind: 'listing' })}
                 >
-                  Borrow
-                </button>
-                <button
-                  className={lendingTab === 'lend' ? 'active' : ''}
-                  aria-pressed={lendingTab === 'lend'}
-                  onClick={() => setLendingTab('lend')}
-                >
-                  Lend
+                  Create listing
                 </button>
               </div>
-              {lendingTab === 'borrow' ? (
-                <div className="lending-intro">
-                  <span className="lending-intro-icon">
-                    <Info size={24} aria-hidden="true" />
-                  </span>
-                  <div>
-                    <h3>Start with a position you own.</h3>
-                    <p>
-                      Verify your veKITTEN token ID and set a USDC amount, APR
-                      and duration. Ownership alone does not establish safe
-                      borrowing capacity. Your account shows saved requests and
-                      their status.
-                    </p>
-                    <button
-                      className="inline-link"
-                      onClick={() => {
-                        setModal({ type: session ? 'account' : 'signin' });
-                        if (session) void refreshAccount();
-                      }}
-                    >
-                      View your account
-                    </button>
-                  </div>
+              {!publicError && (
+                <PublicListings
+                  items={lists.items}
+                  loading={lists.loading}
+                  onReview={(listing) => setModal({ type: 'review', listing })}
+                />
+              )}
+              {!publicError && lists.nextCursor && (
+                <div className="connected-pagination">
+                  <button
+                    className="button secondary"
+                    disabled={publicLoading}
+                    onClick={lists.loadMore}
+                  >
+                    {publicLoading ? 'Loading…' : 'Load more'}
+                  </button>
                 </div>
-              ) : (
-                !publicError && (
-                  <PublicRequests
-                    items={requests.items}
-                    loading={requests.loading}
-                    address={session?.address}
-                    onOffer={(request) =>
-                      openIntent({ type: 'form', kind: 'offer', request })
-                    }
-                  />
-                )
               )}
             </>
+          ) : (
+            <ConnectedLending
+              status={lending}
+              tab={lendingTab}
+              onTab={setLendingTab}
+              account={account}
+              signedIn={!!session}
+              loading={accountBusy}
+              onAccount={() => {
+                setModal({ type: session ? 'account' : 'signin' });
+                if (session) void refreshAccount();
+              }}
+              onInspect={(position) =>
+                setModal({ type: 'collateral', position })
+              }
+            />
           )}
-          {!publicError &&
-            (section === 'marketplace'
-              ? lists.nextCursor
-              : lendingTab === 'lend' && requests.nextCursor) && (
-              <div className="connected-pagination">
-                <button
-                  className="button secondary"
-                  disabled={publicLoading}
-                  onClick={
-                    section === 'marketplace'
-                      ? lists.loadMore
-                      : requests.loadMore
-                  }
-                >
-                  {publicLoading ? 'Loading…' : 'Load more'}
-                </button>
-              </div>
-            )}
         </section>
       </main>
       <footer className="site-footer">
@@ -797,19 +730,13 @@ export default function ConnectedApp() {
       {modal?.type === 'review' && (
         <ListingReview listing={modal.listing} onClose={closeModal} />
       )}
-      {modal?.type === 'offer-review' && (
-        <OfferReview
-          offer={modal.offer}
-          request={modal.request}
-          onClose={() => setModal({ type: 'account' })}
-        />
+      {modal?.type === 'collateral' && (
+        <CollateralReview position={modal.position} onClose={closeModal} />
       )}
       {modal?.type === 'form' && session && (
         <RecordForm
-          key={`${modal.kind}-${modal.position?.id ?? modal.request?.id ?? 'new'}`}
-          kind={modal.kind}
+          key={modal.position?.id ?? 'new'}
           position={modal.position}
-          request={modal.request}
           session={session}
           onClose={closeModal}
           onSaved={saved}
@@ -826,16 +753,10 @@ export default function ConnectedApp() {
           onList={(position) =>
             openIntent({ type: 'form', kind: 'listing', position })
           }
-          onBorrow={(position) =>
-            openIntent({ type: 'form', kind: 'request', position })
-          }
           onCancel={(kind, record) =>
             setModal({ type: 'cancel', kind, record })
           }
           onSignOut={() => void signOut()}
-          onReviewOffer={(offer, request) =>
-            setModal({ type: 'offer-review', offer, request })
-          }
         />
       )}
       {modal?.type === 'cancel' && (

@@ -1,6 +1,6 @@
 import { ArrowRight, ArrowUpRight, CircleUserRound, Info } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { ASSETS } from './data';
+import { ASSETS, COLLATERAL_LIMITS } from './data';
 import { DEFAULT_MARKET, type Market } from './markets';
 import MarketSelector from './components/MarketSelector';
 import PortalMark from './components/PortalMark';
@@ -8,43 +8,80 @@ import {
   emptyPortfolio,
   parsePortfolio,
   STORAGE_KEY,
+  LEGACY_STORAGE_KEY,
   type Asset,
-  type BorrowReceipt,
-  type LendReceipt,
   type Portfolio,
   type Receipt,
 } from './domain';
 import AccountDialog, { type AccountTab } from './components/AccountDialog';
 import Dialog from './components/Dialog';
-import Lending, { type LendingTab } from './components/Lending';
+import Lending, {
+  activityLabel,
+  type LendingAction,
+  type LendingTab,
+} from './components/Lending';
+import LendingActionDialog, {
+  type LendingActionInput,
+} from './components/LendingDialogs';
+import {
+  advanceEpoch,
+  borrow,
+  createLendingState,
+  depositCollateral,
+  LendingError,
+  parseLendingState,
+  removeCollateral,
+  repay,
+  supply,
+  withdraw,
+  type LendingState,
+} from './lending';
 import Marketplace from './components/Marketplace';
 import {
   AssetDetails,
-  LoanDialog,
   PurchaseDialog,
   SuccessDialog,
 } from './components/TradeDialogs';
 
 type Section = 'lending' | 'marketplace';
 type Modal =
-  | { type: 'details' | 'purchase' | 'borrow' | 'lend'; asset: Asset }
+  | { type: 'details' | 'purchase'; asset: Asset }
+  | { type: 'lending-action'; action: LendingAction }
   | { type: 'account'; tab?: AccountTab }
   | { type: 'reset' | 'about' }
-  | { type: 'cancel'; receipt: BorrowReceipt | LendReceipt }
   | { type: 'success'; receipt: Receipt; asset: Asset }
   | null;
 
-function initialPortfolio(): { portfolio: Portfolio; readIssue: boolean } {
+const LENDING_STORAGE_KEY = 'riftwell.pooled-lending-preview.v1';
+function initialPortfolio(): {
+  portfolio: Portfolio;
+  lending: LendingState;
+  readIssue: boolean;
+  migrated: boolean;
+} {
   try {
+    const current = localStorage.getItem(STORAGE_KEY);
+    const legacy =
+      current === null ? localStorage.getItem(LEGACY_STORAGE_KEY) : null;
     return {
       portfolio: parsePortfolio(
-        localStorage.getItem(STORAGE_KEY),
+        current ?? legacy,
         ASSETS.map((asset) => asset.id),
       ),
+      lending: parseLendingState(
+        localStorage.getItem(LENDING_STORAGE_KEY),
+        COLLATERAL_LIMITS,
+      ),
       readIssue: false,
+      migrated: legacy !== null,
     };
   } catch {
-    return { portfolio: emptyPortfolio(), readIssue: true };
+    return {
+      portfolio: emptyPortfolio(),
+      lending: createLendingState(),
+      readIssue: true,
+      migrated: false,
+    };
   }
 }
 
@@ -56,6 +93,9 @@ export default function App() {
   const [lendingTab, setLendingTab] = useState<LendingTab>('borrow');
   const [initial] = useState(initialPortfolio);
   const [portfolio, setPortfolio] = useState<Portfolio>(initial.portfolio);
+  const [lending, setLending] = useState<LendingState>(initial.lending);
+  const lendingRef = useRef(lending);
+  lendingRef.current = lending;
   const [modal, setModal] = useState<Modal>(null);
   const [storageIssue, setStorageIssue] = useState(initial.readIssue);
   const [announcement, setAnnouncement] = useState('');
@@ -91,11 +131,12 @@ export default function App() {
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(portfolio));
+      localStorage.setItem(LENDING_STORAGE_KEY, JSON.stringify(lending));
       setStorageIssue(initial.readIssue);
     } catch {
       setStorageIssue(true);
     }
-  }, [portfolio, initial.readIssue]);
+  }, [portfolio, lending, initial.readIssue]);
 
   const purchasedIds = new Set(
     portfolio.receipts
@@ -105,9 +146,10 @@ export default function App() {
   const availableAssets = ASSETS.filter(
     (asset) => asset.marketId === market.id && !purchasedIds.has(asset.id),
   );
-  const accountCount = portfolio.receipts.filter(
-    (receipt) => receipt.kind === 'purchase' || receipt.status !== 'cancelled',
-  ).length;
+  const accountCount =
+    portfolio.receipts.length +
+    lending.collateralIds.length +
+    (BigInt(lending.shareBalanceRaw) > 0n ? 1 : 0);
 
   function selectSection(next: Section, scroll = false) {
     setSection(next);
@@ -140,7 +182,7 @@ export default function App() {
         (item) =>
           item.kind === receipt.kind &&
           item.assetId === receipt.assetId &&
-          (item.kind === 'purchase' || item.status !== 'cancelled'),
+          item.kind === 'purchase',
       );
       return duplicate
         ? current
@@ -151,19 +193,52 @@ export default function App() {
     setAnnouncement('Your preview receipt has been saved.');
   }
 
-  function cancelReceipt(receipt: BorrowReceipt | LendReceipt) {
-    setPortfolio((current) => ({
-      ...current,
-      receipts: current.receipts.map((item) =>
-        item.id === receipt.id && item.kind !== 'purchase'
-          ? { ...item, status: 'cancelled' }
-          : item,
-      ),
-    }));
-    setModal({ type: 'account', tab: receipt.kind });
-    setAnnouncement(
-      'The preview has been cancelled. Your receipt remains in the account.',
-    );
+  function applyLendingAction(
+    action: LendingAction,
+    input: LendingActionInput,
+  ): string | null {
+    try {
+      const current = lendingRef.current;
+      let next = current;
+      switch (action.kind) {
+        case 'deposit-collateral':
+          next = depositCollateral(current, action.asset.id, COLLATERAL_LIMITS);
+          break;
+        case 'remove-collateral':
+          next = removeCollateral(current, action.asset.id, COLLATERAL_LIMITS);
+          break;
+        case 'borrow':
+          next = borrow(current, input.amountMicros ?? '0', COLLATERAL_LIMITS);
+          break;
+        case 'repay':
+          next = repay(current, input.amountMicros ?? '0');
+          break;
+        case 'supply':
+          next = supply(current, input.amountMicros ?? '0');
+          break;
+        case 'withdraw':
+          next = withdraw(current, input.amountMicros ?? '0');
+          break;
+        case 'epoch':
+          next = advanceEpoch(
+            current,
+            input.collateralRewardMicros ?? '0',
+            input.poolYieldMicros ?? '0',
+          );
+          break;
+        case 'how':
+          return null;
+      }
+      lendingRef.current = next;
+      setLending(next);
+      setAnnouncement(`${activityLabel[action.kind]} in your local preview.`);
+      closeModal();
+      return null;
+    } catch (error) {
+      return error instanceof LendingError
+        ? error.message
+        : 'This preview action could not be completed. Try again.';
+    }
   }
 
   return (
@@ -256,9 +331,10 @@ export default function App() {
               for your <span className="accent-text">assets.</span>
             </h1>
             <p className="hero-description">
-              Trade {market.positionSymbol} positions. Borrow against them.
-              Explore the {market.name} market in one simple space, with USDC
-              settlement.
+              Trade {market.positionSymbol} positions. Borrow against collateral
+              or supply USDC to a pooled lending vault. Explore the{' '}
+              {market.name}
+              market in one simple space.
             </p>
             <div className="hero-actions">
               <button
@@ -304,8 +380,18 @@ export default function App() {
           <div className="notice storage-notice" role="status">
             <Info size={18} aria-hidden="true" />
             <p>
-              This browser could not restore or save preview receipts. Your
-              preview works, but receipts may not persist after you refresh.
+              This browser could not restore or save your preview account. You
+              can explore, but changes may not persist after you refresh.
+            </p>
+          </div>
+        )}
+        {initial.migrated && (
+          <div className="notice storage-notice" role="status">
+            <Info size={18} aria-hidden="true" />
+            <p>
+              Your sample purchases were retained. Lending now uses a fresh
+              pooled-vault preview; older unfunded proposals were not converted
+              into balances.
             </p>
           </div>
         )}
@@ -320,6 +406,11 @@ export default function App() {
           }
           tabIndex={-1}
         >
+          {announcement && section === 'lending' && (
+            <p className="pooled-feedback" role="status">
+              {announcement}
+            </p>
+          )}
           {section === 'marketplace' ? (
             <Marketplace
               market={market}
@@ -332,9 +423,10 @@ export default function App() {
               market={market}
               tab={lendingTab}
               onTab={setLendingTab}
-              receipts={portfolio.receipts}
-              onBorrow={(asset) => setModal({ type: 'borrow', asset })}
-              onLend={(asset) => setModal({ type: 'lend', asset })}
+              state={lending}
+              onAction={(action) =>
+                setModal({ type: 'lending-action', action })
+              }
             />
           )}
         </section>
@@ -400,13 +492,13 @@ export default function App() {
           onSave={saveReceipt}
         />
       )}
-      {(modal?.type === 'borrow' || modal?.type === 'lend') && (
-        <LoanDialog
-          key={modal.type}
-          asset={modal.asset}
-          kind={modal.type}
+      {modal?.type === 'lending-action' && (
+        <LendingActionDialog
+          key={modal.action.kind}
+          action={modal.action}
+          state={lending}
           onClose={closeModal}
-          onSave={saveReceipt}
+          onApply={(input) => applyLendingAction(modal.action, input)}
         />
       )}
       {modal?.type === 'success' && (
@@ -424,10 +516,11 @@ export default function App() {
         <AccountDialog
           key="account"
           receipts={portfolio.receipts}
+          lending={lending}
           initialTab={modal.tab}
           onClose={closeModal}
           onReset={() => setModal({ type: 'reset' })}
-          onCancel={(receipt) => setModal({ type: 'cancel', receipt })}
+          onAction={(action) => setModal({ type: 'lending-action', action })}
           onExplore={(next, nextTab) => {
             if (nextTab) setLendingTab(nextTab);
             closeModal();
@@ -444,12 +537,12 @@ export default function App() {
         >
           <div className="dialog-body confirmation-copy">
             <p>
-              This will remove all Riftwell preview purchases, loans and
-              proposals saved in this browser.
+              This will clear saved purchases, collateral, debt, vault shares
+              and activity, then restore the starting demo balances.
             </p>
             <p className="text-muted">
-              You can create new sample purchases, loans and proposals after
-              resetting.
+              No real assets or funds are affected. You can explore every
+              preview flow again after resetting.
             </p>
           </div>
           <div className="dialog-footer">
@@ -462,52 +555,20 @@ export default function App() {
             <button
               className="button primary"
               onClick={() => {
+                try {
+                  localStorage.removeItem(LEGACY_STORAGE_KEY);
+                } catch {
+                  setStorageIssue(true);
+                }
                 setPortfolio(emptyPortfolio());
+                const freshLending = createLendingState();
+                lendingRef.current = freshLending;
+                setLending(freshLending);
                 setModal({ type: 'account' });
                 setAnnouncement('Your preview account has been reset.');
               }}
             >
               Reset preview
-            </button>
-          </div>
-        </Dialog>
-      )}
-      {modal?.type === 'cancel' && (
-        <Dialog
-          key="cancel"
-          title={
-            modal.receipt.kind === 'borrow'
-              ? 'Cancel this preview loan?'
-              : 'Cancel this proposal?'
-          }
-          kicker="PREVIEW ONLY"
-          onClose={closeModal}
-        >
-          <div className="dialog-body confirmation-copy">
-            <p>
-              {modal.receipt.kind === 'borrow'
-                ? 'The simulated loan will be marked as cancelled and its sample collateral will become available again.'
-                : 'The sample proposal will be marked as cancelled. You can create another proposal whenever you like.'}
-            </p>
-            <p className="text-muted">
-              The receipt stays in your preview account. No real funds or assets
-              are involved.
-            </p>
-          </div>
-          <div className="dialog-footer">
-            <button
-              className="button secondary"
-              onClick={() =>
-                setModal({ type: 'account', tab: modal.receipt.kind })
-              }
-            >
-              Go back
-            </button>
-            <button
-              className="button primary"
-              onClick={() => cancelReceipt(modal.receipt)}
-            >
-              Confirm cancellation
             </button>
           </div>
         </Dialog>
@@ -522,8 +583,8 @@ export default function App() {
           <div className="dialog-body">
             <p>
               Riftwell combines a marketplace for {market.positionSymbol}{' '}
-              positions with NFT-backed lending in USDC. The selected market is{' '}
-              {market.name}.
+              positions with collateral-backed borrowing and pooled USDC
+              lending. The selected market is {market.name}.
             </p>
             <dl className="details-list">
               <div>
@@ -535,7 +596,7 @@ export default function App() {
                 </dd>
               </div>
               <div>
-                <dt>Purchases &amp; loans</dt>
+                <dt>Purchases &amp; lending</dt>
                 <dd>
                   Local simulations. No wallet, signatures, approvals or real
                   transactions.

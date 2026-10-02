@@ -63,7 +63,7 @@ export function registerAuth(app, ctx) {
     const expiresAt = issuedAt + 5 * 60_000;
     const challengeId = randomUUID();
     const nonce = randomBytes(16).toString('hex');
-    const message = `${new URL(config.origin).host} wants you to sign in with your Ethereum account:\n${account}\n\nSign in to Riftwell to manage off-chain listings, requests and offers. This does not authorize transactions or move funds.\n\nURI: ${config.origin}\nVersion: 1\nChain ID: 999\nNonce: ${nonce}\nIssued At: ${iso(issuedAt)}\nExpiration Time: ${iso(expiresAt)}\nRequest ID: ${challengeId}`;
+    const message = `${new URL(config.origin).host} wants you to sign in with your Ethereum account:\n${account}\n\nSign in to Riftwell to manage off-chain marketplace listings and cancel historical lending intents. This does not authorize transactions or move funds.\n\nURI: ${config.origin}\nVersion: 1\nChain ID: 999\nNonce: ${nonce}\nIssued At: ${iso(issuedAt)}\nExpiration Time: ${iso(expiresAt)}\nRequest ID: ${challengeId}`;
     db.transaction(() => {
       db.prepare(
         'INSERT INTO challenges(id,address,chain_id,nonce,message,created_at,expires_at) VALUES (?,?,999,?,?,?,?)',

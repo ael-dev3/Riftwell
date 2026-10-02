@@ -2,7 +2,7 @@
 
 [Live preview → ael-dev3.github.io/Riftwell](https://ael-dev3.github.io/Riftwell/)
 
-NFT-backed lending and a focused marketplace, starting with KittenSwap on HyperEVM. Dark surfaces, a light-green accent and a quiet portal theme.
+Collateral credit lines, pooled USDC lending and a focused marketplace, starting with KittenSwap on HyperEVM. Dark surfaces, a light-green accent and a quiet portal theme.
 
 ![Riftwell preview](docs/qa/preview.png)
 
@@ -10,10 +10,12 @@ NFT-backed lending and a focused marketplace, starting with KittenSwap on HyperE
 
 Two build modes share the interface:
 
-- **Preview:** the GitHub Pages site uses labelled sample positions and local demo receipts.
-- **Connected:** the Node service serves the interface and API together. Wallet sign-in, confirmed veKITTEN ownership reads, persistent listings, borrowing requests and lender offers work through SQLite. Borrowers can review received offers; creators can cancel their records.
+- **Preview:** GitHub Pages uses labelled sample positions, local purchase receipts and a pooled lending simulation. Try depositing collateral, borrowing, repaying, supplying USDC and withdrawing vault shares.
+- **Connected:** the Node service supports wallet sign-in, confirmed veKITTEN ownership reads and persistent marketplace listings. The lending view reports its undeployed status without inventing liquidity, credit or yield.
 
-Listings and offers are off-chain expressions of interest. Purchases, funded loans, acceptance, repayment and liquidation remain unavailable until the settlement contracts are separately released. No application route requests token approvals, transfers an NFT or sends a blockchain transaction. Displayed 0.5% settlement fees are future terms; saving a record charges nothing.
+Marketplace listings are off-chain expressions of interest. Funded purchases and lending are unavailable until compatible contracts are separately released. No application route requests token approvals, transfers NFTs or sends transactions. Earlier unfunded lending requests/offers are retained only for history and cancellation.
+
+Lending uses a shared vault: borrowers draw against collateral reward income; suppliers hold vault shares whose withdrawals depend on available liquidity. There is no fixed loan APR or maturity. Read the [lending model and release boundary](docs/LENDING.md). The existing Solidity prototypes remain unchanged and do not implement this pooled execution model.
 
 ## Run locally
 

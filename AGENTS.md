@@ -4,7 +4,7 @@ Keep the interface focused on Lending and Marketplace. Use dark surfaces, the se
 
 Contract prototypes are experimental and must not be deployed live without explicit release authorization and the required evidence. Preserve the 0.5% fee basis, exact accounting and custody boundaries. Retain upstream license notices. Do not add private research, counterparties, personal identifiers or credentials to this public repository.
 
-Connected mode uses a same-origin server and durable SQLite. Keep wallet keys and custody out of the service, settlement disabled until its separate release, and Pages explicitly in preview mode. Fail closed on public ownership verification errors; creators must be able to cancel their own off-chain records during RPC outages. Validate frontend and server locally and keep deployment evidence separate from simulations. Preserve exact accounting, single-use authentication, Origin/CSRF checks and idempotency.
+Connected mode uses a same-origin server and durable SQLite. Keep wallet keys and custody out of the service, settlement disabled until its separate release, and Pages explicitly in preview mode. Lending means pooled USDC vault shares and reward-backed collateral credit lines, not fixed-term peer offers. Report undeployed connected accounting and terms as null; preserve previous unfunded records only as historical/cancellable data. Fail closed on public ownership verification errors; creators must be able to cancel their own off-chain records during RPC outages. Validate frontend and server locally and keep deployment evidence separate from simulations. Preserve exact accounting, single-use authentication, Origin/CSRF checks and idempotency.
 
 ## Conservative GitHub Actions use
 

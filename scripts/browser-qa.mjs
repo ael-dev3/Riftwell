@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { isDeepStrictEqual } from 'node:util';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { chromium } from 'playwright';
@@ -22,6 +23,31 @@ const externalRequests = [];
 const checks = [];
 const accessibility = [];
 const selectedMarketAccent = '#bff4aa';
+const marketplaceStorageKey = 'riftwell.marketplace-preview.v3';
+const lendingStorageKey = 'riftwell.pooled-lending-preview.v1';
+const legacyStorageKey = 'riftwell.positions-preview.v2';
+const seedLedger = {
+  version: 1,
+  walletMicros: '25000000000',
+  poolCashMicros: '200000000000',
+  poolOutstandingMicros: '80000000000',
+  totalSharesRaw: '280000000000',
+  shareBalanceRaw: '0',
+  debtMicros: '0',
+  platformFeesMicros: '0',
+  collateralIds: [],
+  epoch: 0,
+  activity: [],
+};
+const moneyFields = [
+  'walletMicros',
+  'poolCashMicros',
+  'poolOutstandingMicros',
+  'totalSharesRaw',
+  'shareBalanceRaw',
+  'debtMicros',
+  'platformFeesMicros',
+];
 let status = 'failed';
 page.on('pageerror', (error) => errors.push(error.message));
 page.on('console', (message) => {
@@ -95,6 +121,74 @@ async function fits(name) {
     scrollWidth: document.documentElement.scrollWidth,
   }));
   check(`No horizontal overflow: ${name}`, sizes.scrollWidth === sizes.width);
+}
+async function ledger() {
+  return page.evaluate(
+    (key) => JSON.parse(localStorage.getItem(key)),
+    lendingStorageKey,
+  );
+}
+function baseline(name, state, expectedWealth = null) {
+  check(
+    `Other borrowers and suppliers retain their baseline: ${name}`,
+    BigInt(state.poolOutstandingMicros) - BigInt(state.debtMicros) ===
+      80000000000n &&
+      BigInt(state.totalSharesRaw) - BigInt(state.shareBalanceRaw) ===
+        280000000000n,
+  );
+  if (expectedWealth !== null)
+    check(
+      `Balances conserve funds including debt and fees: ${name}`,
+      BigInt(state.walletMicros) +
+        BigInt(state.poolCashMicros) +
+        BigInt(state.poolOutstandingMicros) +
+        BigInt(state.platformFeesMicros) -
+        BigInt(state.debtMicros) ===
+        BigInt(expectedWealth),
+    );
+}
+function sameMoney(left, right) {
+  return moneyFields.every((key) => left[key] === right[key]);
+}
+async function changedLedger(name, before, kind, fields, wealth) {
+  await page.waitForFunction(
+    ({ key, fields, activityCount }) => {
+      const saved = JSON.parse(localStorage.getItem(key));
+      return (
+        saved?.activity.length === activityCount &&
+        Object.entries(fields).every(([field, value]) => saved[field] === value)
+      );
+    },
+    {
+      key: lendingStorageKey,
+      fields,
+      activityCount: before.activity.length + 1,
+    },
+  );
+  const state = await ledger();
+  check(
+    name,
+    state.activity.at(-1).kind === kind &&
+      Object.entries(fields).every(([field, value]) => state[field] === value),
+  );
+  baseline(name, state, wealth);
+  return state;
+}
+async function apply(name) {
+  await dialog().getByRole('button', { name, exact: true }).click();
+  await dialog().waitFor({ state: 'hidden' });
+}
+async function epoch(repayment, revenue) {
+  await page
+    .getByRole('button', { name: 'Simulate an epoch', exact: true })
+    .click();
+  await dialog()
+    .getByLabel('Net rewards for repayment', { exact: true })
+    .fill(repayment);
+  await dialog()
+    .getByLabel('Net lender revenue', { exact: true })
+    .fill(revenue);
+  await apply('Apply example rewards');
 }
 async function close() {
   await page.keyboard.press('Escape');
@@ -278,139 +372,391 @@ try {
     fullPage: true,
     animations: 'disabled',
   });
-  await page
-    .getByRole('button', { name: 'Review loan', exact: true })
-    .first()
-    .click();
-  await fits('loan dialog mobile');
-  await audit('loan mobile');
   await page.setViewportSize({ width: 1440, height: 1000 });
-  const amount = page.getByLabel('Borrow amount');
-  for (const invalid of ['999999', '1e3', '0x10', '1.0000001']) {
+  check(
+    'Pooled lending has no negotiated rate, duration or proposal form',
+    (await page
+      .getByLabel(/annual rate|loan duration|proposed amount/i)
+      .count()) === 0 &&
+      (await page
+        .getByRole('button', {
+          name: /Review loan|Make proposal|Request a loan/i,
+        })
+        .count()) === 0,
+  );
+  let state = await ledger();
+  check(
+    'Pooled preview starts with explicit example balances and no user position',
+    isDeepStrictEqual(state, seedLedger),
+  );
+  baseline('initial examples', state, '305000000000');
+  await page.getByRole('button', { name: 'Lend', exact: true }).click();
+  check(
+    'Withdraw is disabled before supplying',
+    await page
+      .getByRole('button', { name: 'Withdraw', exact: true })
+      .isDisabled(),
+  );
+  await page.getByRole('button', { name: 'Supply USDC', exact: true }).click();
+  await dialog().getByLabel('Supply amount', { exact: true }).fill('1000');
+  await audit('vault supply review');
+  const beforeSupply = state;
+  await apply('Supply in preview');
+  state = await changedLedger(
+    'Supply exchanges exact USDC for vault shares',
+    beforeSupply,
+    'supply',
+    {
+      walletMicros: '24000000000',
+      poolCashMicros: '201000000000',
+      shareBalanceRaw: '1000000000',
+      totalSharesRaw: '281000000000',
+      debtMicros: '0',
+      platformFeesMicros: '0',
+    },
+    '305000000000',
+  );
+  check(
+    'Supply records minted shares',
+    state.activity.at(-1).sharesRaw === '1000000000',
+  );
+  await page.getByRole('button', { name: 'Withdraw', exact: true }).click();
+  await dialog().getByLabel('Withdrawal amount', { exact: true }).fill('250');
+  await audit('vault withdrawal review');
+  const beforeWithdraw = state;
+  await apply('Withdraw in preview');
+  state = await changedLedger(
+    'Withdraw returns liquid USDC and burns shares',
+    beforeWithdraw,
+    'withdraw',
+    {
+      walletMicros: '24250000000',
+      poolCashMicros: '200750000000',
+      shareBalanceRaw: '750000000',
+      totalSharesRaw: '280750000000',
+    },
+    '305000000000',
+  );
+  await page.getByRole('button', { name: 'Borrow', exact: true }).click();
+  const collateral = () =>
+    page.locator('.pooled-position').filter({ hasText: 'Demo veKITTEN #041' });
+  await collateral()
+    .getByRole('button', { name: 'Deposit', exact: true })
+    .click();
+  await page.setViewportSize({ width: 320, height: 900 });
+  await fits('collateral deposit dialog mobile');
+  await audit('collateral deposit mobile');
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  const beforeDeposit = state;
+  await apply('Deposit in preview');
+  state = await changedLedger(
+    'Collateral deposit opens a credit line without moving USDC',
+    beforeDeposit,
+    'deposit-collateral',
+    {},
+    '305000000000',
+  );
+  check(
+    'Only the selected position is deposited',
+    JSON.stringify(state.collateralIds) === JSON.stringify(['rift-041']) &&
+      sameMoney(state, beforeDeposit),
+  );
+  await page.getByRole('button', { name: 'Borrow USDC', exact: true }).click();
+  const amount = dialog().getByLabel('Borrow amount', { exact: true });
+  const rejectedBefore = await ledger();
+  for (const invalid of ['999999', '1e3', '0x10', '1.0000001', '0']) {
     await amount.fill(invalid);
-    await page.getByRole('button', { name: 'Save preview loan' }).click();
+    await dialog()
+      .getByRole('button', { name: 'Borrow in preview', exact: true })
+      .click();
     check(
-      `Reject invalid amount ${invalid}`,
+      `Reject invalid borrow amount ${invalid} without changing balances`,
       (await amount.getAttribute('aria-invalid')) === 'true' &&
-        (await page.getByRole('alert').textContent()).length > 0,
+        (await dialog().getByRole('alert').textContent()).trim().length > 0 &&
+        (await amount.evaluate((node) => document.activeElement === node)) &&
+        isDeepStrictEqual(await ledger(), rejectedBefore),
     );
   }
   await amount.fill('1000');
-  await page.getByLabel('Duration', { exact: true }).selectOption('7');
   check(
-    'Borrow proceeds and interest separated',
+    'Draw fee, net wallet proceeds and gross debt are separate',
     (await dialog().textContent()).includes('5 USDC') &&
       (await dialog().textContent()).includes('995 USDC') &&
-      (await dialog().textContent()).includes('2.301369 USDC'),
+      (await dialog().textContent()).includes('1,000 USDC'),
   );
-  await audit('loan desktop');
+  await audit('pooled borrowing review');
   await page.screenshot({
-    path: new URL('loan-review.png', output).pathname,
+    path: new URL('borrow-review.png', output).pathname,
     animations: 'disabled',
   });
-  await page.getByRole('button', { name: 'Save preview loan' }).click();
-  await page.getByRole('button', { name: 'View preview account' }).click();
-  check(
-    'Loan saved in matching account tab',
-    (await page
-      .getByRole('button', { name: 'Loans', exact: true })
-      .getAttribute('aria-pressed')) === 'true',
+  const beforeBorrow = state;
+  await apply('Borrow in preview');
+  state = await changedLedger(
+    'Borrow moves gross principal from vault cash into debt',
+    beforeBorrow,
+    'borrow',
+    {
+      walletMicros: '25245000000',
+      poolCashMicros: '199750000000',
+      poolOutstandingMicros: '81000000000',
+      debtMicros: '1000000000',
+      platformFeesMicros: '5000000',
+    },
+    '305000000000',
   );
-  await page.getByText('Receipt breakdown', { exact: true }).click();
   check(
-    'Account loan accounting visible',
-    (await dialog().textContent()).includes('1,002.301369 USDC'),
+    'Borrow records the exact one-time 0.5% origination fee',
+    state.activity.at(-1).feeMicros === '5000000',
+  );
+  check(
+    'Debt prevents removing the only collateral position',
+    await collateral()
+      .getByRole('button', { name: 'Remove', exact: true })
+      .isDisabled(),
+  );
+  const beforeZero = state;
+  await epoch('0', '0');
+  state = await changedLedger(
+    'A zero-reward epoch does not invent interest or repayment',
+    beforeZero,
+    'epoch',
+    { epoch: 1 },
+    '305000000000',
+  );
+  check(
+    'Zero epoch preserves every financial balance',
+    sameMoney(state, beforeZero),
   );
   await page
-    .getByRole('button', { name: 'Cancel preview loan', exact: true })
+    .getByRole('button', { name: 'Simulate an epoch', exact: true })
     .click();
-  await page.getByRole('button', { name: 'Go back', exact: true }).click();
+  await dialog()
+    .getByLabel('Net rewards for repayment', { exact: true })
+    .fill('25');
+  const poolReward = dialog().getByLabel('Net lender revenue', { exact: true });
+  await poolReward.fill('1000.000001');
+  await dialog()
+    .getByRole('button', { name: 'Apply example rewards', exact: true })
+    .click();
   check(
-    'Cancellation can be declined',
-    await page
-      .getByRole('button', { name: 'Cancel preview loan', exact: true })
-      .isVisible(),
+    'Out-of-range epoch revenue is rejected without a partial repayment',
+    (await dialog().getByRole('alert').textContent()).includes('1,000 USDC') &&
+      (await poolReward.evaluate((node) => document.activeElement === node)) &&
+      isDeepStrictEqual(await ledger(), state),
   );
-  await page
-    .getByRole('button', { name: 'Cancel preview loan', exact: true })
-    .click();
-  await page.getByRole('button', { name: 'Confirm cancellation' }).click();
+  await poolReward.fill('100');
+  await audit('variable reward epoch');
+  const beforeReward = state;
+  await apply('Apply example rewards');
+  state = await changedLedger(
+    'Variable net rewards repay debt while separate revenue increases vault value',
+    beforeReward,
+    'epoch',
+    {
+      epoch: 2,
+      walletMicros: '25245000000',
+      poolCashMicros: '199875000000',
+      poolOutstandingMicros: '80975000000',
+      debtMicros: '975000000',
+      shareBalanceRaw: '750000000',
+      totalSharesRaw: '280750000000',
+    },
+    '305125000000',
+  );
   check(
-    'Cancellation retains receipt',
-    (await dialog().textContent()).includes('Cancelled'),
+    'Reward repayment is not counted twice as lender yield',
+    state.activity.at(-1).rewardRepaidMicros === '25000000' &&
+      state.activity.at(-1).poolYieldMicros === '100000000' &&
+      BigInt(state.poolCashMicros) +
+        BigInt(state.poolOutstandingMicros) -
+        BigInt(beforeReward.poolCashMicros) -
+        BigInt(beforeReward.poolOutstandingMicros) ===
+        100000000n,
+  );
+  await page.getByRole('button', { name: 'Repay', exact: true }).click();
+  const repayment = dialog().getByLabel('Repayment amount', { exact: true });
+  await repayment.fill('976');
+  await dialog()
+    .getByRole('button', { name: 'Repay in preview', exact: true })
+    .click();
+  check(
+    'Manual repayment cannot exceed the outstanding debt',
+    (await repayment.getAttribute('aria-invalid')) === 'true' &&
+      isDeepStrictEqual(await ledger(), state),
+  );
+  await repayment.fill('175');
+  await audit('manual repayment');
+  const beforeRepay = state;
+  await apply('Repay in preview');
+  state = await changedLedger(
+    'Manual repayment returns wallet cash to the vault and reduces debt',
+    beforeRepay,
+    'repay',
+    {
+      walletMicros: '25070000000',
+      poolCashMicros: '200050000000',
+      poolOutstandingMicros: '80800000000',
+      debtMicros: '800000000',
+    },
+    '305125000000',
+  );
+  const beforeSurplus = state;
+  await epoch('900', '0');
+  state = await changedLedger(
+    'Rewards clear remaining debt and route only the surplus to the wallet',
+    beforeSurplus,
+    'epoch',
+    {
+      epoch: 3,
+      walletMicros: '25170000000',
+      poolCashMicros: '200850000000',
+      poolOutstandingMicros: '80000000000',
+      debtMicros: '0',
+    },
+    '306025000000',
+  );
+  check(
+    'Repayment and surplus are independently recorded',
+    state.activity.at(-1).rewardRepaidMicros === '800000000' &&
+      state.activity.at(-1).rewardSurplusMicros === '100000000',
+  );
+  await collateral()
+    .getByRole('button', { name: 'Remove', exact: true })
+    .click();
+  const beforeRemove = state;
+  await apply('Remove in preview');
+  state = await changedLedger(
+    'Repaid collateral can be removed without erasing accounting',
+    beforeRemove,
+    'remove-collateral',
+    {},
+    '306025000000',
+  );
+  check(
+    'Removed collateral returns to the deposit list',
+    state.collateralIds.length === 0 &&
+      sameMoney(state, beforeRemove) &&
+      (await collateral()
+        .getByRole('button', { name: 'Deposit', exact: true })
+        .isEnabled()),
+  );
+  await page.reload({ waitUntil: 'networkidle' });
+  check(
+    'Vault shares, debt, fees and activity persist after reload',
+    isDeepStrictEqual(await ledger(), state),
+  );
+  await page.locator('.account-button').click();
+  await dialog().getByRole('button', { name: 'Vault', exact: true }).click();
+  check(
+    'Account vault view shows the existing share position',
+    (await dialog().textContent()).includes('750') &&
+      (await dialog()
+        .getByRole('button', { name: 'Withdraw in preview', exact: true })
+        .isEnabled()),
+  );
+  await audit('pooled preview account');
+  await dialog()
+    .getByRole('button', { name: 'Reset preview', exact: true })
+    .click();
+  await dialog()
+    .getByRole('button', { name: 'Keep my preview', exact: true })
+    .click();
+  check(
+    'Declining reset preserves both purchases and pooled balances',
+    isDeepStrictEqual(await ledger(), state) &&
+      (await page.evaluate(
+        (key) => JSON.parse(localStorage.getItem(key)).receipts.length,
+        marketplaceStorageKey,
+      )) === 1,
+  );
+  await page.evaluate(
+    (key) => localStorage.setItem(key, '{legacy fixture}'),
+    legacyStorageKey,
+  );
+  await dialog()
+    .getByRole('button', { name: 'Reset preview', exact: true })
+    .click();
+  await dialog()
+    .getByRole('button', { name: 'Reset preview', exact: true })
+    .click();
+  await page.waitForFunction(
+    (key) => JSON.parse(localStorage.getItem(key)).activity.length === 0,
+    lendingStorageKey,
+  );
+  check(
+    'Confirmed reset clears purchases, collateral, shares, debt, fees and activity',
+    isDeepStrictEqual(await ledger(), seedLedger) &&
+      (await page.evaluate(
+        (key) => JSON.parse(localStorage.getItem(key)).receipts.length,
+        marketplaceStorageKey,
+      )) === 0 &&
+      (await page.evaluate(
+        (key) => localStorage.getItem(key),
+        legacyStorageKey,
+      )) === null,
   );
   await close();
-  check(
-    'Cancelled collateral available again',
-    (await page
-      .getByRole('button', { name: 'Review loan', exact: true })
-      .count()) === 3,
+  // A deliberately synthetic valid preview snapshot exercises cash-limited withdrawals.
+  // These values are local examples and do not represent a live vault.
+  const liquidityFixture = {
+    ...seedLedger,
+    poolCashMicros: '100000000',
+    totalSharesRaw: '285000000000',
+    shareBalanceRaw: '5000000000',
+  };
+  await page.evaluate(
+    ({ key, value }) => localStorage.setItem(key, JSON.stringify(value)),
+    { key: lendingStorageKey, value: liquidityFixture },
   );
+  await page.reload({ waitUntil: 'networkidle' });
   await page.getByRole('button', { name: 'Lend', exact: true }).click();
-  await page
-    .getByRole('button', { name: 'Make proposal', exact: true })
-    .first()
-    .click();
-  await page.getByLabel('Proposed amount').fill('1000');
-  const apr = page.getByLabel('Proposed annual rate (%)');
-  await apr.fill('41');
-  await page
-    .getByRole('button', { name: 'Save proposal', exact: true })
+  await page.getByRole('button', { name: 'Withdraw', exact: true }).click();
+  const withdrawal = dialog().getByLabel('Withdrawal amount', { exact: true });
+  await withdrawal.fill('100.000001');
+  await dialog()
+    .getByRole('button', { name: 'Withdraw in preview', exact: true })
     .click();
   check(
-    'APR cap validation',
-    (await apr.getAttribute('aria-invalid')) === 'true',
+    'A share position cannot withdraw more cash than the vault holds',
+    (await withdrawal.getAttribute('aria-invalid')) === 'true' &&
+      isDeepStrictEqual(await ledger(), liquidityFixture),
   );
-  await apr.fill('10.25');
-  await audit('lending proposal');
-  await page
-    .getByRole('button', { name: 'Save proposal', exact: true })
-    .click();
-  await page.getByRole('button', { name: 'View preview account' }).click();
+  await dialog().getByRole('button', { name: 'Use max.', exact: true }).click();
   check(
-    'Proposal saved in matching account tab',
-    (await page
-      .getByRole('button', { name: 'Proposals', exact: true })
-      .getAttribute('aria-pressed')) === 'true',
+    'Use max is bounded by 100 liquid USDC rather than total share value',
+    (await withdrawal.inputValue()) === '100',
   );
-  await page
-    .getByRole('button', { name: 'Cancel proposal', exact: true })
-    .click();
-  await page.getByRole('button', { name: 'Confirm cancellation' }).click();
+  await apply('Withdraw in preview');
+  state = await changedLedger(
+    'Cash-limited withdrawal cannot make vault cash negative',
+    liquidityFixture,
+    'withdraw',
+    {
+      walletMicros: '25100000000',
+      poolCashMicros: '0',
+    },
+    '105100000000',
+  );
   check(
-    'Proposal cancellation',
-    (await dialog().textContent()).includes('Cancelled'),
+    'Remaining illiquid shares persist while withdrawals are disabled',
+    BigInt(state.shareBalanceRaw) > 0n &&
+      (await page
+        .getByRole('button', { name: 'Withdraw', exact: true })
+        .isDisabled()),
   );
-  await page
+  await page.locator('.account-button').click();
+  await dialog()
     .getByRole('button', { name: 'Reset preview', exact: true })
     .click();
-  await page.getByRole('button', { name: 'Keep my preview' }).click();
-  check(
-    'Reset confirmation can be declined',
-    await dialog()
-      .getByRole('button', { name: 'Reset preview', exact: true })
-      .isEnabled(),
-  );
-  await page
+  await dialog()
     .getByRole('button', { name: 'Reset preview', exact: true })
     .click();
-  await page
-    .getByRole('button', { name: 'Reset preview', exact: true })
-    .click();
-  check(
-    'Reset clears all receipts',
-    (await page.evaluate(
-      () =>
-        JSON.parse(localStorage.getItem('riftwell.positions-preview.v2'))
-          .receipts.length,
-    )) === 0,
-  );
   await close();
   await page.goto(`${base}/#lending`, { waitUntil: 'networkidle' });
   check(
     'Direct lending route loads',
     await page
-      .getByRole('heading', { name: 'Borrow against your position.' })
+      .getByRole('heading', { name: 'Borrow against your positions.' })
       .isVisible(),
   );
   await page
@@ -421,7 +767,7 @@ try {
   check(
     'Browser back updates route',
     await page
-      .getByRole('heading', { name: 'Borrow against your position.' })
+      .getByRole('heading', { name: 'Borrow against your positions.' })
       .isVisible(),
   );
   await page.goForward();
@@ -444,13 +790,28 @@ try {
           ) || parseFloat(getComputedStyle(node).animationDuration) <= 0.00001,
       ),
   );
-  await page.evaluate(() =>
-    localStorage.setItem('riftwell.positions-preview.v2', '{corrupt'),
+  await page.evaluate(
+    ({ marketplaceKey, lendingKey }) => {
+      localStorage.setItem(marketplaceKey, '{corrupt');
+      localStorage.setItem(lendingKey, '{corrupt');
+    },
+    { marketplaceKey: marketplaceStorageKey, lendingKey: lendingStorageKey },
   );
   await page.reload({ waitUntil: 'networkidle' });
   check(
-    'Corrupt storage safely recovers',
-    (await page.locator('.asset-card').count()) === 6,
+    'Corrupt marketplace and lending storage safely recover',
+    (await page.locator('.asset-card').count()) === 6 &&
+      isDeepStrictEqual(await ledger(), seedLedger),
+  );
+  await page.evaluate(
+    ({ key, seed }) =>
+      localStorage.setItem(key, JSON.stringify({ ...seed, debtMicros: '1' })),
+    { key: lendingStorageKey, seed: seedLedger },
+  );
+  await page.reload({ waitUntil: 'networkidle' });
+  check(
+    'A stored ledger that breaks the other-borrower baseline safely resets',
+    isDeepStrictEqual(await ledger(), seedLedger),
   );
   check('No runtime or console errors', errors.length === 0);
   check('No remote requests or wallet services', externalRequests.length === 0);
@@ -483,6 +844,9 @@ try {
         status,
         baseURL: base,
         browser: 'isolated headless Chrome',
+        suiteVersion: 'pooled-lending-v1',
+        scope:
+          'Local marketplace receipts and synthetic pooled lending balances; no live liquidity, wallet or settlement',
         checkedAt: new Date().toISOString(),
         checks,
         errors,

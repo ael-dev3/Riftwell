@@ -2689,3 +2689,527 @@ div.field-label {
     transform: none;
   }
 }
+
+/* Pooled lending preview. Connected views can reuse these presentation hooks. */
+.pooled-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  border: 1px solid var(--line);
+  background: var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 22px;
+}
+.pooled-summary > div {
+  min-width: 0;
+  background: var(--surface);
+  padding: 23px 21px;
+}
+.pooled-summary span,
+.pooled-position-data span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-bottom: 9px;
+  line-height: 1.6;
+}
+.pooled-summary strong {
+  display: block;
+  color: var(--text);
+  font-size: clamp(17px, 1.8vw, 24px);
+  line-height: 1.35;
+  font-weight: 450;
+  letter-spacing: -0.6px;
+  overflow-wrap: anywhere;
+}
+.pooled-summary small {
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+.pooled-toolbar,
+.pooled-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.pooled-toolbar {
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 20px;
+}
+.pooled-toolbar p {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+.pooled-toolbar p strong {
+  color: var(--text);
+  font-weight: 500;
+}
+.pooled-panel {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  margin-top: 20px;
+  overflow: hidden;
+}
+.pooled-panel-header {
+  padding: 23px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.pooled-panel h3,
+.pooled-activity h3 {
+  font-size: 19px;
+  font-weight: 450;
+  letter-spacing: -0.4px;
+  line-height: 1.3;
+  margin: 0;
+}
+.pooled-panel-header p,
+.pooled-rewards p,
+.pooled-empty p {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.8;
+  margin: 8px 0 0;
+}
+.pooled-panel-header > svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.pooled-position {
+  display: grid;
+  grid-template-columns: 1.4fr 1.3fr auto;
+  align-items: center;
+  gap: 22px;
+  padding: 22px 24px;
+  border-top: 1px solid var(--line);
+}
+.pooled-position .row-asset {
+  min-width: 0;
+}
+.pooled-position .row-thumb {
+  flex-shrink: 0;
+}
+.pooled-position .row-asset span {
+  line-height: 1.6;
+}
+.pooled-position .row-asset strong {
+  line-height: 1.5;
+}
+.pooled-position-data {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.pooled-position-data span {
+  margin-bottom: 3px;
+}
+.pooled-position-data strong {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.pooled-position-action {
+  display: grid;
+  gap: 5px;
+  justify-items: end;
+}
+.pooled-position-action .form-hint {
+  max-width: 130px;
+  margin: 0;
+  text-align: right;
+}
+.pooled-empty {
+  padding: 28px 24px 34px;
+  text-align: center;
+  border-top: 1px solid var(--line);
+}
+.pooled-empty > svg {
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+.pooled-empty h3 {
+  font-size: 17px;
+}
+.pooled-explanation {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 17px;
+}
+.pooled-explanation > svg {
+  color: var(--accent);
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.pooled-explanation p {
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--muted);
+  margin: 0;
+}
+.pooled-rewards {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 26px 24px;
+  background: linear-gradient(
+    120deg,
+    var(--accent-surface),
+    var(--surface) 65%
+  );
+  border-color: var(--accent-border);
+}
+.pooled-rewards > div {
+  max-width: 650px;
+}
+.pooled-rewards .section-eyebrow {
+  margin-bottom: 8px;
+  display: block;
+}
+.pooled-rewards .button {
+  flex-shrink: 0;
+}
+.pooled-vault-name {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.pooled-token {
+  width: 43px;
+  height: 43px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: var(--accent-surface);
+  border: 1px solid var(--accent-border);
+  border-radius: 50%;
+  color: var(--accent);
+  font-size: 24px;
+}
+.pooled-panel-header .inline-link {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+}
+.pooled-vault-stats,
+.pooled-supply-position > .pooled-summary {
+  border-radius: 0;
+  border-left: 0;
+  border-right: 0;
+  margin-bottom: 0;
+}
+.pooled-utilization {
+  padding: 22px 24px 7px;
+}
+.pooled-utilization > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.pooled-utilization strong {
+  color: var(--accent);
+  font-weight: 500;
+}
+.pooled-progress {
+  height: 5px;
+  background: #ffffff0b;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.pooled-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: inherit;
+}
+.pooled-vault > .form-hint {
+  padding: 0 24px 21px;
+  margin: 0;
+}
+.pooled-supply-position > .pooled-actions {
+  padding: 21px 24px;
+}
+.pooled-activity-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  border-top: 1px solid var(--line);
+  gap: 20px;
+  font-size: 11px;
+}
+.pooled-activity-row > div {
+  display: grid;
+  gap: 7px;
+}
+.pooled-activity-row strong {
+  font-weight: 500;
+  line-height: 1.6;
+}
+.pooled-activity-row span {
+  color: var(--muted);
+  line-height: 1.5;
+}
+.pooled-activity-row > strong {
+  text-align: right;
+}
+.pooled-account .pooled-activity {
+  margin-top: 28px;
+}
+.pooled-account .pooled-activity h3 {
+  padding-bottom: 16px;
+  font-size: 16px;
+}
+.pooled-account .pooled-activity-row {
+  padding-inline: 0;
+}
+.pooled-account-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 18px;
+}
+.pooled-account-metrics > div {
+  padding: 15px;
+}
+.pooled-account-metrics strong {
+  font-size: 17px;
+}
+.pooled-account .pooled-actions {
+  margin-top: 19px;
+}
+.pooled-feedback {
+  margin: 0 0 20px;
+  font-size: 12px;
+  color: var(--accent);
+}
+@media (max-width: 1000px) {
+  .pooled-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .pooled-account-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .pooled-position {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 15px;
+  }
+  .pooled-position-data {
+    grid-row: 2;
+  }
+  .pooled-position-action {
+    grid-column: 2;
+    grid-row: 1 / 3;
+  }
+  .pooled-rewards {
+    gap: 24px;
+  }
+}
+@media (max-width: 640px) {
+  .pooled-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+  .pooled-toolbar .pooled-actions .button {
+    flex: 1;
+  }
+  .pooled-summary > div {
+    padding: 18px 15px;
+  }
+  .pooled-summary strong {
+    font-size: 19px;
+  }
+  .pooled-panel-header {
+    padding: 19px 18px;
+    gap: 15px;
+    align-items: start;
+  }
+  .pooled-panel h3 {
+    font-size: 17px;
+  }
+  .pooled-panel-header .inline-link {
+    font-size: 10px;
+  }
+  .pooled-position {
+    padding: 18px;
+  }
+  .pooled-position-data {
+    gap: 12px;
+  }
+  .pooled-position-data span {
+    font-size: 10px;
+  }
+  .pooled-position .row-asset {
+    gap: 10px;
+  }
+  .pooled-position .row-asset strong {
+    font-size: 11px;
+  }
+  .pooled-position .row-asset span {
+    font-size: 10px;
+  }
+  .pooled-rewards {
+    padding: 23px 18px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 19px;
+  }
+  .pooled-utilization {
+    padding-inline: 18px;
+  }
+  .pooled-vault > .form-hint {
+    padding-inline: 18px;
+  }
+  .pooled-supply-position > .pooled-actions {
+    padding: 18px;
+  }
+  .pooled-supply-position > .pooled-actions .button {
+    flex: 1;
+  }
+  .pooled-activity-row {
+    padding: 17px 18px;
+  }
+  .pooled-account-metrics {
+    grid-template-columns: 1fr;
+  }
+  .pooled-account-metrics > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .pooled-account-metrics span {
+    margin-bottom: 0;
+  }
+  .pooled-account-metrics strong {
+    font-size: 15px;
+    text-align: right;
+  }
+}
+@media (max-width: 390px) {
+  .pooled-summary strong {
+    font-size: 16px;
+  }
+  .pooled-summary span {
+    font-size: 10px;
+  }
+  .pooled-position {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pooled-position-action {
+    grid-column: 1;
+    grid-row: 3;
+    justify-self: stretch;
+  }
+  .pooled-position-action .button {
+    width: 100%;
+  }
+  .pooled-position-action .form-hint {
+    max-width: none;
+  }
+  .pooled-panel-header:has(.pooled-vault-name) {
+    flex-direction: column;
+  }
+  .pooled-activity-row {
+    align-items: start;
+  }
+}
+
+[data-mode='connected'] dl.pooled-summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+[data-mode='connected'] .pooled-summary dt {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+[data-mode='connected'] .pooled-summary dd {
+  margin: 12px 0 0;
+  font-size: 25px;
+  font-weight: 500;
+}
+[data-mode='connected'] .pooled-panel-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+[data-mode='connected'] .pooled-panel > .pooled-actions,
+[data-mode='connected'] .pooled-panel > .form-hint {
+  padding: 0 24px 24px;
+}
+[data-mode='connected'] .pooled-position {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+[data-mode='connected'] .pooled-position-data {
+  display: block;
+  grid-row: auto;
+}
+[data-mode='connected'] .pooled-position-data h4 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+[data-mode='connected'] .pooled-position-data p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.pooled-explainer {
+  margin-top: 24px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+.pooled-explainer summary {
+  cursor: pointer;
+  font-size: 14px;
+}
+.pooled-explainer p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.8;
+  margin: 16px 0 0;
+}
+@media (max-width: 640px) {
+  [data-mode='connected'] dl.pooled-summary {
+    grid-template-columns: 1fr;
+  }
+  [data-mode='connected'] .pooled-summary > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  [data-mode='connected'] .pooled-summary dd {
+    margin: 0;
+  }
+  [data-mode='connected'] .pooled-panel-header {
+    flex-direction: column;
+  }
+  [data-mode='connected'] .pooled-panel > .pooled-actions,
+  [data-mode='connected'] .pooled-panel > .form-hint {
+    padding-inline: 18px;
+  }
+  [data-mode='connected'] .pooled-position {
+    grid-template-columns: 1fr;
+  }
+}

@@ -4,7 +4,7 @@ The application service serves the production frontend and `/api/v1` on one orig
 
 ## Scope
 
-Wallet-authenticated, durable off-chain marketplace listings, borrowing requests and lending proposals are supported. Positions are read from the canonical KittenSwap escrow on HyperEVM (chain 999). Listing a position does not transfer custody. Proposals are unfunded until a future reviewed settlement integration exists. Contract-dependent purchases, funded loans, repayment, reward claims and token approvals are disabled. No backend private key or transaction signer exists.
+Wallet-authenticated, durable off-chain marketplace listings are supported. Positions are read from the canonical KittenSwap escrow on HyperEVM (chain 999). Listing a position does not transfer custody. The lending product is a shared USDC vault and revenue-backed collateral credit line; it has not been deployed. Contract-dependent purchases, borrowing, supply, withdrawal, repayment, reward claims and token approvals are disabled. No backend private key or transaction signer exists.
 
 Amounts are unsigned decimal **strings of raw units**, never JSON floating-point money: USDC has six decimals; KITTEN has eighteen. Token IDs are canonical decimal uint256 strings. Dates are UTC ISO strings. All exposed records carry their market and status; browser-local preview receipts are never imported as real orders or ownership.
 
@@ -12,7 +12,7 @@ Amounts are unsigned decimal **strings of raw units**, never JSON floating-point
 
 Errors use `{ "error": { "code": "...", "message": "...", "requestId": "..." } }`. Do not expose database errors, stack traces, RPC credentials or session tokens. List responses are `{ "items": [], "nextCursor": null }`; cursors are opaque and input-validated. Default limit is 24, maximum 50.
 
-`GET /status` returns `{ mode: "connected", chainId: 999, marketId: "kittenswap", settlementEnabled: false, capabilities: { walletSignIn: true, marketplace: true, lending: true, settlement: false } }`. Chain health may be included separately without making an unhealthy service appear ready. `/health/live` is process liveness; `/health/ready` checks database and chain readiness.
+`GET /status` returns `{ mode: "connected", chainId: 999, marketId: "kittenswap", settlementEnabled: false, capabilities: { walletSignIn: true, marketplace: true, lending: false, settlement: false } }`. Chain health may be included separately without making an unhealthy service appear ready. `/health/live` is process liveness; `/health/ready` checks database and chain readiness.
 
 `GET /markets` returns `{ markets: [...] }`. The sole market is KittenSwap, using the same identity and light-green accent as `src/markets.ts`.
 
@@ -58,30 +58,37 @@ Creation verifies that the authenticated address currently owns the NFT. At most
 
 ## Lending
 
-- `GET /loan-requests?market=kittenswap&limit=24&cursor=...` → active, unexpired, ownership-verified `LoanRequest` records.
-- `POST /loan-requests`: `{ tokenId, principalMicros, aprBps, durationDays, expiresAt, idempotencyKey }` → `LoanRequest`.
-- `DELETE /loan-requests/:id` → cancelled `LoanRequest`.
-- `POST /offers`: `{ requestId, principalMicros, aprBps, durationDays, expiresAt, idempotencyKey }` → `Offer`.
-- `DELETE /offers/:id` → cancelled `Offer`.
+`GET /lending` is public and accepts no query fields. It returns:
 
-```text
-LoanRequest {
-  id, marketId: "kittenswap", tokenId, owner, principalMicros,
-  aprBps: integer, durationDays: integer,
-  status: "active" | "cancelled" | "expired" | "invalidated",
-  expiresAt, createdAt, position: Position
-}
-Offer {
-  id, requestId, lender, principalMicros, aprBps: integer,
-  durationDays: integer,
-  status: "proposed" | "cancelled" | "expired" | "invalidated",
-  expiresAt, createdAt
+```json
+{
+  "model": "pooled-revenue",
+  "state": "not-deployed",
+  "marketId": "kittenswap",
+  "asset": "USDC",
+  "chainId": 999,
+  "vaultAddress": null,
+  "portfolioAddress": null,
+  "accounting": null,
+  "terms": null,
+  "executionEnabled": false
 }
 ```
 
-Requests and offers are expressly unfunded. Ownership does not establish collateral eligibility or a safe borrowing capacity. The service does not invent an LTV oracle. Supported durations are 7, 14 and 30 days; APR is 100–4,000 basis points. Principal/ask minimum is 1 USDC; maximum is 1,000,000 USDC. Orders expire within 30 days; offers cannot outlive their request and cannot be made by the borrower. A cancelled, expired or invalidated request invalidates its outstanding offers.
+Unknown accounting is `null`, not a zero balance. Wallet ownership does not imply deposited collateral, approved credit or vault shares. The client rejects an enabled or fabricated deployment response.
 
-An offer must match its request's principal and duration and cannot exceed the requested APR. Only the lender can cancel its offer. Creators can cancel their off-chain records without a working RPC connection; cancellation never moves assets.
+`POST /lending/actions` requires the same exact Origin, session and CSRF protections as other authenticated mutations. It always rejects with HTTP 503 `SMART_CONTRACTS_DISABLED`, creates no record and makes no chain call.
+
+### Historical lending intents
+
+`GET /loan-requests`, `POST /loan-requests` and `POST /offers` return HTTP 410 `LEGACY_LENDING_RETIRED`. Creation still requires Origin/session/CSRF; there is no new request/offer matching product. Existing data is not deleted or converted into balances.
+
+`GET /account` retains its bounded private `loanRequests`, `offers` and `receivedOffers` collections for history. Historical records retain their original principal, APR/duration and explicit status; those fields are not terms of the pooled product. The UI labels them as previous unfunded records.
+
+- `DELETE /loan-requests/:id` cancels a request owned by the caller and invalidates its outstanding offers.
+- `DELETE /offers/:id` cancels an offer created by the caller.
+
+Cancellation remains possible during RPC outages and never transfers assets. Another owner/lender cannot cancel the record. Account histories remain session-protected and preserve their privacy boundaries.
 
 ## Mutation reliability
 
@@ -91,4 +98,4 @@ Unknown JSON fields, invalid addresses, malformed IDs, unsafe integers, oversize
 
 ## Settlement boundary
 
-`POST /settlement` always returns HTTP 503, code `SMART_CONTRACTS_DISABLED`. The response must not contain transaction calldata, approvals, a signer, a success receipt or a synthetic funded balance. Marketplace seller fees remain 0.5% of sale price; borrower origination fees remain a one-time 0.5% of principal. These are review terms for the future settlement path, separate from lender interest, and are not charged by an off-chain listing or proposal.
+`POST /settlement` always returns HTTP 503, code `SMART_CONTRACTS_DISABLED`. The response must not contain transaction calldata, approvals, a signer, a success receipt or a synthetic funded balance. Marketplace reviews retain the future 0.5% seller-fee basis. The pooled lending endpoint has no configured fee terms until a compatible contract release; its null terms must not be replaced with another protocol’s schedule. See [lending semantics](LENDING.md).

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ArrowUpRight, Search } from 'lucide-react';
 import type { Account, Listing, LoanRequest, Offer, Position } from './api';
-import { dateLabel, kitten, shortAddress, usdc } from './amounts';
+import { dateLabel, kitten, usdc } from './amounts';
 import Dialog from '../components/Dialog';
 import { PositionSummary } from './RecordDialogs';
 
@@ -148,90 +148,6 @@ export function PublicListings({
   );
 }
 
-export function PublicRequests({
-  items,
-  address,
-  loading,
-  onOffer,
-}: {
-  items: LoanRequest[];
-  address?: string;
-  loading: boolean;
-  onOffer: (request: LoanRequest) => void;
-}) {
-  return (
-    <div className="lending-table-wrap">
-      <table className="lending-table">
-        <caption className="sr-only">
-          Active unfunded borrowing requests
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col">Position</th>
-            <th scope="col">Requested amount</th>
-            <th scope="col">Duration</th>
-            <th scope="col">APR</th>
-            <th scope="col">
-              <span className="sr-only">Action</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((request) => (
-            <tr key={request.id}>
-              <td>
-                <div className="row-asset">
-                  <img
-                    className="row-thumb"
-                    src={positionArt(request.tokenId)}
-                    width={52}
-                    height={52}
-                    alt=""
-                  />
-                  <div>
-                    <strong>veKITTEN #{request.tokenId}</strong>
-                    <span>Unfunded request</span>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <span className="mobile-label">Requested</span>
-                {usdc(request.principalMicros)}
-              </td>
-              <td>
-                <span className="mobile-label">Duration</span>
-                {request.durationDays} days
-              </td>
-              <td>
-                <span className="rate-pill">{request.aprBps / 100}%</span>
-              </td>
-              <td className="table-actions">
-                <button
-                  className="button secondary"
-                  disabled={
-                    address?.toLowerCase() === request.owner.toLowerCase()
-                  }
-                  onClick={() => onOffer(request)}
-                >
-                  {address?.toLowerCase() === request.owner.toLowerCase()
-                    ? 'Your request'
-                    : 'Make offer'}
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {!items.length && (
-        <div className="empty-state">
-          <h3>{loading ? 'Loading requests…' : 'No active requests.'}</h3>
-          <p>Borrowing requests and lending offers remain unfunded.</p>
-        </div>
-      )}
-    </div>
-  );
-}
-
 type AccountProps = {
   account: Account | null;
   loading: boolean;
@@ -239,13 +155,11 @@ type AccountProps = {
   onRefresh: () => void;
   onMore: () => void;
   onList: (position: Position) => void;
-  onBorrow: (position: Position) => void;
   onCancel: (
     kind: 'listing' | 'request' | 'offer',
     record: Listing | LoanRequest | Offer,
   ) => void;
   onSignOut: () => void;
-  onReviewOffer: (offer: Offer, request?: LoanRequest) => void;
 };
 
 export function ConnectedAccount({
@@ -255,14 +169,12 @@ export function ConnectedAccount({
   onRefresh,
   onMore,
   onList,
-  onBorrow,
   onCancel,
   onSignOut,
-  onReviewOffer,
 }: AccountProps) {
-  const [tab, setTab] = useState<
-    'positions' | 'listings' | 'loanRequests' | 'offers' | 'receivedOffers'
-  >('positions');
+  const [tab, setTab] = useState<'positions' | 'listings' | 'archive'>(
+    'positions',
+  );
   return (
     <Dialog
       title="Your account"
@@ -295,30 +207,28 @@ export function ConnectedAccount({
           className="segmented-control portfolio-tabs"
           aria-label="Account view"
         >
-          {(
-            [
-              'positions',
-              'listings',
-              'loanRequests',
-              'offers',
-              'receivedOffers',
-            ] as const
-          ).map((value) => (
-            <button
-              key={value}
-              className={tab === value ? 'active' : ''}
-              aria-pressed={tab === value}
-              onClick={() => setTab(value)}
-            >
-              {value === 'loanRequests'
-                ? 'Requests'
-                : value === 'offers'
-                  ? 'Sent offers'
-                  : value === 'receivedOffers'
-                    ? 'Received offers'
-                    : value[0].toUpperCase() + value.slice(1)}
-            </button>
-          ))}
+          {(['positions', 'listings', 'archive'] as const)
+            .filter(
+              (value) =>
+                value !== 'archive' ||
+                (!!account &&
+                  account.loanRequests.length +
+                    account.offers.length +
+                    account.receivedOffers.length >
+                    0),
+            )
+            .map((value) => (
+              <button
+                key={value}
+                className={tab === value ? 'active' : ''}
+                aria-pressed={tab === value}
+                onClick={() => setTab(value)}
+              >
+                {value === 'archive'
+                  ? 'Previous records'
+                  : value[0].toUpperCase() + value.slice(1)}
+              </button>
+            ))}
         </div>
         {!account ? (
           <div className="empty-state">
@@ -346,12 +256,6 @@ export function ConnectedAccount({
                     >
                       Create listing
                     </button>
-                    <button
-                      className="button secondary"
-                      onClick={() => onBorrow(position)}
-                    >
-                      Request loan
-                    </button>
                   </div>
                 </article>
               ))}
@@ -366,7 +270,7 @@ export function ConnectedAccount({
                 <p>
                   {account.positionsUnavailable
                     ? 'Refresh your account when chain access returns. Your off-chain records remain in the other account views.'
-                    : 'You can verify a token ID from Create listing or Borrowing request.'}
+                    : 'You can verify a token ID from Create listing.'}
                 </p>
               </div>
             )}
@@ -382,14 +286,28 @@ export function ConnectedAccount({
           </>
         ) : (
           <div className="portfolio-list">
-            {account[tab].map((record) => (
+            {tab === 'archive' && (
+              <p className="form-hint">
+                These are records from an earlier lending design. They were
+                never funded and are retained only for reference and
+                cancellation. They are not vault balances or credit lines.
+              </p>
+            )}
+            {(tab === 'listings'
+              ? account.listings
+              : [
+                  ...account.loanRequests,
+                  ...account.offers,
+                  ...account.receivedOffers,
+                ]
+            ).map((record) => (
               <article className="portfolio-item" key={record.id}>
                 <div className="portfolio-item-main">
                   <div className="portfolio-item-copy">
                     <h3>
                       {'tokenId' in record
                         ? `veKITTEN #${record.tokenId}`
-                        : 'Unfunded lending offer'}
+                        : 'Previous unfunded offer'}
                     </h3>
                     <p className="text-muted">
                       {usdc(
@@ -403,16 +321,6 @@ export function ConnectedAccount({
                     >
                       {record.status}
                     </span>
-                    {tab === 'receivedOffers' && 'lender' in record && (
-                      <p className="text-muted">
-                        From {shortAddress(record.lender)} ·{' '}
-                        {account.loanRequests.find(
-                          (request) => request.id === record.requestId,
-                        )?.tokenId
-                          ? `veKITTEN #${account.loanRequests.find((request) => request.id === record.requestId)!.tokenId}`
-                          : `Request ${record.requestId.slice(0, 8)}`}
-                      </p>
-                    )}
                   </div>
                   <div className="portfolio-item-value">
                     <span className="text-muted">
@@ -425,48 +333,39 @@ export function ConnectedAccount({
                     )}
                   </div>
                 </div>
-                {tab === 'receivedOffers' && 'lender' in record && (
-                  <button
-                    className="inline-link cancellation-link"
-                    onClick={() =>
-                      onReviewOffer(
-                        record,
-                        account.loanRequests.find(
-                          (request) => request.id === record.requestId,
-                        ),
-                      )
-                    }
-                  >
-                    Review offer
-                  </button>
-                )}
-                {tab !== 'receivedOffers' &&
-                  (record.status === 'active' ||
-                    record.status === 'proposed') && (
-                    <button
-                      className="inline-link cancellation-link"
-                      onClick={() =>
-                        onCancel(
-                          tab === 'listings'
-                            ? 'listing'
-                            : tab === 'loanRequests'
-                              ? 'request'
-                              : 'offer',
-                          record,
-                        )
-                      }
-                    >
-                      Cancel{' '}
-                      {tab === 'listings'
-                        ? 'listing'
-                        : tab === 'loanRequests'
-                          ? 'request'
-                          : 'offer'}
-                    </button>
-                  )}
+                {record.status === 'active' || record.status === 'proposed'
+                  ? ('owner' in record
+                      ? record.owner
+                      : record.lender
+                    ).toLowerCase() === account.address.toLowerCase() && (
+                      <button
+                        className="inline-link cancellation-link"
+                        onClick={() =>
+                          onCancel(
+                            'priceMicros' in record
+                              ? 'listing'
+                              : 'tokenId' in record
+                                ? 'request'
+                                : 'offer',
+                            record,
+                          )
+                        }
+                      >
+                        Cancel record
+                      </button>
+                    )
+                  : null}
               </article>
             ))}
-            {!account[tab].length && (
+            {!(
+              tab === 'listings'
+                ? account.listings
+                : [
+                    ...account.loanRequests,
+                    ...account.offers,
+                    ...account.receivedOffers,
+                  ]
+            ).length && (
               <div className="empty-state">
                 <h3>No records yet.</h3>
                 <p>Saved records and their status will appear here.</p>

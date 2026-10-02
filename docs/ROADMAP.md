@@ -1,21 +1,25 @@
 # Product direction
 
-Riftwell is a focused place to use NFT positions: lending and a marketplace, with clear ownership and legible terms.
+Riftwell is a focused place to use NFT positions: collateral credit lines, pooled USDC lending and a marketplace, starting with KittenSwap on HyperEVM.
 
-## Implemented application
+## Implemented interface and service
 
-KittenSwap is the first market on HyperEVM. The interface has responsive layouts, keyboard dialogs, reduced motion and local artwork. Connected mode adds EOA sign-in, block-pinned position reads, persistent listings, borrowing requests, lender offers and borrower reviews. Cancellation, session recovery, expiration, ownership invalidation and outage handling are covered by local checks.
+The preview models collateral deposits, credit drawdowns, manual/reward repayment, shared USDC supply and liquidity-limited redemptions. Example reward history and credit parameters are explicit. There is no borrower-request board, fixed loan APR or maturity.
 
-The connected backend is packaged for a single-instance HTTPS deployment. GitHub Pages remains the illustrative preview. Host provisioning and verification at a public connected domain remain outstanding.
+Connected mode supports EOA sign-in, block-pinned wallet position reads and persistent marketplace listings. Lending reports an undeployed status with null accounting and terms. Prior unfunded intents remain historical/cancellable; they cannot be converted into funded loans or vault shares.
 
-## Separate settlement release
+The backend is packaged for a single-instance HTTPS deployment. GitHub Pages remains the illustrative preview. Provisioning and verification at a public connected domain remain outstanding.
 
-Agree supported collateral and valuation, capital sourcing, reward and transfer semantics, and maturity/default policy. Independently review contract code and dependencies, simulate transaction flows, test every custody boundary and run a limited pilot before funded operation. Solidity prototypes remain separate and unchanged by the application build.
+## Separate funded release
+
+Release a compatible pooled vault and collateral-account implementation before enabling lending. Agree reward-based credit policy, portfolio custody/release rules, borrowing headroom, reward conversion and routing, debt settlement, share valuation/rounding, fee schedules and withdrawal liquidity. Independently review those contracts and dependencies, test coherent block reads and transaction/custody boundaries, and run a limited pilot.
+
+Existing Solidity prototypes are experimental and unchanged. They do not implement the intended pooled vault/credit-line product. Frontend or backend validation is not funded protocol evidence.
 
 ## Fee basis
 
-Future marketplace settlement charges the seller 0.5% of the price. Borrowing charges a one-time 0.5% of new principal. Lender interest, gas and underlying swap fees are separate. Creating off-chain records charges nothing.
+Future marketplace settlement charges the seller 0.5% of price. The borrowing design retains a one-time 0.5% origination basis on gross draw, with net proceeds disclosed at confirmation. Revenue shares, automation and vault fees require explicit agreed terms and contract verification. No fees are charged by saving a marketplace listing or using the local preview.
 
 ## Later integrations
 
-Desktop WalletConnect, contract-wallet authentication and further collection adapters can follow the first verified deployment. Multiple server replicas require a different database architecture. Domain/trademark clearance and independent release review are not implied by source publication.
+Desktop WalletConnect, contract-wallet authentication and further collection adapters can follow a verified deployment. Multiple server replicas require a different database architecture. Domain/trademark clearance and independent release review are not implied by source publication.

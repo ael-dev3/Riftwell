@@ -14,17 +14,12 @@ export type Asset = {
   underlyingBalance: number;
   lockTerm: string;
   unlockDate: string;
-  apr: number;
   positionId: string;
   description: string;
 };
 
 export type SortOrder = 'curated' | 'price-asc' | 'price-desc';
 export const PLATFORM_FEE_RATE = 0.005;
-export const MAX_APR = 40;
-export const MIN_PRINCIPAL = 1;
-export const LOAN_DURATIONS = [7, 14, 30] as const;
-export type LoanDuration = (typeof LOAN_DURATIONS)[number];
 const USDC_SCALE = 1_000_000n;
 
 /** Parse decimal USDC exactly. Scientific notation, signs and fractional micros are rejected. */
@@ -47,21 +42,12 @@ function amountToMicros(value: number): bigint {
   return micros;
 }
 
-function aprToBps(apr: string): bigint | null {
-  if (!/^\d+(?:\.\d{1,2})?$/.test(apr)) return null;
-  const [whole, fraction = ''] = apr.split('.');
-  return BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0'));
-}
-
 export const marketplaceFee = (price: number): number =>
   roundAmount((amountToMicros(price) * 5n) / 1000n);
 export const marketplaceProceeds = (price: number): number => {
   const principal = amountToMicros(price);
   return roundAmount(principal - (principal * 5n) / 1000n);
 };
-export const maxBorrowAmount = (asset: Asset): number =>
-  roundAmount((amountToMicros(asset.referenceValue) * 2n) / 5n);
-
 export function filterAssets(
   assets: readonly Asset[],
   query: string,
@@ -81,90 +67,25 @@ export function filterAssets(
   return matching;
 }
 
-export function validateLoan(
-  amount: string,
-  duration: number,
-  maximum: number,
-): string | null {
-  if (amount === '') return 'Enter an amount to continue.';
-  const principal = parseUSDCMicros(amount);
-  if (principal === null)
-    return 'Use a plain decimal amount with up to six decimal places.';
-  if (principal < amountToMicros(MIN_PRINCIPAL))
-    return `Enter an amount of at least ${formatAmount(MIN_PRINCIPAL)}.`;
-  if (principal > amountToMicros(maximum))
-    return `The maximum for this sample position is ${formatAmount(maximum)}.`;
-  if (!(LOAN_DURATIONS as readonly number[]).includes(duration))
-    return 'Choose a supported loan duration.';
-  return null;
-}
-
-export function validateApr(apr: string): string | null {
-  const bps = aprToBps(apr);
-  if (bps === null || bps < 100n || bps > BigInt(MAX_APR * 100))
-    return `Enter an APR from 1% to ${MAX_APR}%, with up to two decimal places.`;
-  return null;
-}
-
-export function calculateLoan(
-  principal: number,
-  apr: number,
-  duration: number,
-) {
-  const principalMicros = amountToMicros(principal);
-  const aprBps = aprToBps(String(apr));
-  if (
-    aprBps === null ||
-    aprBps < 0n ||
-    aprBps > BigInt(MAX_APR * 100) ||
-    !(LOAN_DURATIONS as readonly number[]).includes(duration)
-  )
-    throw new RangeError('Unsupported sample rate or duration.');
-  const feeMicros = (principalMicros * 5n) / 1000n;
-  const interestMicros =
-    (principalMicros * aprBps * BigInt(duration)) / (10_000n * 365n);
-  return {
-    principal,
-    originationFee: roundAmount(feeMicros),
-    interest: roundAmount(interestMicros),
-    netProceeds: roundAmount(principalMicros - feeMicros),
-    repayment: roundAmount(principalMicros + interestMicros),
-  };
-}
-
 type ReceiptBase = { id: string; assetId: string; createdAt: string };
 export type PurchaseReceipt = ReceiptBase & {
   kind: 'purchase';
   price: number;
   sellerFee: number;
 };
-export type BorrowReceipt = ReceiptBase & {
-  kind: 'borrow';
-  principal: number;
-  apr: number;
-  duration: LoanDuration;
-  originationFee: number;
-  interest: number;
-  status: 'active' | 'cancelled';
-};
-export type LendReceipt = ReceiptBase & {
-  kind: 'lend';
-  principal: number;
-  apr: number;
-  duration: LoanDuration;
-  interest: number;
-  status: 'proposed' | 'cancelled';
-};
-export type Receipt = PurchaseReceipt | BorrowReceipt | LendReceipt;
-export type Portfolio = { version: 2; receipts: Receipt[] };
-export const emptyPortfolio = (): Portfolio => ({ version: 2, receipts: [] });
-export const STORAGE_KEY = 'riftwell.positions-preview.v2';
+export type Receipt = PurchaseReceipt;
+export type Portfolio = { version: 3; receipts: PurchaseReceipt[] };
+export const emptyPortfolio = (): Portfolio => ({ version: 3, receipts: [] });
+export const STORAGE_KEY = 'riftwell.marketplace-preview.v3';
+export const LEGACY_STORAGE_KEY = 'riftwell.positions-preview.v2';
 
-function validReceipt(value: unknown): value is Receipt {
+function validReceipt(value: unknown): value is PurchaseReceipt {
   if (!value || typeof value !== 'object') return false;
   const entry = value as Record<string, unknown>;
   if (
+    entry.kind !== 'purchase' ||
     typeof entry.id !== 'string' ||
+    entry.id.length > 100 ||
     typeof entry.assetId !== 'string' ||
     typeof entry.createdAt !== 'string' ||
     !Number.isFinite(Date.parse(entry.createdAt))
@@ -176,22 +97,14 @@ function validReceipt(value: unknown): value is Receipt {
     (entry[key] as number) >= 0 &&
     (entry[key] as number) <= 1_000_000 &&
     parseUSDCMicros(String(entry[key])) !== null;
-  if (entry.kind === 'purchase') return finite('price') && finite('sellerFee');
-  if (entry.kind !== 'borrow' && entry.kind !== 'lend') return false;
-  if (
-    !finite('principal') ||
-    typeof entry.apr !== 'number' ||
-    validateApr(String(entry.apr)) ||
-    !finite('interest') ||
-    !(LOAN_DURATIONS as readonly unknown[]).includes(entry.duration)
-  )
-    return false;
-  return entry.kind === 'borrow'
-    ? finite('originationFee') &&
-        (entry.status === 'active' || entry.status === 'cancelled')
-    : entry.status === 'proposed' || entry.status === 'cancelled';
+  return (
+    finite('price') &&
+    finite('sellerFee') &&
+    entry.sellerFee === marketplaceFee(entry.price as number)
+  );
 }
 
+/** Migrate purchases only. Prior unfunded lending intents never become pooled balances. */
 export function parsePortfolio(
   raw: string | null,
   knownAssetIds: readonly string[],
@@ -201,26 +114,22 @@ export function parsePortfolio(
     const parsed: unknown = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object') return emptyPortfolio();
     const value = parsed as Record<string, unknown>;
-    if (value.version !== 2 || !Array.isArray(value.receipts))
+    if (
+      ![2, 3].includes(value.version as number) ||
+      !Array.isArray(value.receipts)
+    )
       return emptyPortfolio();
+    const seen = new Set<string>();
     const receipts = value.receipts
+      .slice(0, 1000)
       .filter(validReceipt)
-      .filter((entry) => knownAssetIds.includes(entry.assetId));
-    // Keep purchases and current positions even when a long cancellation history is pruned.
-    const current = receipts.filter(
-      (entry) => entry.kind === 'purchase' || entry.status !== 'cancelled',
-    );
-    const cancelled = receipts
-      .filter(
-        (entry) => entry.kind !== 'purchase' && entry.status === 'cancelled',
-      )
-      .slice(-200);
-    return {
-      version: 2,
-      receipts: [...current, ...cancelled].sort(
-        (a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt),
-      ),
-    };
+      .filter((entry) => {
+        if (!knownAssetIds.includes(entry.assetId) || seen.has(entry.assetId))
+          return false;
+        seen.add(entry.assetId);
+        return true;
+      });
+    return { version: 3, receipts };
   } catch {
     return emptyPortfolio();
   }
@@ -241,4 +150,23 @@ export function formatDate(value: string): string {
     year: 'numeric',
     timeZone: 'UTC',
   }).format(new Date(value));
+}
+
+/** Format exact micro-USDC without a floating-point conversion. */
+export function microsToDecimal(value: string | bigint): string {
+  const raw = BigInt(value);
+  const fraction = (raw % USDC_SCALE)
+    .toString()
+    .padStart(6, '0')
+    .replace(/0+$/, '');
+  return `${raw / USDC_SCALE}${fraction ? `.${fraction}` : ''}`;
+}
+
+export function formatMicros(value: string | bigint): string {
+  const raw = BigInt(value);
+  const fraction = (raw % USDC_SCALE)
+    .toString()
+    .padStart(6, '0')
+    .replace(/0+$/, '');
+  return `${new Intl.NumberFormat('en-GB').format(raw / USDC_SCALE)}${fraction ? `.${fraction}` : ''} USDC`;
 }

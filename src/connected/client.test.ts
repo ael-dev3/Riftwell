@@ -5,6 +5,7 @@ import {
   type Account,
   type Challenge,
   type Listing,
+  type LendingStatus,
   type LoanRequest,
   type Offer,
   type Position,
@@ -102,9 +103,21 @@ const statusRecord: Status = {
   capabilities: {
     walletSignIn: true,
     marketplace: true,
-    lending: true,
+    lending: false,
     settlement: false,
   },
+};
+const lendingRecord: LendingStatus = {
+  model: 'pooled-revenue',
+  state: 'not-deployed',
+  marketId: 'kittenswap',
+  asset: 'USDC',
+  chainId: 999,
+  vaultAddress: null,
+  portfolioAddress: null,
+  accounting: null,
+  terms: null,
+  executionEnabled: false,
 };
 const accountRecord: Account = {
   address: fixtureAddress,
@@ -179,9 +192,7 @@ describe('application API transport', () => {
     for (const record of [
       listingRecord,
       { ...listingRecord, status: 'cancelled' },
-      requestRecord,
       { ...requestRecord, status: 'cancelled' },
-      offerRecord,
       { ...offerRecord, status: 'cancelled' },
       { ok: true },
     ])
@@ -195,28 +206,15 @@ describe('application API transport', () => {
       tokenId: '42',
       priceMicros: '1000001',
     };
-    const request = {
-      ...common,
-      tokenId: '42',
-      principalMicros: '1000001',
-      aprBps: 1234,
-      durationDays: 7,
-    };
-    const offer = { ...request, requestId: 'request-1' };
-    const { tokenId: _tokenId, ...offerInput } = offer;
     await client.createListing(listing, 'csrf-token');
     await client.cancelListing('listing/1', 'csrf-token');
-    await client.createLoanRequest(request, 'csrf-token');
     await client.cancelLoanRequest('request/1', 'csrf-token');
-    await client.createOffer(offerInput, 'csrf-token');
     await client.cancelOffer('offer/1', 'csrf-token');
     await client.logout('csrf-token');
     expect(fetcher.mock.calls.map(([url]) => url)).toEqual([
       '/api/v1/listings',
       '/api/v1/listings/listing%2F1',
-      '/api/v1/loan-requests',
       '/api/v1/loan-requests/request%2F1',
-      '/api/v1/offers',
       '/api/v1/offers/offer%2F1',
       '/api/v1/auth/logout',
     ]);
@@ -226,16 +224,13 @@ describe('application API transport', () => {
       expect(['POST', 'DELETE']).toContain(init?.method);
     }
     expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body))).toEqual(listing);
-    expect(JSON.parse(String(fetcher.mock.calls[4][1]?.body))).toEqual(
-      offerInput,
-    );
     expect(
       new Headers(fetcher.mock.calls[0][1]?.headers).get('Content-Type'),
     ).toBe('application/json');
     await expect(client.cancelListing('listing-1', '')).rejects.toMatchObject({
       code: 'CSRF_REQUIRED',
     });
-    expect(fetcher).toHaveBeenCalledTimes(7);
+    expect(fetcher).toHaveBeenCalledTimes(5);
   });
 
   it('uses chain 999 in authentication and sends the exact returned signature', async () => {
@@ -300,7 +295,7 @@ describe('application API transport', () => {
       .fn<typeof globalThis.fetch>()
       .mockRejectedValue(new TypeError('Failed to fetch'));
     await expect(
-      new ApiClient({ fetch: fetcher }).loanRequests('kittenswap'),
+      new ApiClient({ fetch: fetcher }).lending(),
     ).rejects.toMatchObject({ code: 'API_UNAVAILABLE', status: 0 });
   });
 });
@@ -322,7 +317,7 @@ describe('successful API response validation', () => {
       statusRecord,
       { markets: [DEFAULT_MARKET] },
       { items: [listingRecord], nextCursor: 'opaque-next' },
-      { items: [requestRecord], nextCursor: null },
+      lendingRecord,
       sessionRecord,
       accountRecord,
       positionRecord,
@@ -332,7 +327,7 @@ describe('successful API response validation', () => {
     expect(await client.status()).toEqual(statusRecord);
     expect(await client.markets()).toEqual({ markets: [DEFAULT_MARKET] });
     expect(await client.listings('kittenswap')).toEqual(responses[2]);
-    expect(await client.loanRequests('kittenswap')).toEqual(responses[3]);
+    expect(await client.lending()).toEqual(lendingRecord);
     expect(await client.session()).toEqual(sessionRecord);
     expect(await client.account()).toEqual(accountRecord);
     expect(await client.position('42')).toEqual(positionRecord);
@@ -363,6 +358,31 @@ describe('successful API response validation', () => {
     ).toEqual(maximum);
   });
 
+  it('accepts only an explicitly undeployed pooled model and rejects invented live balances or enabled capabilities', async () => {
+    expect(await mockApi(lendingRecord).client.lending()).toEqual(
+      lendingRecord,
+    );
+    for (const altered of [
+      { ...lendingRecord, accounting: { totalAssetsMicros: '0' } },
+      { ...lendingRecord, vaultAddress: fixtureAddress },
+      { ...lendingRecord, terms: { originationBps: 50 } },
+      { ...lendingRecord, executionEnabled: true },
+      { ...lendingRecord, state: 'active' },
+      { ...lendingRecord, model: 'peer-to-peer' },
+      { ...lendingRecord, asset: 'USDT' },
+      { ...lendingRecord, chainId: 1 },
+    ])
+      await expect(mockApi(altered).client.lending()).rejects.toMatchObject({
+        code: 'INVALID_RESPONSE',
+      });
+    await expect(
+      mockApi({
+        ...statusRecord,
+        capabilities: { ...statusRecord.capabilities, lending: true },
+      }).client.status(),
+    ).rejects.toMatchObject({ code: 'INVALID_RESPONSE' });
+  });
+
   const malformed: {
     name: string;
     response: unknown;
@@ -386,7 +406,7 @@ describe('successful API response validation', () => {
     {
       name: 'oversized cursor',
       response: { items: [], nextCursor: 'a'.repeat(513) },
-      read: (client) => client.loanRequests('kittenswap'),
+      read: (client) => client.listings('kittenswap'),
     },
     {
       name: 'numeric money',
@@ -509,10 +529,10 @@ describe('successful API response validation', () => {
     {
       name: 'unknown order status',
       response: {
-        items: [{ ...requestRecord, status: 'funded' }],
-        nextCursor: null,
+        ...accountRecord,
+        loanRequests: [{ ...requestRecord, status: 'funded' }],
       },
-      read: (client) => client.loanRequests('kittenswap'),
+      read: (client) => client.account(),
     },
     {
       name: 'invalid APR',

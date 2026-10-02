@@ -3,7 +3,7 @@ import { DEFAULT_MARKET } from './markets';
 
 // Fictional veKITTEN positions with illustrative KITTEN balances, not live listings.
 // Stable preview IDs preserve existing local receipts across presentation changes.
-// USDC prices, collateral references and APRs are illustrative, with no price feed.
+// USDC prices and references are illustrative, with no price feed.
 export const ASSETS: readonly Asset[] = [
   {
     id: 'rift-041',
@@ -18,7 +18,6 @@ export const ASSETS: readonly Asset[] = [
     underlyingBalance: 50000,
     lockTerm: '12 months',
     unlockDate: '2027-10-02',
-    apr: 12,
     positionId: '041',
     description:
       'A fictional vote-escrowed NFT position holding 50,000 sample KITTEN units. Review its lock and ask price before saving a preview purchase.',
@@ -36,7 +35,6 @@ export const ASSETS: readonly Asset[] = [
     underlyingBalance: 80000,
     lockTerm: '24 months',
     unlockDate: '2028-10-01',
-    apr: 10,
     positionId: '018',
     description:
       'A fictional vote-escrowed NFT position holding 80,000 sample KITTEN units. The displayed reference value is a fixed example, independent of any live market.',
@@ -54,7 +52,6 @@ export const ASSETS: readonly Asset[] = [
     underlyingBalance: 40000,
     lockTerm: '6 months',
     unlockDate: '2027-04-02',
-    apr: 14,
     positionId: '009',
     description:
       'A fictional vote-escrowed NFT position holding 40,000 sample KITTEN units. This shorter sample lock illustrates how positions can carry different terms.',
@@ -72,7 +69,6 @@ export const ASSETS: readonly Asset[] = [
     underlyingBalance: 65000,
     lockTerm: '18 months',
     unlockDate: '2028-04-02',
-    apr: 11,
     positionId: '027',
     description:
       'A fictional vote-escrowed NFT position holding 65,000 sample KITTEN units. Its price and collateral reference are illustrative USDC amounts.',
@@ -90,7 +86,6 @@ export const ASSETS: readonly Asset[] = [
     underlyingBalance: 35000,
     lockTerm: '3 months',
     unlockDate: '2027-01-02',
-    apr: 15,
     positionId: '062',
     description:
       'A fictional vote-escrowed NFT position holding 35,000 sample KITTEN units. Its displayed unlock date is part of the example, not verified chain data.',
@@ -108,7 +103,6 @@ export const ASSETS: readonly Asset[] = [
     underlyingBalance: 100000,
     lockTerm: '24 months',
     unlockDate: '2028-10-01',
-    apr: 9,
     positionId: '012',
     description:
       'A fictional vote-escrowed NFT position holding 100,000 sample KITTEN units. The longest sample lock demonstrates the position details available for review.',
@@ -117,10 +111,26 @@ export const ASSETS: readonly Asset[] = [
 
 // The lending preview uses a separate fictional account, not marketplace purchases.
 export const COLLATERAL = [ASSETS[0], ASSETS[1], ASSETS[5]];
-export const LEND_REQUESTS = [ASSETS[2], ASSETS[3], ASSETS[4]];
 export const CATEGORIES = [
   'All',
   'Short lock',
   'Long lock',
   'Max lock',
 ] as const;
+
+// An example net historical reward observation, not a forecast or live credit policy.
+export const SAMPLE_REWARD_MICROS: Readonly<Record<string, string>> = {
+  'rift-041': '50000000',
+  'rift-018': '80000000',
+  'rift-012': '100000000',
+};
+export const SAMPLE_CREDIT_EPOCHS = 40;
+export const COLLATERAL_LIMITS: Readonly<Record<string, string>> =
+  Object.fromEntries(
+    COLLATERAL.map((asset) => [
+      asset.id,
+      (
+        BigInt(SAMPLE_REWARD_MICROS[asset.id]) * BigInt(SAMPLE_CREDIT_EPOCHS)
+      ).toString(),
+    ]),
+  );

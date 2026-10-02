@@ -67,6 +67,12 @@ function loanEligible(position, days, now) {
 
 export function registerOrders(app, ctx) {
   const { db, now, hash, freshPosition, chainCall, chain } = ctx;
+  const retireLending = () =>
+    fail(
+      410,
+      'LEGACY_LENDING_RETIRED',
+      'Lending requests and offers are retired. Historical intents remain available for cancellation.',
+    );
   const responseFor = (table, id) => {
     const row = db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(id);
     return (
@@ -197,6 +203,7 @@ export function registerOrders(app, ctx) {
 
   for (const [path, definition] of Object.entries(definitions)) {
     app.get(`/api/v1/${path}`, async (request) => {
+      if (lendingTable(definition)) retireLending();
       const query = valid.fields(request.query, ['market', 'limit', 'cursor']);
       if (query.market !== undefined && query.market !== 'kittenswap')
         fail(400, 'INVALID_MARKET', 'KittenSwap is the only available market.');
@@ -248,21 +255,25 @@ export function registerOrders(app, ctx) {
 
     app.post(`/api/v1/${path}`, async (request) => {
       const session = ctx.requireSession(request, true);
-      const lending = definition.table === 'loan_requests';
+      if (lendingTable(definition)) retireLending();
       const body = valid.fields(request.body, [
         'tokenId',
         definition.amount,
         'expiresAt',
         'idempotencyKey',
-        ...(lending ? ['aprBps', 'durationDays'] : []),
       ]);
       const tokenId = valid.tokenId(body.tokenId);
       const amount = valid.money(body[definition.amount]);
       const expiresAt = valid.expiry(body.expiresAt, now());
       const key = valid.uuid(body.idempotencyKey, 'Idempotency key');
-      const apr = lending ? valid.apr(body.aprBps) : null;
-      const days = lending ? valid.duration(body.durationDays) : null;
-      const digest = payloadHash({ tokenId, amount, expiresAt, apr, days });
+      // Keep the original listing digest shape for durable idempotency retries.
+      const digest = payloadHash({
+        tokenId,
+        amount,
+        expiresAt,
+        apr: null,
+        days: null,
+      });
       cached(session.address, path, key, digest);
       const position = await freshPosition(tokenId);
       if (!valid.sameOwner(position.owner, session.address)) {
@@ -279,12 +290,6 @@ export function registerOrders(app, ctx) {
           'The signed-in account must currently own this position.',
         );
       }
-      if (lending && !loanEligible(position, days, now()))
-        fail(
-          400,
-          'LOCK_INELIGIBLE',
-          'A positive locked position must remain locked for the proposed duration.',
-        );
       return db.transaction(() => {
         if (expiresAt <= now())
           fail(400, 'INVALID_EXPIRY', 'Expiry must still be in the future.');
@@ -317,34 +322,18 @@ export function registerOrders(app, ctx) {
           );
         const id = randomUUID();
         const createdAt = now();
-        if (lending)
-          db.prepare(
-            "INSERT INTO loan_requests(id,market,token_id,owner,principal_micros,apr_bps,duration_days,expires_at,created_at,updated_at,status,position_json) VALUES (?,'kittenswap',?,?,?,?,?,?,?,?, 'active',?)",
-          ).run(
-            id,
-            tokenId,
-            session.address,
-            amount,
-            apr,
-            days,
-            expiresAt,
-            createdAt,
-            createdAt,
-            JSON.stringify(position),
-          );
-        else
-          db.prepare(
-            "INSERT INTO listings(id,market,token_id,owner,price_micros,expires_at,created_at,updated_at,status,position_json) VALUES (?,'kittenswap',?,?,?,?,?,?, 'active',?)",
-          ).run(
-            id,
-            tokenId,
-            session.address,
-            amount,
-            expiresAt,
-            createdAt,
-            createdAt,
-            JSON.stringify(position),
-          );
+        db.prepare(
+          "INSERT INTO listings(id,market,token_id,owner,price_micros,expires_at,created_at,updated_at,status,position_json) VALUES (?,'kittenswap',?,?,?,?,?,?, 'active',?)",
+        ).run(
+          id,
+          tokenId,
+          session.address,
+          amount,
+          expiresAt,
+          createdAt,
+          createdAt,
+          JSON.stringify(position),
+        );
         const result = responseFor(definition.table, id);
         saveResult(session.address, path, key, digest, result);
         appendAudit(
@@ -399,119 +388,8 @@ export function registerOrders(app, ctx) {
   }
 
   app.post('/api/v1/offers', async (request) => {
-    const session = ctx.requireSession(request, true);
-    const body = valid.fields(request.body, [
-      'requestId',
-      'principalMicros',
-      'aprBps',
-      'durationDays',
-      'expiresAt',
-      'idempotencyKey',
-    ]);
-    const requestId = valid.uuid(body.requestId, 'Request ID');
-    const principal = valid.money(body.principalMicros);
-    const apr = valid.apr(body.aprBps);
-    const days = valid.duration(body.durationDays);
-    const expiresAt = valid.expiry(body.expiresAt, now());
-    const key = valid.uuid(body.idempotencyKey, 'Idempotency key');
-    const digest = payloadHash({ requestId, principal, apr, days, expiresAt });
-    cached(session.address, 'offers', key, digest);
-    expireRecords(db, now());
-    const row = db
-      .prepare('SELECT * FROM loan_requests WHERE id = ?')
-      .get(requestId);
-    if (!row)
-      fail(404, 'REQUEST_NOT_FOUND', 'The borrowing request was not found.');
-    if (valid.sameOwner(row.owner, session.address))
-      fail(
-        403,
-        'SELF_LENDING',
-        'Borrowers cannot make proposals to their own request.',
-      );
-    const verified = await verifyRecord(definitions['loan-requests'], row);
-    if (!verified)
-      fail(
-        409,
-        'REQUEST_INACTIVE',
-        'The borrowing request is no longer active.',
-      );
-    if (
-      principal !== row.principal_micros ||
-      days !== row.duration_days ||
-      apr > row.apr_bps ||
-      expiresAt > row.expires_at
-    )
-      fail(
-        400,
-        'OFFER_TERMS_REJECTED',
-        'Proposal terms must fit the borrowing request.',
-      );
-    return db.transaction(() => {
-      if (expiresAt <= now())
-        fail(400, 'INVALID_EXPIRY', 'Expiry must still be in the future.');
-      expireRecords(db, now());
-      const current = db
-        .prepare('SELECT * FROM loan_requests WHERE id = ?')
-        .get(requestId);
-      if (current?.status !== 'active')
-        fail(
-          409,
-          'REQUEST_INACTIVE',
-          'The borrowing request is no longer active.',
-        );
-      const retry = cached(session.address, 'offers', key, digest);
-      if (retry) {
-        const offer = db
-          .prepare('SELECT status FROM offers WHERE id = ?')
-          .get(retry.entity_id);
-        if (offer?.status !== 'proposed')
-          fail(
-            409,
-            'ORDER_INACTIVE',
-            'The original proposal is no longer active.',
-          );
-        return JSON.parse(retry.response_json);
-      }
-      if (
-        db
-          .prepare(
-            "SELECT id FROM offers WHERE request_id = ? AND lender = ? AND status = 'proposed'",
-          )
-          .get(requestId, session.address)
-      )
-        fail(
-          409,
-          'ACTIVE_ORDER_EXISTS',
-          'An active proposal already exists for this account and request.',
-        );
-      const id = randomUUID();
-      const createdAt = now();
-      db.prepare(
-        "INSERT INTO offers(id,request_id,lender,principal_micros,apr_bps,duration_days,expires_at,created_at,updated_at,status) VALUES (?,?,?,?,?,?,?,?,?,'proposed')",
-      ).run(
-        id,
-        requestId,
-        session.address,
-        principal,
-        apr,
-        days,
-        expiresAt,
-        createdAt,
-        createdAt,
-      );
-      const result = responseFor('offers', id);
-      saveResult(session.address, 'offers', key, digest, result);
-      appendAudit(
-        db,
-        createdAt,
-        session.address,
-        'offer.proposed',
-        'offer',
-        id,
-        { requestId },
-      );
-      return result;
-    })();
+    ctx.requireSession(request, true);
+    retireLending();
   });
 
   app.delete('/api/v1/offers/:id', async (request) => {

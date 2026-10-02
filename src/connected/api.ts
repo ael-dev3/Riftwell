@@ -89,16 +89,17 @@ export type CreateListingInput = {
   expiresAt: string;
   idempotencyKey: string;
 };
-export type CreateLoanRequestInput = {
-  tokenId: string;
-  principalMicros: string;
-  aprBps: number;
-  durationDays: number;
-  expiresAt: string;
-  idempotencyKey: string;
-};
-export type CreateOfferInput = Omit<CreateLoanRequestInput, 'tokenId'> & {
-  requestId: string;
+export type LendingStatus = {
+  model: 'pooled-revenue';
+  state: 'not-deployed';
+  marketId: MarketId;
+  asset: 'USDC';
+  chainId: 999;
+  vaultAddress: null;
+  portfolioAddress: null;
+  accounting: null;
+  terms: null;
+  executionEnabled: false;
 };
 
 export class ApiError extends Error {
@@ -389,8 +390,35 @@ function status(value: unknown): value is Status {
     ]) &&
     typeof value.capabilities.walletSignIn === 'boolean' &&
     typeof value.capabilities.marketplace === 'boolean' &&
-    typeof value.capabilities.lending === 'boolean' &&
+    value.capabilities.lending === false &&
     value.capabilities.settlement === false
+  );
+}
+
+function lendingStatus(value: unknown): value is LendingStatus {
+  return (
+    fields(value, [
+      'model',
+      'state',
+      'marketId',
+      'asset',
+      'chainId',
+      'vaultAddress',
+      'portfolioAddress',
+      'accounting',
+      'terms',
+      'executionEnabled',
+    ]) &&
+    value.model === 'pooled-revenue' &&
+    value.state === 'not-deployed' &&
+    value.marketId === 'kittenswap' &&
+    value.asset === 'USDC' &&
+    value.chainId === 999 &&
+    value.vaultAddress === null &&
+    value.portfolioAddress === null &&
+    value.accounting === null &&
+    value.terms === null &&
+    value.executionEnabled === false
   );
 }
 
@@ -612,16 +640,8 @@ export class ApiClient {
     });
   }
 
-  loanRequests(market: MarketId, cursor?: string | null, signal?: AbortSignal) {
-    const query = new URLSearchParams({ market, limit: '24' });
-    if (cursor) query.set('cursor', cursor);
-    return this.request<Page<LoanRequest>>(
-      `/loan-requests?${query}`,
-      page(loanRequest),
-      {
-        signal,
-      },
-    );
+  lending(signal?: AbortSignal) {
+    return this.request<LendingStatus>('/lending', lendingStatus, { signal });
   }
 
   session(signal?: AbortSignal) {
@@ -675,16 +695,6 @@ export class ApiClient {
     );
   }
 
-  createLoanRequest(body: CreateLoanRequestInput, csrf: string) {
-    return this.mutate<LoanRequest>(
-      '/loan-requests',
-      'POST',
-      csrf,
-      loanRequest,
-      body,
-    );
-  }
-
   cancelLoanRequest(id: string, csrf: string) {
     return this.mutate<LoanRequest>(
       `/loan-requests/${encodeURIComponent(id)}`,
@@ -692,10 +702,6 @@ export class ApiClient {
       csrf,
       loanRequest,
     );
-  }
-
-  createOffer(body: CreateOfferInput, csrf: string) {
-    return this.mutate<Offer>('/offers', 'POST', csrf, offer, body);
   }
 
   cancelOffer(id: string, csrf: string) {

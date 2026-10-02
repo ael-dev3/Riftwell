@@ -2,7 +2,19 @@
 
 The frontend, Node service and contract prototypes have separate dependency trees. Frontend production dependencies are React, React DOM and Lucide; the server uses Fastify, ethers and better-sqlite3. Contract/compiler tooling is not shipped with the application. Captured application audits are in `production-dependency-audit.json` and `server-production-dependency-audit.json`.
 
-## Connected application checks — 2 October 2026
+## Pooled lending correction — 2 October 2026
+
+- 96 frontend tests pass: 23 pooled-accounting tests, eight marketplace/domain tests and 65 connected client/wallet tests. Coverage includes exact share rounding, cash-limited withdrawals, debt and credit limits, collateral release, net reward repayment, zero-reward epochs, persisted-state validation and undeployed API responses.
+- 48 server tests pass on Node 24 with real SQLite. The corrected lending status returns null accounting and terms; funded actions remain disabled. Retired request/offer creation returns HTTP 410 while private historical records and creator-only cancellation remain available. Authentication, Origin/CSRF, idempotency, ownership, outage recovery, database persistence and read-only chain checks pass.
+- Strict TypeScript and both production build modes pass. The preview bundle is approximately 90 kB compressed; connected mode approximately 86 kB compressed; CSS approximately 10 kB compressed.
+- Manual browser checks verified collateral deposit without debt, gross draw versus net proceeds, amount rejection, zero and positive reward epochs, supply/share accounting, liquidity and balance withdrawal limits, full manual repayment, collateral release and persistence after reload. A narrow rendered viewport (355 CSS pixels) showed no horizontal overflow. Public connected Borrow/Lend views were inspected against the built frontend and a temporary HTTP/SQLite service with simulated read-only chain data; accounting remained unknown and funded controls disabled. No browser runtime errors were observed in those inspected flows.
+- Screenshots: [borrow desktop](qa/pooled-borrow-desktop.jpg), [borrow mobile](qa/pooled-borrow-mobile.jpg), [connected vault](qa/pooled-connected-lend.jpg). These are preview/service-fixture evidence, not live lending evidence.
+
+The browser scripts now cover the pooled product and historical-record compatibility. The updated automated browser suites have **not been executed** for this correction; the older reports below cannot be used as coverage of the new lending interface. Signed connected account flows were covered by server/client tests, but were not exercised in the manual browser inspection.
+
+## Earlier connected application checks — retained historical evidence
+
+The following results describe the application before its pooled-lending correction. They do not validate the replacement interface or its new lending model.
 
 - 74 frontend/domain/client tests pass, including exact money, runtime response validation, wallet rejection/account changes and offer consent limits.
 - 45 server tests pass on Node 24 with real SQLite: nonce replay/concurrency, Origin/CSRF, raw HTTP encoded-path rejection, bounded rate limits/readiness probes, ownership invalidation, idempotency, private received offers, outage cancellation, WAL restart, backup/restore and static path/header/cache handling.
@@ -22,7 +34,9 @@ The reward-converter draft has 15 dedicated local tests covering measured single
 
 The experimental contract toolchain currently reports dependency advisories in its separately installed development tree. It is not part of the production frontend, and its package code/binaries are not committed. Review or replace that toolchain before using it for a production contract release. Do not apply forced dependency upgrades without checking compiler/EVM behavior and saved evidence.
 
-## Frontend release checks — 2 October 2026
+## Earlier frontend checks — retained historical evidence
+
+The following results describe the former request/offer preview, not the replacement pooled interface.
 
 - 10 domain tests passed: exact USDC fee/interest flooring, input boundaries, filtering and persisted receipts.
 - Strict TypeScript and Vite production build passed. Initial JavaScript is approximately 82 kB compressed; CSS approximately 8 kB compressed.

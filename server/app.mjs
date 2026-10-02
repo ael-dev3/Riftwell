@@ -269,7 +269,7 @@ export async function createApp({ config, chain, now = Date.now }) {
       capabilities: {
         walletSignIn: true,
         marketplace: true,
-        lending: true,
+        lending: false,
         settlement: false,
       },
     };
@@ -277,6 +277,29 @@ export async function createApp({ config, chain, now = Date.now }) {
   app.get('/api/v1/markets', async (request) => {
     fields(request.query, []);
     return { markets: [market] };
+  });
+  app.get('/api/v1/lending', async (request) => {
+    fields(request.query, []);
+    return {
+      model: 'pooled-revenue',
+      state: 'not-deployed',
+      marketId: 'kittenswap',
+      asset: 'USDC',
+      chainId: 999,
+      vaultAddress: null,
+      portfolioAddress: null,
+      accounting: null,
+      terms: null,
+      executionEnabled: false,
+    };
+  });
+  app.post('/api/v1/lending/actions', async (request) => {
+    ctx.requireSession(request, true);
+    fail(
+      503,
+      'SMART_CONTRACTS_DISABLED',
+      'Pooled lending is not deployed. No funds or tokens have moved.',
+    );
   });
   app.get('/health/live', async () => ({ status: 'live' }));
   let readinessCache;
