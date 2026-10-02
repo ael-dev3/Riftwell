@@ -11,11 +11,11 @@ The experimental contract toolchain currently reports dependency advisories in i
 ## Frontend release checks — 2 October 2026
 
 - 10 domain tests passed: exact USDC fee/interest flooring, input boundaries, filtering and persisted receipts.
-- Strict TypeScript and Vite production build passed. Initial JavaScript is approximately 82 kB compressed; CSS approximately 9 kB compressed.
-- 61 browser checks passed against the built production preview using isolated headless Chrome. Coverage includes search/filter/sort, position details, purchase receipts, borrowing, lending proposals, amount/APR validation, cancellation/reset, persistence, hash/history navigation, keyboard focus and reduced motion.
+- Strict TypeScript and Vite production build passed. Initial JavaScript is approximately 82 kB compressed; CSS approximately 8 kB compressed.
+- 77 browser checks passed against the built production preview using isolated headless Chrome. Coverage includes the default and sole KittenSwap market, supplied logo loading, selected-market accents in body-portalled dialogs, search/filter/sort, position details, purchase receipts, borrowing, lending proposals, amount/APR validation, cancellation/reset, persistence, hash/history navigation, keyboard focus and reduced motion.
 - 10 tested views passed automated WCAG A/AA accessibility checks with no reported violations. Desktop and mobile layouts were inspected; no horizontal overflow was found at 320, 390, 768, 1440 or 1920 pixels.
 - No browser runtime/console errors or external requests were observed in those flows. Corrupt and unavailable browser storage were checked separately.
 
-The reproducible browser script is `scripts/browser-qa.mjs`; its results are in [qa/browser-report.json](qa/browser-report.json). Screenshots in `qa/` show the final position and USDC interface. The checks use local sample data, not a wallet or live lending integration.
+The reproducible browser script is `scripts/browser-qa.mjs`; its results are in [qa/browser-report.json](qa/browser-report.json). Screenshots in `qa/` show the KittenSwap light-green theme, demo veKITTEN positions and USDC interface. The checks use local sample data, not a wallet or live lending integration.
 
 Automated checks cover the tested views and browser only; they do not establish universal accessibility or security of future integrations. Production hosting must still be verified at its final URL, including HTTPS, response headers and cache behavior. The frontend is ready for static hosting as a preview; the contracts and funded protocol are not a production release.

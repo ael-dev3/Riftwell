@@ -1,6 +1,7 @@
 import { ArrowUpRight, Search, SlidersHorizontal, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { CATEGORIES } from '../data';
+import type { Market } from '../markets';
 import {
   filterAssets,
   formatAmount,
@@ -11,12 +12,18 @@ import {
 } from '../domain';
 
 type Props = {
+  market: Market;
   assets: readonly Asset[];
   onDetails: (asset: Asset) => void;
   onPurchase: (asset: Asset) => void;
 };
 
-export default function Marketplace({ assets, onDetails, onPurchase }: Props) {
+export default function Marketplace({
+  market,
+  assets,
+  onDetails,
+  onPurchase,
+}: Props) {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All');
   const [sort, setSort] = useState<SortOrder>('curated');
@@ -34,8 +41,10 @@ export default function Marketplace({ assets, onDetails, onPurchase }: Props) {
     <>
       <div className="section-heading">
         <div>
-          <p className="section-eyebrow">THE MARKETPLACE</p>
-          <h2 className="section-title">Trade NFT positions.</h2>
+          <p className="section-eyebrow">{market.name} MARKETPLACE</p>
+          <h2 className="section-title">
+            Trade {market.positionSymbol} positions.
+          </h2>
           <p className="section-description">
             Review locked balances, terms and ask prices. Settle in USDC.
           </p>
@@ -134,7 +143,12 @@ export default function Marketplace({ assets, onDetails, onPurchase }: Props) {
                 <div className="position-meta">
                   <div className="position-stat">
                     <span>Locked balance · sample</span>
-                    <strong>{formatBalance(asset.underlyingBalance)}</strong>
+                    <strong>
+                      {formatBalance(
+                        asset.underlyingBalance,
+                        asset.underlyingSymbol,
+                      )}
+                    </strong>
                   </div>
                   <div className="position-stat">
                     <span>Unlocks · {asset.lockTerm}</span>
@@ -179,8 +193,8 @@ export default function Marketplace({ assets, onDetails, onPurchase }: Props) {
         </div>
       )}
       <p className="workspace-note">
-        Fictional NFT positions and RIFT units. Values are illustrative; no
-        chain data or yield is shown.
+        Demo {market.positionSymbol} positions and sample {market.tokenSymbol}{' '}
+        units. Values are illustrative; no chain data or yield is shown.
       </p>
     </>
   );

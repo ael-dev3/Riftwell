@@ -21,6 +21,7 @@ const errors = [];
 const externalRequests = [];
 const checks = [];
 const accessibility = [];
+const selectedMarketAccent = '#bff4aa';
 let status = 'failed';
 page.on('pageerror', (error) => errors.push(error.message));
 page.on('console', (message) => {
@@ -47,6 +48,24 @@ async function audit(name) {
       animations.map((animation) => animation.finished.catch(() => {})),
     );
   });
+  if ((await dialog().count()) > 0) {
+    const theme = await dialog().evaluate((node) => {
+      const kicker = node.querySelector('.dialog-kicker');
+      return {
+        bodyPortal:
+          node.parentElement?.parentElement === document.body &&
+          node.closest('.app-shell') === null,
+        accent: getComputedStyle(node).getPropertyValue('--accent').trim(),
+        kickerColor: kicker ? getComputedStyle(kicker).color : null,
+      };
+    });
+    check(`Dialog mounts in body: ${name}`, theme.bodyPortal);
+    check(
+      `Selected market accent reaches dialog: ${name}`,
+      theme.accent === selectedMarketAccent &&
+        theme.kickerColor === 'rgb(191, 244, 170)',
+    );
+  }
   await page.addScriptTag({ path: require.resolve('axe-core/axe.min.js') });
   const result = await page.evaluate(async () =>
     window.axe.run(document, {
@@ -95,6 +114,45 @@ try {
       .count()) === 2,
   );
   check('Initial hash route', new URL(page.url()).hash === '#marketplace');
+  const marketSelect = page.getByLabel('Select market', { exact: true });
+  check(
+    'KittenSwap is the selected market',
+    (await marketSelect.inputValue()) === 'kittenswap',
+  );
+  const marketOptions = await marketSelect
+    .locator('option')
+    .evaluateAll((options) =>
+      options.map((option) => ({
+        value: option.value,
+        label: option.textContent.trim(),
+      })),
+    );
+  check(
+    'KittenSwap is the only available market',
+    marketOptions.length === 1 &&
+      marketOptions[0].value === 'kittenswap' &&
+      marketOptions[0].label === 'KittenSwap',
+  );
+  const marketLogo = await page
+    .locator('.market-selector .market-logo')
+    .evaluate((image) => ({
+      src: image.currentSrc,
+      loaded:
+        image.complete && image.naturalWidth > 0 && image.naturalHeight > 0,
+    }));
+  check(
+    'Supplied KittenSwap logo loads',
+    marketLogo.loaded &&
+      marketLogo.src === new URL('markets/kittenswap.png', `${base}/`).href,
+  );
+  check(
+    'Selected market accent is applied to the document root',
+    (await page.evaluate(() =>
+      getComputedStyle(document.documentElement)
+        .getPropertyValue('--accent')
+        .trim(),
+    )) === selectedMarketAccent,
+  );
   check(
     'Local artwork loads',
     await page
@@ -145,7 +203,7 @@ try {
   );
   await page.getByLabel('Sort positions').selectOption('curated');
   const detailTrigger = page.getByRole('button', {
-    name: 'View Rift Position #041',
+    name: 'View Demo veKITTEN #041',
     exact: true,
   });
   await detailTrigger.click();
@@ -171,7 +229,7 @@ try {
     await detailTrigger.evaluate((node) => document.activeElement === node),
   );
   await page
-    .getByRole('button', { name: 'Review purchase of Rift Position #041' })
+    .getByRole('button', { name: 'Review purchase of Demo veKITTEN #041' })
     .click();
   await audit('purchase review');
   check(
@@ -184,7 +242,7 @@ try {
   check(
     'Purchase receipt saved',
     await dialog()
-      .getByRole('heading', { name: 'Rift Position #041' })
+      .getByRole('heading', { name: 'Demo veKITTEN #041' })
       .isVisible(),
   );
   await audit('preview account');
@@ -370,7 +428,7 @@ try {
   check(
     'Browser forward updates route',
     await page
-      .getByRole('heading', { name: 'Trade NFT positions.' })
+      .getByRole('heading', { name: 'Trade veKITTEN positions.' })
       .isVisible(),
   );
   await page.emulateMedia({ reducedMotion: 'reduce' });

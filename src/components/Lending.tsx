@@ -1,5 +1,6 @@
 import { ArrowUpRight, HandCoins, Layers3 } from 'lucide-react';
 import { COLLATERAL, LEND_REQUESTS } from '../data';
+import type { Market } from '../markets';
 import {
   formatAmount,
   maxBorrowAmount,
@@ -9,6 +10,7 @@ import {
 
 export type LendingTab = 'borrow' | 'lend';
 type Props = {
+  market: Market;
   tab: LendingTab;
   onTab: (tab: LendingTab) => void;
   receipts: Receipt[];
@@ -17,6 +19,7 @@ type Props = {
 };
 
 export default function Lending({
+  market,
   tab,
   onTab,
   receipts,
@@ -24,12 +27,14 @@ export default function Lending({
   onLend,
 }: Props) {
   const isBorrow = tab === 'borrow';
-  const assets = isBorrow ? COLLATERAL : LEND_REQUESTS;
+  const assets = (isBorrow ? COLLATERAL : LEND_REQUESTS).filter(
+    (asset) => asset.marketId === market.id,
+  );
   return (
     <>
       <div className="section-heading">
         <div>
-          <p className="section-eyebrow">NFT-BACKED LENDING</p>
+          <p className="section-eyebrow">{market.positionSymbol} LENDING</p>
           <h2 className="section-title">Borrow against your position.</h2>
           <p className="section-description">
             Review a sample USDC loan or propose lending terms.
@@ -72,7 +77,7 @@ export default function Lending({
             </h3>
             <p>
               {isBorrow
-                ? 'Choose a position from a separate demo account. Borrow up to 40% of its fixed illustrative reference value.'
+                ? 'Choose a demo veKITTEN position from a separate sample account. Borrow up to 40% of its fixed illustrative reference value.'
                 : 'Review fictional USDC requests and propose an amount, APR and duration. APR is capped at 40% in this preview.'}
             </p>
           </div>

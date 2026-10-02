@@ -36,7 +36,7 @@ describe('exact USDC fees and interest', () => {
 describe('position discovery', () => {
   it('matches IDs without case or surrounding-space sensitivity', () => {
     expect(
-      filterAssets(ASSETS, '  POSITION #041  ', 'All', 'curated').map(
+      filterAssets(ASSETS, '  VEKITTEN #041  ', 'All', 'curated').map(
         (asset) => asset.id,
       ),
     ).toEqual(['rift-041']);

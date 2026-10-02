@@ -1,3 +1,6 @@
+KittenSwap market logo
+The image in markets/kittenswap.png was supplied to identify the selected market. Third-party branding remains with its respective owners and is excluded from the license for original Riftwell artwork.
+
 Riftwell third-party notices
 
 Original Riftwell code/artwork is Apache-2.0. The packages below retain their upstream licenses.

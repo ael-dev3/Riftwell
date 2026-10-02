@@ -1,6 +1,9 @@
 import { ArrowRight, ArrowUpRight, CircleUserRound, Info } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { ASSETS } from './data';
+import { DEFAULT_MARKET, type Market } from './markets';
+import MarketSelector from './components/MarketSelector';
+import PortalMark from './components/PortalMark';
 import {
   emptyPortfolio,
   parsePortfolio,
@@ -46,6 +49,7 @@ function initialPortfolio(): { portfolio: Portfolio; readIssue: boolean } {
 }
 
 export default function App() {
+  const [market, setMarket] = useState<Market>(DEFAULT_MARKET);
   const [section, setSection] = useState<Section>(() =>
     window.location.hash === '#lending' ? 'lending' : 'marketplace',
   );
@@ -57,6 +61,10 @@ export default function App() {
   const [announcement, setAnnouncement] = useState('');
   const workspaceRef = useRef<HTMLElement>(null);
   const accountButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--accent', market.accentColor);
+  }, [market]);
 
   useEffect(() => {
     if (!['#marketplace', '#lending'].includes(window.location.hash))
@@ -94,7 +102,9 @@ export default function App() {
       .filter((receipt) => receipt.kind === 'purchase')
       .map((receipt) => receipt.assetId),
   );
-  const availableAssets = ASSETS.filter((asset) => !purchasedIds.has(asset.id));
+  const availableAssets = ASSETS.filter(
+    (asset) => asset.marketId === market.id && !purchasedIds.has(asset.id),
+  );
   const accountCount = portfolio.receipts.filter(
     (receipt) => receipt.kind === 'purchase' || receipt.status !== 'cancelled',
   ).length;
@@ -157,7 +167,7 @@ export default function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-market={market.id}>
       <a
         className="skip-link"
         href="#workspace"
@@ -186,12 +196,7 @@ export default function App() {
           }}
         >
           <span className="brand-mark">
-            <img
-              src={`${import.meta.env.BASE_URL}riftwell.svg`}
-              alt=""
-              width="37"
-              height="37"
-            />
+            <PortalMark />
           </span>
           <span className="brand-name">
             riftwell<span className="brand-period">.</span>
@@ -214,6 +219,13 @@ export default function App() {
           </button>
         </nav>
         <div className="header-actions">
+          <MarketSelector
+            market={market}
+            onChange={(selected) => {
+              setMarket(selected);
+              closeModal();
+            }}
+          />
           <span className="preview-badge">
             <span />
             Preview
@@ -235,7 +247,8 @@ export default function App() {
         <section className="hero" aria-labelledby="hero-title">
           <div className="hero-copy">
             <p className="eyebrow">
-              <span className="eyebrow-dot" />A NEW POINT OF VIEW
+              <span className="eyebrow-dot" />
+              {market.name} · {market.chain}
             </p>
             <h1 className="hero-title" id="hero-title">
               A new orbit
@@ -243,8 +256,9 @@ export default function App() {
               for your <span className="accent-text">assets.</span>
             </h1>
             <p className="hero-description">
-              Trade locked NFT positions. Borrow against them. Explore both in
-              one simple space, with USDC settlement.
+              Trade {market.positionSymbol} positions. Borrow against them.
+              Explore the {market.name} market in one simple space, with USDC
+              settlement.
             </p>
             <div className="hero-actions">
               <button
@@ -275,11 +289,13 @@ export default function App() {
               <div className="portal-plinth" />
               <div className="portal-caption">
                 <span className="portal-caption-dot" />
-                DIGITAL ASSETS, REIMAGINED
+                {market.name.toUpperCase()} / {market.chain.toUpperCase()}
               </div>
-              <div className="portal-coordinate top">RW / 001</div>
+              <div className="portal-coordinate top">
+                {market.positionSymbol} / RW
+              </div>
               <div className="portal-coordinate bottom">
-                A NEW POINT OF VIEW
+                {market.tokenSymbol} POSITIONS
               </div>
             </div>
           </div>
@@ -306,12 +322,14 @@ export default function App() {
         >
           {section === 'marketplace' ? (
             <Marketplace
+              market={market}
               assets={availableAssets}
               onDetails={(asset) => setModal({ type: 'details', asset })}
               onPurchase={(asset) => setModal({ type: 'purchase', asset })}
             />
           ) : (
             <Lending
+              market={market}
               tab={lendingTab}
               onTab={setLendingTab}
               receipts={portfolio.receipts}
@@ -338,16 +356,14 @@ export default function App() {
           }}
         >
           <span className="brand-mark">
-            <img
-              src={`${import.meta.env.BASE_URL}riftwell.svg`}
-              alt=""
-              width="24"
-              height="24"
-            />
+            <PortalMark size={24} />
           </span>
           <span className="brand-name">riftwell.</span>
         </a>
-        <p>NFT positions. USDC settlement. An interactive preview.</p>
+        <p>
+          {market.positionSymbol} positions. USDC settlement. An interactive
+          preview.
+        </p>
         <div className="footer-links">
           <button
             className="inline-link"
@@ -505,15 +521,17 @@ export default function App() {
         >
           <div className="dialog-body">
             <p>
-              Riftwell combines a marketplace for locked NFT positions with
-              NFT-backed lending in USDC.
+              Riftwell combines a marketplace for {market.positionSymbol}{' '}
+              positions with NFT-backed lending in USDC. The selected market is{' '}
+              {market.name}.
             </p>
             <dl className="details-list">
               <div>
                 <dt>Positions &amp; prices</dt>
                 <dd>
-                  Fictional Rift Positions and sample RIFT units. Locked
-                  balances, dates and USDC values are illustrative.
+                  Demo {market.positionSymbol} positions and sample{' '}
+                  {market.tokenSymbol} units. Locked balances, dates and USDC
+                  values are illustrative.
                 </dd>
               </div>
               <div>

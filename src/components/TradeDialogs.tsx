@@ -67,7 +67,9 @@ export function AssetDetails({
             </div>
             <div className="detail-stat">
               <dt>Locked balance</dt>
-              <dd>{formatBalance(asset.underlyingBalance)}</dd>
+              <dd>
+                {formatBalance(asset.underlyingBalance, asset.underlyingSymbol)}
+              </dd>
             </div>
             <div className="detail-stat">
               <dt>Lock term</dt>
@@ -87,8 +89,8 @@ export function AssetDetails({
             </div>
           </dl>
           <PreviewNotice>
-            Fictional position and RIFT units. No live balance, lock
-            verification or yield data.
+            Demo veKITTEN position and sample KITTEN units. No live balance,
+            lock verification or yield data.
           </PreviewNotice>
         </div>
       </div>
@@ -125,7 +127,8 @@ export function PurchaseDialog({
             <p className="asset-collection">{asset.collection}</p>
             <h3>{asset.name}</h3>
             <span className="text-muted">
-              {formatBalance(asset.underlyingBalance)} · {asset.lockTerm} lock
+              {formatBalance(asset.underlyingBalance, asset.underlyingSymbol)} ·{' '}
+              {asset.lockTerm} lock
             </span>
           </div>
         </div>

@@ -2,7 +2,7 @@
 
 [Live preview → ael-dev3.github.io/Riftwell](https://ael-dev3.github.io/Riftwell/)
 
-A focused interface for NFT-backed lending and an NFT marketplace. Dark, quiet, and built around the idea of moving between positions with less friction.
+A focused interface for NFT-backed lending and an NFT marketplace. KittenSwap is the first market, with a light-green accent, veKITTEN position previews, and a quiet portal theme.
 
 ![Riftwell frontend preview](docs/qa/preview.png)
 
@@ -10,7 +10,7 @@ A focused interface for NFT-backed lending and an NFT marketplace. Dark, quiet, 
 
 - Borrow against eligible NFTs, with terms and fees visible before committing.
 - Discover, compare, and trade NFT positions in one clean marketplace.
-- Start with one integration and build a reusable foundation for more collections.
+- Choose a market from the header. KittenSwap is the only current option; its identity and accent carry through both sections.
 - Keep the platform fee simple: 0.5% of a sale, or a one-time 0.5% of new loan principal. Lender interest is separate.
 
 The current release is a deployable frontend preview. Its collections, prices, offers, balances, and activity are illustrative. Preview actions do not connect a wallet, request a signature, move funds, or deploy contracts.
@@ -37,7 +37,7 @@ For the browser checks, start `npm run preview -- --port 5191` and run `npm run 
 ## Source layout
 
 - `src/` — React and TypeScript interface, preview data, and domain logic.
-- `public/` — original brand mark and artwork.
+- `public/` — original brand mark, artwork, and the supplied KittenSwap market logo.
 - `prototypes/` — experimental Solidity, local EVM tests, and integration tooling.
 - `docs/` — product direction, validation, and release boundaries.
 

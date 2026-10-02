@@ -1,8 +1,12 @@
+import type { MarketId } from './markets';
+
 export type AssetCategory = 'Short lock' | 'Long lock' | 'Max lock';
 export type Asset = {
   id: string;
   name: string;
   collection: string;
+  marketId: MarketId;
+  underlyingSymbol: string;
   category: AssetCategory;
   artwork: string;
   price: number;
@@ -226,8 +230,8 @@ export function formatAmount(value: number): string {
   return `${new Intl.NumberFormat('en-GB', { maximumFractionDigits: 6 }).format(value)} USDC`;
 }
 
-export function formatBalance(value: number): string {
-  return `${new Intl.NumberFormat('en-GB', { maximumFractionDigits: 0 }).format(value)} RIFT`;
+export function formatBalance(value: number, symbol: string): string {
+  return `${new Intl.NumberFormat('en-GB', { maximumFractionDigits: 0 }).format(value)} ${symbol}`;
 }
 
 export function formatDate(value: string): string {
