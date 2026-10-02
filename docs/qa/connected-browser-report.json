@@ -1,6 +1,6 @@
 {
   "status": "passed",
-  "checkedAt": "2026-10-02T20:30:52.232Z",
+  "checkedAt": "2026-10-02T21:36:33.137Z",
   "browser": "isolated headless Chrome",
   "suiteVersion": "interface-v2",
   "scope": "Built connected frontend + real HTTP/SQLite, simulated read-only chain and ephemeral EOA providers; no real funds, wallets or transactions",
@@ -35,6 +35,7 @@
     "Accessibility: purchase blocked review",
     "Borrowing credit, debt and available cash remain unknown before launch",
     "Wallet ownership is shown without claiming collateral was deposited",
+    "The reward relayer waits for the lending launch",
     "Accessibility: connected borrow positions",
     "Collateral review cannot deposit or transfer the NFT",
     "Dialog mounts in body with selected market accent: connected collateral review",
@@ -49,6 +50,14 @@
     "Dialog mounts in body with selected market accent: connected service status",
     "Accessibility: connected service status",
     "Accessibility: connected faq",
+    "What’s new lists the release notes in connected mode",
+    "Connected statistics show no vault, reward or sales totals before launch",
+    "Accessibility: connected statistics",
+    "Connected privacy notes describe the session cookie",
+    "Accessibility: connected privacy",
+    "Accessibility: connected brand kit",
+    "Unknown connected routes show the not-found page",
+    "Accessibility: connected not found",
     "Legacy records remain clearly separated from pool balances and credit lines",
     "Borrower can cancel their request but cannot cancel the received offer",
     "Dialog mounts in body with selected market accent: legacy lending history",
@@ -143,6 +152,22 @@
       "violations": []
     },
     {
+      "view": "connected statistics",
+      "violations": []
+    },
+    {
+      "view": "connected privacy",
+      "violations": []
+    },
+    {
+      "view": "connected brand kit",
+      "violations": []
+    },
+    {
+      "view": "connected not found",
+      "violations": []
+    },
+    {
       "view": "legacy lending history",
       "violations": []
     },
@@ -187,11 +212,11 @@
     },
     {
       "method": "DELETE",
-      "path": "/api/v1/listings/b48c9074-1134-4d9b-af8f-9fa7f767bc72"
+      "path": "/api/v1/listings/a137e460-04f7-4a67-bcfd-0d7fb87f1f00"
     },
     {
       "method": "DELETE",
-      "path": "/api/v1/loan-requests/47f8fb52-c0ba-4d15-90d6-25620b22763f"
+      "path": "/api/v1/loan-requests/73542646-c508-45f5-883d-c99352afda96"
     },
     {
       "method": "POST",

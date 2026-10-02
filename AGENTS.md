@@ -1,6 +1,6 @@
 # Riftwell contributor notes
 
-Keep the interface focused on Borrow, Earn and Marketplace, with the repayment simulator and FAQ as resources rather than more navigation. Use dark surfaces (with the optional light theme), the selected market’s accent color and a restrained portal motif. KittenSwap is the default and only current market, with a light-green accent. Use original local artwork, accessible keyboard interactions, responsive layouts and reduced-motion support. Keep preview data explicit. Never claim live liquidity, yield or wallet operations from illustrative data.
+Keep the interface focused on Borrow, Earn and Marketplace, with the simulator, statistics, FAQ and similar pages as resources rather than more navigation. Use dark surfaces (with the optional light theme), the selected market’s accent color and a restrained portal motif. KittenSwap is the default and only current market, with a light-green accent. Use original local artwork, accessible keyboard interactions, responsive layouts and reduced-motion support. Keep preview data explicit. Never claim live liquidity, yield or wallet operations from illustrative data.
 
 Contract prototypes are experimental and must not be deployed live without explicit release authorization and the required evidence. Preserve the 0.5% fee basis, exact accounting and custody boundaries. Retain upstream license notices. Do not add private research, counterparties, personal identifiers or credentials to this public repository.
 

@@ -413,6 +413,13 @@ try {
         .getByText('In your wallet · not deposited', { exact: true })
         .count()) === 2,
   );
+  check(
+    'The reward relayer waits for the lending launch',
+    (await page.getByRole('heading', { name: 'Reward relayer' }).isVisible()) &&
+      (await page.locator('main').textContent()).includes(
+        'The relayer launches with the lending contracts',
+      ),
+  );
   await audit(page, 'connected borrow positions');
   await capture(page, 'connected-borrow.jpg', { fullPage: true });
   await page
@@ -482,6 +489,41 @@ try {
   await page.goto(`${base}/#faq`, { waitUntil: 'networkidle' });
   await heading(page, 'Questions, answered').waitFor();
   await audit(page, 'connected faq');
+  await page.getByRole('button', { name: 'What’s new' }).click();
+  check(
+    'What’s new lists the release notes in connected mode',
+    (await page
+      .getByRole('region', { name: 'What’s new' })
+      .locator('li')
+      .count()) === 4,
+  );
+  await page.keyboard.press('Escape');
+  await page.goto(`${base}/#stats`, { waitUntil: 'networkidle' });
+  await heading(page, 'Statistics').waitFor();
+  check(
+    'Connected statistics show no vault, reward or sales totals before launch',
+    (await page.locator('main .stat-grid .stat-value').count()) === 4 &&
+      (await dashes(page.locator('main .stat-grid .stat-value'))) &&
+      (await page.locator('main').textContent()).includes('1 active listing'),
+  );
+  await audit(page, 'connected statistics');
+  await page.goto(`${base}/#privacy`, { waitUntil: 'networkidle' });
+  await heading(page, 'What Riftwell stores').waitFor();
+  check(
+    'Connected privacy notes describe the session cookie',
+    (await page.locator('main').textContent()).includes('HttpOnly cookie'),
+  );
+  await audit(page, 'connected privacy');
+  await page.goto(`${base}/#brand`, { waitUntil: 'networkidle' });
+  await heading(page, 'Brand kit').waitFor();
+  await audit(page, 'connected brand kit');
+  await page.goto(`${base}/#missing-page`, { waitUntil: 'networkidle' });
+  await heading(page, 'This page slipped through the rift.').waitFor();
+  check(
+    'Unknown connected routes show the not-found page',
+    (await page.evaluate(() => location.hash)) === '#missing-page',
+  );
+  await audit(page, 'connected not found');
   await account(page);
   await accountTab(page, 'Previous records').click();
   check(

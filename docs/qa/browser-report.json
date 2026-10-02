@@ -3,8 +3,8 @@
   "baseURL": "http://127.0.0.1:5193/Riftwell",
   "browser": "isolated headless Chrome",
   "suiteVersion": "interface-v2",
-  "scope": "Local preview of Borrow, Earn, Marketplace, Simulator and FAQ with sample positions and synthetic pooled balances; no live liquidity, wallet or settlement",
-  "checkedAt": "2026-10-02T20:30:28.621Z",
+  "scope": "Local preview of Borrow, Earn, Marketplace, Simulator, Statistics, FAQ, brand kit and privacy pages with sample positions, sample sales and synthetic pooled balances; no live liquidity, wallet or settlement",
+  "checkedAt": "2026-10-02T21:36:04.794Z",
   "checks": [
     "Default route is Borrow",
     "Borrow page heading",
@@ -52,6 +52,21 @@
     "No horizontal overflow: faq 768",
     "No horizontal overflow: faq 1440",
     "No horizontal overflow: faq 1920",
+    "No horizontal overflow: stats 320",
+    "No horizontal overflow: stats 390",
+    "No horizontal overflow: stats 768",
+    "No horizontal overflow: stats 1440",
+    "No horizontal overflow: stats 1920",
+    "No horizontal overflow: brand 320",
+    "No horizontal overflow: brand 390",
+    "No horizontal overflow: brand 768",
+    "No horizontal overflow: brand 1440",
+    "No horizontal overflow: brand 1920",
+    "No horizontal overflow: privacy 320",
+    "No horizontal overflow: privacy 390",
+    "No horizontal overflow: privacy 768",
+    "No horizontal overflow: privacy 1440",
+    "No horizontal overflow: privacy 1920",
     "Accessibility: borrow mobile",
     "Dialog mounts in body: mobile menu",
     "Selected market accent reaches dialog: mobile menu",
@@ -70,6 +85,9 @@
     "Small positions can be hidden",
     "Select all picks every visible listing",
     "Clearing the selection hides the sweep bar",
+    "The sweep slider selects the first listings in view",
+    "Each listing row copies its deep link",
+    "Market stats switch metric and range",
     "Details open as a shareable link",
     "Position lock and reference value shown",
     "Dialog mounts in body: position details",
@@ -161,6 +179,31 @@
     "Activity lists every borrowing event",
     "Activity filters by event type",
     "Accessibility: borrow activity",
+    "Relayer review shows the example reward and no credit",
+    "Dialog mounts in body: relayer review",
+    "Selected market accent reaches dialog: relayer review",
+    "Accessibility: relayer review",
+    "Adding a position to the relayer moves no funds and opens no credit",
+    "Other borrowers and suppliers retain their baseline: Adding a position to the relayer moves no funds and opens no credit",
+    "Balances conserve funds including debt and fees: Adding a position to the relayer moves no funds and opens no credit",
+    "The relayer holds the position apart from collateral and the wallet",
+    "An epoch prefills relayer rewards, which cannot repay debt",
+    "Out-of-range relayer rewards are rejected without changes",
+    "Dialog mounts in body: relayer epoch",
+    "Selected market accent reaches dialog: relayer epoch",
+    "Accessibility: relayer epoch",
+    "Relayer rewards are paid to the wallet without touching the vault",
+    "Other borrowers and suppliers retain their baseline: Relayer rewards are paid to the wallet without touching the vault",
+    "Balances conserve funds including debt and fees: Relayer rewards are paid to the wallet without touching the vault",
+    "The epoch records relayer rewards separately from repayment",
+    "Removing a position from the relayer keeps the accounting",
+    "Other borrowers and suppliers retain their baseline: Removing a position from the relayer keeps the accounting",
+    "Balances conserve funds including debt and fees: Removing a position from the relayer keeps the accounting",
+    "A removed relayer position can be deposited again",
+    "Vault history switches between epoch ranges",
+    "Dialog mounts in body: vault history ranges",
+    "Selected market accent reaches dialog: vault history ranges",
+    "Accessibility: vault history ranges",
     "Purchase review defaults to the wallet when the balance covers the ask",
     "Dialog mounts in body: purchase review",
     "Selected market accent reaches dialog: purchase review",
@@ -173,6 +216,15 @@
     "Other borrowers and suppliers retain their baseline: A wallet purchase spends demo USDC and records the seller fee",
     "Balances conserve funds including debt and fees: A wallet purchase spends demo USDC and records the seller fee",
     "Bought listing leaves the market",
+    "Buying into the relayer lists its steps and needs no borrowing",
+    "Dialog mounts in body: purchase into relayer",
+    "Selected market accent reaches dialog: purchase into relayer",
+    "Accessibility: purchase into relayer",
+    "Receipt confirms the relayer destination",
+    "Buying into the relayer deposits the position there and pays the seller",
+    "Other borrowers and suppliers retain their baseline: Buying into the relayer deposits the position there and pays the seller",
+    "Balances conserve funds including debt and fees: Buying into the relayer deposits the position there and pays the seller",
+    "The bought position collects rewards in the relayer",
     "A purchase the wallet cannot cover defaults to the credit line",
     "A wallet purchase above the balance is rejected",
     "Borrowing beyond the new credit is rejected",
@@ -203,7 +255,7 @@
     "Dialog mounts in body: listing review",
     "Selected market accent reaches dialog: listing review",
     "Accessibility: listing review",
-    "Listing saves a seven-day ask without moving funds",
+    "Listing saves a seven-day public ask without moving funds",
     "Your listing appears in the market with a cancel action",
     "Your listings tab shows the active ask",
     "Accessibility: your listings",
@@ -212,7 +264,20 @@
     "Selected market accent reaches dialog: cancel listing",
     "Accessibility: cancel listing",
     "Cancelling returns the position and keeps history",
-    "History shows purchases and the cancelled listing",
+    "Ended listings keep the cancelled ask",
+    "Accessibility: otc tab",
+    "Creating from the OTC tab preselects a private listing",
+    "A malformed buyer address is rejected",
+    "Dialog mounts in body: private listing review",
+    "Selected market accent reaches dialog: private listing review",
+    "Accessibility: private listing review",
+    "A private listing is reserved for one normalized address",
+    "The OTC tab shows the reserved buyer",
+    "Private listings stay off the public listings",
+    "A private listing can be cancelled",
+    "History lists sample sales and your purchases, newest first",
+    "History pages through older sales",
+    "Accessibility: sales history",
     "A deep link to a sold listing explains and falls back",
     "Account lists owned positions with their status",
     "Dialog mounts in body: preview account",
@@ -224,7 +289,7 @@
     "Selected market accent reaches dialog: reset confirmation",
     "Accessibility: reset confirmation",
     "Declining reset preserves the preview",
-    "Confirmed reset clears purchases, listings, votes, collateral, shares, debt and fees",
+    "Confirmed reset clears purchases, listings, votes, collateral, relayer, shares, debt and fees",
     "Nothing is left to reset",
     "A share position cannot withdraw more cash than the vault holds",
     "Use max is bounded by 100 liquid USDC rather than total share value",
@@ -252,6 +317,7 @@
     "Simulator starts from the sample position defaults",
     "Borrowing the full credit lengthens the projection",
     "Simulator rejects an invalid reward",
+    "The simulator splits each weekly reward",
     "Accessibility: simulator",
     "Footer opens the FAQ",
     "FAQ answers expand",
@@ -259,6 +325,21 @@
     "Dialog mounts in body: about this preview",
     "Selected market accent reaches dialog: about this preview",
     "Accessibility: about this preview",
+    "What’s new lists the release notes",
+    "Accessibility: whats new",
+    "The updates ticker switches entries",
+    "Statistics page",
+    "Statistics summarize the vault, rewards and market",
+    "Accessibility: statistics",
+    "Brand kit page",
+    "Brand marks download as SVG files",
+    "Brand colors copy their values",
+    "Accessibility: brand kit",
+    "Privacy page lists every preview storage key",
+    "Accessibility: privacy",
+    "Unknown routes show a not-found page",
+    "Accessibility: not found",
+    "The not-found page leads back",
     "The former lending route opens Borrow",
     "Browser back updates route",
     "Browser forward updates route",
@@ -291,22 +372,22 @@
     {
       "view": "mobile menu",
       "violations": [],
-      "passes": 32
+      "passes": 34
     },
     {
       "view": "marketplace mobile 320",
       "violations": [],
-      "passes": 34
+      "passes": 35
     },
     {
       "view": "marketplace desktop",
       "violations": [],
-      "passes": 34
+      "passes": 35
     },
     {
       "view": "position details",
       "violations": [],
-      "passes": 34
+      "passes": 35
     },
     {
       "view": "vault supply review",
@@ -359,59 +440,94 @@
       "passes": 30
     },
     {
-      "view": "purchase review",
+      "view": "relayer review",
       "violations": [],
-      "passes": 34
+      "passes": 31
     },
     {
-      "view": "purchase receipt",
+      "view": "relayer epoch",
       "violations": [],
-      "passes": 36
+      "passes": 32
     },
     {
-      "view": "purchase into credit line",
-      "violations": [],
-      "passes": 38
-    },
-    {
-      "view": "sweep review",
-      "violations": [],
-      "passes": 36
-    },
-    {
-      "view": "listing review",
-      "violations": [],
-      "passes": 37
-    },
-    {
-      "view": "your listings",
+      "view": "vault history ranges",
       "violations": [],
       "passes": 33
     },
     {
+      "view": "purchase review",
+      "violations": [],
+      "passes": 35
+    },
+    {
+      "view": "purchase receipt",
+      "violations": [],
+      "passes": 37
+    },
+    {
+      "view": "purchase into relayer",
+      "violations": [],
+      "passes": 37
+    },
+    {
+      "view": "purchase into credit line",
+      "violations": [],
+      "passes": 39
+    },
+    {
+      "view": "sweep review",
+      "violations": [],
+      "passes": 37
+    },
+    {
+      "view": "listing review",
+      "violations": [],
+      "passes": 38
+    },
+    {
+      "view": "your listings",
+      "violations": [],
+      "passes": 34
+    },
+    {
       "view": "cancel listing",
+      "violations": [],
+      "passes": 37
+    },
+    {
+      "view": "otc tab",
+      "violations": [],
+      "passes": 34
+    },
+    {
+      "view": "private listing review",
+      "violations": [],
+      "passes": 36
+    },
+    {
+      "view": "sales history",
       "violations": [],
       "passes": 36
     },
     {
       "view": "preview account",
       "violations": [],
-      "passes": 33
+      "passes": 36
     },
     {
       "view": "reset confirmation",
       "violations": [],
-      "passes": 36
+      "passes": 37
     },
     {
       "view": "marketplace light",
       "violations": [],
-      "passes": 34
+      "passes": 35
     },
     {
       "view": "position details light",
       "violations": [],
-      "passes": 34
+      "passes": 35
     },
     {
       "view": "borrow light",
@@ -426,12 +542,12 @@
     {
       "view": "keyboard shortcuts",
       "violations": [],
-      "passes": 34
+      "passes": 35
     },
     {
       "view": "resources menu",
       "violations": [],
-      "passes": 36
+      "passes": 37
     },
     {
       "view": "simulator",
@@ -447,6 +563,31 @@
       "view": "about this preview",
       "violations": [],
       "passes": 29
+    },
+    {
+      "view": "whats new",
+      "violations": [],
+      "passes": 33
+    },
+    {
+      "view": "statistics",
+      "violations": [],
+      "passes": 30
+    },
+    {
+      "view": "brand kit",
+      "violations": [],
+      "passes": 30
+    },
+    {
+      "view": "privacy",
+      "violations": [],
+      "passes": 30
+    },
+    {
+      "view": "not found",
+      "violations": [],
+      "passes": 26
     }
   ],
   "screenshots": [
@@ -458,6 +599,7 @@
     "preview.png",
     "buy-review.jpg",
     "market-light.jpg",
-    "simulator-desktop.jpg"
+    "simulator-desktop.jpg",
+    "stats-desktop.jpg"
   ]
 }

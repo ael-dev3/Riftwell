@@ -10,7 +10,7 @@ Collateral credit lines, a pooled USDC vault and a focused marketplace for veKIT
 
 Two build modes share the interface:
 
-- **Preview:** GitHub Pages uses labelled sample positions and a local simulation saved in your browser. Deposit demo veKITTEN, borrow against it, simulate reward epochs, plan votes, supply and withdraw vault USDC, buy listings into your wallet or straight into your credit line, sweep several at once, list your own and model repayment in the simulator.
+- **Preview:** GitHub Pages uses labelled sample positions and a local simulation saved in your browser. Deposit demo veKITTEN, borrow against it or add it to the reward relayer, simulate reward epochs, plan votes, supply and withdraw vault USDC, buy listings into your wallet, your credit line or the relayer, sweep several at once, list your own publicly or privately, browse sample market history and statistics, and model repayment in the simulator.
 - **Connected:** the Node service supports wallet sign-in, confirmed veKITTEN ownership reads and persistent marketplace listings. Borrow and Earn report their undeployed status without inventing liquidity, credit or yield.
 
 Marketplace listings are off-chain expressions of interest. Funded purchases and lending are unavailable until compatible contracts are separately released. No application route requests token approvals, transfers NFTs or sends transactions. Earlier unfunded lending requests/offers are retained only for history and cancellation.

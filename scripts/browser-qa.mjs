@@ -45,6 +45,7 @@ const seedLedger = {
   debtMicros: '0',
   platformFeesMicros: '0',
   collateralIds: [],
+  relayerIds: [],
   epoch: 0,
   activity: [],
 };
@@ -410,7 +411,16 @@ try {
   await capture('borrow-desktop.jpg', { fullPage: true });
 
   // ---------- Layout at every width ----------
-  for (const route of ['borrow', 'earn', 'marketplace', 'simulator', 'faq']) {
+  for (const route of [
+    'borrow',
+    'earn',
+    'marketplace',
+    'simulator',
+    'faq',
+    'stats',
+    'brand',
+    'privacy',
+  ]) {
     await visit(route);
     for (const width of [320, 390, 768, 1440, 1920]) {
       await page.setViewportSize({ width, height: 1000 });
@@ -513,6 +523,38 @@ try {
     (await page.getByRole('region', { name: 'Selected listings' }).count()) ===
       0,
   );
+  await page.getByRole('slider', { name: 'Sweep' }).fill('3');
+  check(
+    'The sweep slider selects the first listings in view',
+    (
+      await page
+        .getByRole('region', { name: 'Selected listings' })
+        .textContent()
+    ).startsWith('3 selected') &&
+      (await rows().locator('input[type="checkbox"]:checked').count()) === 3,
+  );
+  await button('Clear').click();
+  await button('Copy link to Demo veKITTEN #062').click();
+  await page.getByText('Link to Demo veKITTEN #062 copied.').waitFor();
+  check(
+    'Each listing row copies its deep link',
+    (await page.evaluate(() => navigator.clipboard.readText())) ===
+      `${base}/#marketplace/062`,
+  );
+  const metrics = page.getByRole('group', { name: 'Metric' });
+  const ranges = page.getByRole('group', { name: 'Range' });
+  await metrics.getByRole('button', { name: 'Volume' }).click();
+  await ranges.getByRole('button', { name: 'All' }).click();
+  check(
+    'Market stats switch metric and range',
+    (await metrics
+      .getByRole('button', { name: 'Volume' })
+      .getAttribute('aria-pressed')) === 'true' &&
+      (await page.locator('.stat-headline').textContent()).includes('USDC') &&
+      (await page.locator('.market-side .chart').count()) === 1,
+  );
+  await metrics.getByRole('button', { name: 'Discount' }).click();
+  await ranges.getByRole('button', { name: '30D' }).click();
 
   // Details, focus containment and deep links.
   const detailTrigger = button('View Demo veKITTEN #027');
@@ -896,7 +938,108 @@ try {
   await audit('borrow activity');
   await page.getByRole('tab', { name: 'Positions' }).click();
 
-  // ---------- Marketplace: buy, buy into credit, sweep, list ----------
+  // ---------- Reward relayer: rewards without borrowing ----------
+  await button('Add Demo veKITTEN #012 to the relayer').click();
+  await dialog().waitFor();
+  const relayerReview = await dialog().textContent();
+  check(
+    'Relayer review shows the example reward and no credit',
+    relayerReview.includes('Credit from this position') &&
+      relayerReview.includes('100 USDC'),
+  );
+  await audit('relayer review');
+  before = state;
+  await apply('Add to relayer in preview');
+  state = await changedLedger(
+    'Adding a position to the relayer moves no funds and opens no credit',
+    before,
+    'relayer-deposit',
+    {},
+    '306025000000',
+  );
+  check(
+    'The relayer holds the position apart from collateral and the wallet',
+    isDeepStrictEqual(state.relayerIds, ['rift-012']) &&
+      state.collateralIds.length === 0 &&
+      sameMoney(state, before) &&
+      (await button('Deposit Demo veKITTEN #012').count()) === 0 &&
+      (await visible(button('Remove Demo veKITTEN #012 from the relayer'))),
+  );
+  await button('Simulate an epoch').click();
+  const relayerReward = dialog().getByLabel('Net relayer rewards', {
+    exact: true,
+  });
+  check(
+    'An epoch prefills relayer rewards, which cannot repay debt',
+    (await relayerReward.inputValue()) === '100' &&
+      (await dialog()
+        .getByLabel('Net rewards for repayment', { exact: true })
+        .isDisabled()),
+  );
+  await relayerReward.fill('1000.000001');
+  await button('Apply example rewards', dialog()).click();
+  check(
+    'Out-of-range relayer rewards are rejected without changes',
+    (await dialog().getByRole('alert').textContent()).includes(
+      'relayer reward',
+    ) &&
+      (await focused(relayerReward)) &&
+      isDeepStrictEqual(await ledger(), state),
+  );
+  await relayerReward.fill('100');
+  await dialog().getByLabel('Net lender revenue', { exact: true }).fill('0');
+  await audit('relayer epoch');
+  before = state;
+  await apply('Apply example rewards');
+  state = await changedLedger(
+    'Relayer rewards are paid to the wallet without touching the vault',
+    before,
+    'epoch',
+    {
+      epoch: 4,
+      walletMicros: '25270000000',
+      poolCashMicros: '200850000000',
+      poolOutstandingMicros: '80000000000',
+      debtMicros: '0',
+    },
+    '306125000000',
+  );
+  check(
+    'The epoch records relayer rewards separately from repayment',
+    state.activity.at(-1).relayerRewardMicros === '100000000' &&
+      state.activity.at(-1).rewardRepaidMicros === '0',
+  );
+  await button('Remove Demo veKITTEN #012 from the relayer').click();
+  before = state;
+  await apply('Remove from relayer in preview');
+  state = await changedLedger(
+    'Removing a position from the relayer keeps the accounting',
+    before,
+    'relayer-withdraw',
+    {},
+    '306125000000',
+  );
+  check(
+    'A removed relayer position can be deposited again',
+    state.relayerIds.length === 0 &&
+      (await button('Deposit Demo veKITTEN #012').isEnabled()),
+  );
+  await nav.getByRole('link', { name: 'Earn' }).click();
+  await button('How it works').click();
+  const spans = dialog().getByRole('group', { name: 'Epochs shown' });
+  await spans.getByRole('button', { name: '4 epochs' }).click();
+  check(
+    'Vault history switches between epoch ranges',
+    (await spans.getByRole('button').count()) === 3 &&
+      (await spans
+        .getByRole('button', { name: '4 epochs' })
+        .getAttribute('aria-pressed')) === 'true' &&
+      (await dialog().locator('.chart').count()) === 1,
+  );
+  await audit('vault history ranges');
+  await close();
+
+  // ---------- Marketplace: buy, buy into relayer and credit, sweep, list ----------
   await nav.getByRole('link', { name: 'Marketplace' }).click();
   await button('Buy Demo veKITTEN #009').click();
   const walletBuy = await dialog().textContent();
@@ -906,7 +1049,7 @@ try {
       .getByRole('radio', { name: /Demo wallet/ })
       .isChecked()) &&
       walletBuy.includes('15.5 USDC') &&
-      walletBuy.includes('22,070 USDC'),
+      walletBuy.includes('22,170 USDC'),
   );
   await audit('purchase review');
   before = state;
@@ -922,12 +1065,46 @@ try {
     'A wallet purchase spends demo USDC and records the seller fee',
     before,
     'purchase',
-    { walletMicros: '22070000000', platformFeesMicros: '20500000' },
-    '302940500000',
+    { walletMicros: '22170000000', platformFeesMicros: '20500000' },
+    '303040500000',
   );
   check(
     'Bought listing leaves the market',
     !(await rowTitles()).includes('Demo veKITTEN #009'),
+  );
+  await button('Buy Demo veKITTEN #073').click();
+  await dialog()
+    .getByRole('radio', { name: /Reward relayer/ })
+    .check();
+  const relayerBuy = await dialog().textContent();
+  check(
+    'Buying into the relayer lists its steps and needs no borrowing',
+    relayerBuy.includes('Add to relayer') &&
+      relayerBuy.includes('Pay seller') &&
+      relayerBuy.includes('21,150 USDC') &&
+      (await dialog()
+        .getByLabel('Borrow against this purchase', { exact: true })
+        .count()) === 0,
+  );
+  await audit('purchase into relayer');
+  before = state;
+  await button('Buy into relayer in preview', dialog()).click();
+  await dialog().getByRole('heading', { name: 'Purchase saved' }).waitFor();
+  check(
+    'Receipt confirms the relayer destination',
+    (await dialog().textContent()).includes('in the reward relayer'),
+  );
+  await button('Continue browsing', dialog()).click();
+  state = await changedLedger(
+    'Buying into the relayer deposits the position there and pays the seller',
+    before,
+    ['relayer-deposit', 'purchase'],
+    { walletMicros: '21150000000', platformFeesMicros: '25600000' },
+    '302025600000',
+  );
+  check(
+    'The bought position collects rewards in the relayer',
+    isDeepStrictEqual(state.relayerIds, ['rift-073']),
   );
   await button('Buy Demo veKITTEN #156').click();
   const creditLine = dialog().getByRole('radio', { name: /Credit line/ });
@@ -936,7 +1113,7 @@ try {
     (await creditLine.isChecked()) &&
       (await dialog()
         .getByLabel('Borrow against this purchase', { exact: true })
-        .inputValue()) === '4301.507538',
+        .inputValue()) === '5226.130654',
   );
   await dialog()
     .getByRole('radio', { name: /Demo wallet/ })
@@ -962,13 +1139,13 @@ try {
       ) &&
       isDeepStrictEqual(await ledger(), state),
   );
-  await buyBorrow.fill('5000');
+  await buyBorrow.fill('6000');
   const creditBuy = await dialog().textContent();
   check(
     'Buying into credit shows net borrowing, wallet share and balance after',
-    creditBuy.includes('4,975 USDC') &&
-      creditBuy.includes('21,375 USDC') &&
-      creditBuy.includes('695 USDC'),
+    creditBuy.includes('5,970 USDC') &&
+      creditBuy.includes('20,380 USDC') &&
+      creditBuy.includes('770 USDC'),
   );
   await audit('purchase into credit line');
   await capture('buy-review.jpg');
@@ -985,13 +1162,13 @@ try {
     before,
     ['deposit-collateral', 'borrow', 'purchase'],
     {
-      walletMicros: '695000000',
-      poolCashMicros: '195850000000',
-      poolOutstandingMicros: '85000000000',
-      debtMicros: '5000000000',
-      platformFeesMicros: '177250000',
+      walletMicros: '770000000',
+      poolCashMicros: '194850000000',
+      poolOutstandingMicros: '86000000000',
+      debtMicros: '6000000000',
+      platformFeesMicros: '187350000',
     },
-    '276722250000',
+    '275807350000',
   );
   check(
     'The purchased position backs the credit line',
@@ -1018,7 +1195,7 @@ try {
     'Sweep review totals asks and seller fees',
     sweepText.includes('320 USDC') &&
       sweepText.includes('1.6 USDC') &&
-      sweepText.includes('375 USDC'),
+      sweepText.includes('450 USDC'),
   );
   await audit('sweep review');
   before = state;
@@ -1029,8 +1206,8 @@ try {
     'A sweep buys each selected listing into the wallet',
     before,
     ['purchase', 'purchase'],
-    { walletMicros: '375000000', platformFeesMicros: '178850000' },
-    '276403850000',
+    { walletMicros: '450000000', platformFeesMicros: '188950000' },
+    '275488950000',
   );
   const receipts = (await read(marketplaceStorageKey)).receipts;
   check(
@@ -1039,6 +1216,7 @@ try {
       receipts.map((receipt) => [receipt.assetId, receipt.destination]),
       [
         ['rift-009', 'wallet'],
+        ['rift-073', 'relayer'],
         ['rift-156', 'collateral'],
         ['rift-095', 'wallet'],
         ['rift-133', 'wallet'],
@@ -1076,11 +1254,12 @@ try {
   const book = await read(listingsStorageKey);
   const listing = book.listings[0];
   check(
-    'Listing saves a seven-day ask without moving funds',
+    'Listing saves a seven-day public ask without moving funds',
     book.listings.length === 1 &&
       listing.assetId === 'rift-018' &&
       listing.priceMicros === '7000000000' &&
       listing.status === 'active' &&
+      listing.buyer === null &&
       Date.parse(listing.expiresAt) - Date.parse(listing.createdAt) ===
         7 * 86_400_000 &&
       sameMoney(await ledger(), state),
@@ -1115,14 +1294,85 @@ try {
         .getByRole('button', { name: 'Cancel listing for Demo veKITTEN #018' })
         .count()) === 0,
   );
-  await page.getByRole('tab', { name: 'History' }).click();
-  const history = await page.getByRole('tabpanel').textContent();
+  await page.getByRole('tab', { name: 'Your listings' }).click();
+  const ended = await page.getByRole('tabpanel').textContent();
   check(
-    'History shows purchases and the cancelled listing',
-    history.includes('Cancelled') &&
-      history.includes('Demo veKITTEN #156') &&
-      history.includes('into credit line'),
+    'Ended listings keep the cancelled ask',
+    ended.includes('Ended listings') && ended.includes('Cancelled'),
   );
+
+  // Private (OTC) listings stay off the public table.
+  await page.getByRole('tab', { name: /^OTC/ }).click();
+  await audit('otc tab');
+  await button('Create private listing').click();
+  await dialog()
+    .getByLabel('Position', { exact: true })
+    .selectOption('rift-041');
+  check(
+    'Creating from the OTC tab preselects a private listing',
+    await dialog()
+      .getByRole('radio', { name: /Private \(OTC\)/ })
+      .isChecked(),
+  );
+  const buyerField = dialog().getByLabel('Buyer address', { exact: true });
+  await buyerField.fill('0x123');
+  await button('List in preview', dialog()).click();
+  check(
+    'A malformed buyer address is rejected',
+    (await dialog().getByRole('alert').textContent()).includes(
+      '40 hexadecimal',
+    ) && (await read(listingsStorageKey)).listings.length === 1,
+  );
+  await buyerField.fill('0x1234567890ABCDEF1234567890abcdef12345678');
+  await audit('private listing review');
+  await apply('List in preview');
+  const otcBook = (await read(listingsStorageKey)).listings;
+  check(
+    'A private listing is reserved for one normalized address',
+    otcBook.length === 2 &&
+      otcBook[1].assetId === 'rift-041' &&
+      otcBook[1].buyer === '0x1234567890abcdef1234567890abcdef12345678' &&
+      sameMoney(await ledger(), state),
+  );
+  check(
+    'The OTC tab shows the reserved buyer',
+    (await page.getByRole('tabpanel').textContent()).includes(
+      'Private · 0x1234…5678',
+    ),
+  );
+  await page.getByRole('tab', { name: /^All listings/ }).click();
+  check(
+    'Private listings stay off the public listings',
+    !(await rowTitles()).includes('Demo veKITTEN #041'),
+  );
+  await page.getByRole('tab', { name: /^OTC/ }).click();
+  await button('Cancel listing for Demo veKITTEN #041').click();
+  await button('Cancel listing', dialog()).click();
+  await dialog().waitFor({ state: 'hidden' });
+  check(
+    'A private listing can be cancelled',
+    (await read(listingsStorageKey)).listings[1].status === 'cancelled',
+  );
+
+  // Market-wide sales history: sample sales plus purchases from this browser.
+  await page.getByRole('tab', { name: 'History' }).click();
+  const salesRows = page.locator('.sales-table tbody tr');
+  check(
+    'History lists sample sales and your purchases, newest first',
+    (await salesRows.count()) === 10 &&
+      (await salesRows.first().textContent()).includes('Yours') &&
+      (await page.getByRole('tabpanel').textContent()).includes(
+        'Demo veKITTEN #156',
+      ) &&
+      (await page.locator('.pager').textContent()).includes('Page 1 of 6'),
+  );
+  await button('Next page').click();
+  check(
+    'History pages through older sales',
+    (await page.locator('.pager').textContent()).includes('Page 2 of 6') &&
+      (await salesRows.first().textContent()).includes('Sample'),
+  );
+  await audit('sales history');
   await visit('marketplace/009');
   await page.getByText('That listing is no longer available.').waitFor();
   check(
@@ -1136,10 +1386,13 @@ try {
   const positions = dialog().locator('.list-row');
   check(
     'Account lists owned positions with their status',
-    (await positions.count()) === 7 &&
+    (await positions.count()) === 8 &&
       (
         await positions.filter({ hasText: 'Demo veKITTEN #156' }).textContent()
-      ).includes('Collateral'),
+      ).includes('Collateral') &&
+      (
+        await positions.filter({ hasText: 'Demo veKITTEN #073' }).textContent()
+      ).includes('Relayer'),
   );
   await audit('preview account');
   await dialog().getByRole('tab', { name: 'Vault' }).click();
@@ -1153,8 +1406,8 @@ try {
   check(
     'Balances, receipts, listings and votes persist after reload',
     isDeepStrictEqual(await ledger(), state) &&
-      (await read(marketplaceStorageKey)).receipts.length === 4 &&
-      (await read(listingsStorageKey)).listings.length === 1 &&
+      (await read(marketplaceStorageKey)).receipts.length === 5 &&
+      (await read(listingsStorageKey)).listings.length === 2 &&
       (await read(votesStorageKey)).mode === 'manual',
   );
   await page.locator('.account-button').click();
@@ -1164,7 +1417,7 @@ try {
   check(
     'Declining reset preserves the preview',
     isDeepStrictEqual(await ledger(), state) &&
-      (await read(marketplaceStorageKey)).receipts.length === 4,
+      (await read(marketplaceStorageKey)).receipts.length === 5,
   );
   await page.evaluate(
     (key) => localStorage.setItem(key, '{legacy fixture}'),
@@ -1177,7 +1430,7 @@ try {
     lendingStorageKey,
   );
   check(
-    'Confirmed reset clears purchases, listings, votes, collateral, shares, debt and fees',
+    'Confirmed reset clears purchases, listings, votes, collateral, relayer, shares, debt and fees',
     isDeepStrictEqual(await ledger(), seedLedger) &&
       (await read(marketplaceStorageKey)).receipts.length === 0 &&
       (await read(listingsStorageKey)).listings.length === 0 &&
@@ -1334,6 +1587,12 @@ try {
       .getByLabel('Net reward per epoch', { exact: true })
       .getAttribute('aria-invalid')) === 'true',
   );
+  check(
+    'The simulator splits each weekly reward',
+    (await projection.locator('.reward-split').textContent()).includes(
+      'Repays debt',
+    ),
+  );
   await button('Reset inputs').click();
   await audit('simulator');
   await capture('simulator-desktop.jpg', { fullPage: true });
@@ -1346,7 +1605,7 @@ try {
   await faqItems.nth(1).locator('summary').click();
   check(
     'FAQ answers expand',
-    (await faqItems.count()) >= 6 &&
+    (await faqItems.count()) >= 14 &&
       (await faqItems.nth(1).evaluate((node) => node.open)),
   );
   await audit('faq');
@@ -1354,6 +1613,91 @@ try {
   await dialog().getByRole('heading', { name: 'Room to explore.' }).waitFor();
   await audit('about this preview');
   await close();
+
+  // ---------- What's new, statistics, brand kit, privacy, not found ----------
+  await visit('borrow');
+  await page.getByRole('button', { name: 'What’s new' }).click();
+  const updates = page.getByRole('region', { name: 'What’s new' });
+  check(
+    'What’s new lists the release notes',
+    (await updates.locator('li').count()) === 4,
+  );
+  await audit('whats new');
+  await page.keyboard.press('Escape');
+  const secondUpdate = page.getByRole('button', { name: /Show update 2 of 4/ });
+  await secondUpdate.click();
+  check(
+    'The updates ticker switches entries',
+    (await page.locator('.ticker').textContent()).includes(
+      'How pooled lending works',
+    ) && (await secondUpdate.getAttribute('aria-pressed')) === 'true',
+  );
+  await visit('stats');
+  check('Statistics page', await visible(heading('Statistics')));
+  const statsText = await page.locator('main').textContent();
+  check(
+    'Statistics summarize the vault, rewards and market',
+    statsText.includes('Vault assets') &&
+      statsText.includes('Rewards processed') &&
+      statsText.includes('Market volume') &&
+      statsText.includes('Unlock schedule') &&
+      (await page.locator('main .chart').count()) === 1,
+  );
+  await audit('statistics');
+  await capture('stats-desktop.jpg', { fullPage: true });
+  await visit('brand');
+  check('Brand kit page', await visible(heading('Brand kit')));
+  const marks = await page
+    .locator('a[download]')
+    .evaluateAll((links) => links.map((link) => link.href));
+  const served = await Promise.all(
+    marks.map((href) =>
+      fetch(href).then(
+        (response) =>
+          response.ok &&
+          (response.headers.get('content-type') ?? '').includes('svg'),
+      ),
+    ),
+  );
+  check(
+    'Brand marks download as SVG files',
+    marks.length === 2 && served.every(Boolean),
+  );
+  await page
+    .getByRole('button', { name: 'Copy Market accent #BFF4AA' })
+    .click();
+  await page.getByText('#BFF4AA copied.').waitFor();
+  check(
+    'Brand colors copy their values',
+    (await page.evaluate(() => navigator.clipboard.readText())) === '#BFF4AA',
+  );
+  await audit('brand kit');
+  await visit('privacy');
+  const privacyText = await page.locator('main').textContent();
+  check(
+    'Privacy page lists every preview storage key',
+    [
+      marketplaceStorageKey,
+      lendingStorageKey,
+      listingsStorageKey,
+      votesStorageKey,
+      themeStorageKey,
+    ].every((key) => privacyText.includes(key)),
+  );
+  await audit('privacy');
+  await visit('nowhere');
+  check(
+    'Unknown routes show a not-found page',
+    (await visible(heading('This page slipped through the rift.'))) &&
+      (await hash()) === '#nowhere',
+  );
+  await audit('not found');
+  await button('Go to Borrow').click();
+  check(
+    'The not-found page leads back',
+    (await visible(heading('Borrow against veKITTEN'))) &&
+      (await hash()) === '#borrow',
+  );
 
   // ---------- Routes, motion and storage resilience ----------
   await page.goto(`${base}/#lending`, { waitUntil: 'networkidle' });
@@ -1452,7 +1796,7 @@ try {
         browser: 'isolated headless Chrome',
         suiteVersion: 'interface-v2',
         scope:
-          'Local preview of Borrow, Earn, Marketplace, Simulator and FAQ with sample positions and synthetic pooled balances; no live liquidity, wallet or settlement',
+          'Local preview of Borrow, Earn, Marketplace, Simulator, Statistics, FAQ, brand kit and privacy pages with sample positions, sample sales and synthetic pooled balances; no live liquidity, wallet or settlement',
         checkedAt: new Date().toISOString(),
         checks,
         errors,
