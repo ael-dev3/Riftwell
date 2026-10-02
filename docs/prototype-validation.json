@@ -1,8 +1,8 @@
 {
-  "recordedAt": "2026-10-02T15:21:30.801Z",
+  "recordedAt": "2026-10-02T15:43:36.032456+00:00",
   "scope": "Default local EVM and model/indexer tests on renamed public source; remote fork opt-in skipped.",
-  "tests": 87,
-  "passed": 86,
+  "tests": 102,
+  "passed": 101,
   "failed": 0,
   "skipped": 1,
   "compilerPackage": "0.8.37",
@@ -28,6 +28,10 @@
       "sha256": "f653fd115223f5eb143a7153b4c4de19a8f456a874e5cf0b5c27cc5fce0a6bbc"
     },
     {
+      "path": "prototypes/contracts/mocks/ConverterMocks.sol",
+      "sha256": "8c05f7ae2226fe7bd05d5a476058dccb1d243d3e0bde3144eed6ae2e018daebf"
+    },
+    {
       "path": "prototypes/contracts/mocks/FinancedSalesMocks.sol",
       "sha256": "aba32dd48343be060881737859f3c7a75eb3d8b2ee43e997cc061627f2549379"
     },
@@ -45,8 +49,9 @@
     }
   ],
   "limits": [
-    "Reward converter compiles but has no dedicated swap/fork tests and is not integrated.",
+    "Reward converter has 15 dedicated local mock tests; actual Algebra fork swaps and lending-vault integration remain unverified.",
     "No live deployment or independent security audit.",
     "Historical predecessor fork evidence is identified separately."
-  ]
+  ],
+  "rewardConverterLocalTests": 15
 }

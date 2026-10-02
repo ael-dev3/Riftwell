@@ -6,7 +6,7 @@ These original development prototypes are published for review. They are not pro
 - `RiftwellLoans`: actual lender-funded offers for a specified borrower and NFT; 0.5% once on new principal; remaining-principal simple interest; maturity stops interest; separate, fully funded lender and borrower credits.
 - `RiftwellLoanVault`: individual NFT custody, constrained voting and registered closed-period reward claims. Claims require a deployment verification flag; keep it false for any unreviewed deployment.
 - Financed collateral sales: seller-authorized sale, funded debt settlement before NFT delivery, one 0.5% sale fee, atomic rollback when actual collateral transfer fails.
-- `RiftwellKittenRewardConverter`: **new unintegrated draft** of capped caller-authorized liquid reward conversion with fixed routes, measured transfers, short deadlines and cleared router allowances. It has no unattended oracle policy and is not yet covered by dedicated swap/fork tests. It is not connected to lending vaults or the frontend.
+- `RiftwellKittenRewardConverter`: **unintegrated draft** of capped caller-authorized liquid reward conversion with fixed routes, measured transfers, short deadlines and cleared router allowances. Fifteen local tests cover mock swaps and adversarial transfer/router behavior. Actual Algebra fork swaps, lending-vault integration and an unattended oracle policy remain open. It is not connected to lending vaults or the frontend.
 - Event indexing: local canonical-block/reorg foundation; JSON persistence and incomplete live integration are prototype limitations.
 
 ## Tests

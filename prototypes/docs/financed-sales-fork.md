@@ -13,7 +13,7 @@ timestamp `2026-10-02T14:02:23Z`.
 
 The report remains `productionClaimsVerified: false` and
 `local-gates-passed-release-review-required`. This is evidence for the sampled
-NFT, pool, reward token, exact protocol bytecode and recorded Riftwell sources.
+NFT, pool, reward token, exact protocol bytecode and recorded predecessor sources.
 It is not a production deployment or a completion of the broader launch goal.
 
 ## Settlement and cash conservation
