@@ -14,8 +14,8 @@ export default class ErrorBoundary extends Component<
   render() {
     if (!this.state.failed) return this.props.children;
     return (
-      <main className="page-main">
-        <section className="empty-state" role="alert">
+      <main className="page fatal">
+        <section className="empty" role="alert">
           <h1>Something didn’t load.</h1>
           <p>
             Refresh to return to Riftwell. Your saved preview stays in this

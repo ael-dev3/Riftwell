@@ -1,6 +1,6 @@
 import { useRef, useState, type FormEvent } from 'react';
-import { Info } from 'lucide-react';
 import Dialog from '../components/Dialog';
+import { Breakdown, Notice } from '../components/ui/Bits';
 import { api, type Listing, type Position, type Session } from './api';
 import {
   dateLabel,
@@ -40,15 +40,6 @@ export function PositionSummary({ position }: { position: Position }) {
         <dd>{dateLabel(position.observedAt)}</dd>
       </div>
     </dl>
-  );
-}
-
-function Notice({ children }: { children: string }) {
-  return (
-    <div className="notice">
-      <Info size={17} aria-hidden="true" />
-      <p>{children}</p>
-    </div>
   );
 }
 
@@ -217,7 +208,7 @@ export function RecordForm({
                     setError('');
                   }}
                 />
-                <span>USDC</span>
+                <span className="amount-unit">USDC</span>
               </div>
             </div>
             <div className="form-field">
@@ -232,22 +223,22 @@ export function RecordForm({
               >
                 {[1, 7, 30].map((days) => (
                   <option key={days} value={days}>
-                    {days} days
+                    {days} {days === 1 ? 'day' : 'days'}
                   </option>
                 ))}
               </select>
             </div>
           </div>
           {micros && (
-            <div className="cost-breakdown">
-              <div className="breakdown-row">
-                <span>
-                  Seller fee at settlement
-                  <small>One-time 0.5% · nothing charged now</small>
-                </span>
-                <span>{usdc(feeMicros(micros))}</span>
-              </div>
-            </div>
+            <Breakdown
+              rows={[
+                {
+                  label: 'Seller fee at settlement',
+                  hint: 'One-time 0.5% · nothing charged now',
+                  value: usdc(feeMicros(micros)),
+                },
+              ]}
+            />
           )}
           <p className="form-error" role="alert" ref={errorRef} tabIndex={-1}>
             {error}
@@ -285,22 +276,21 @@ export function ListingReview({
     >
       <div className="dialog-body">
         <PositionSummary position={listing.position} />
-        <div className="cost-breakdown">
-          <div className="breakdown-row">
-            <span>Ask price</span>
-            <strong>{usdc(listing.priceMicros)}</strong>
-          </div>
-          <div className="breakdown-row">
-            <span>
-              Seller fee at settlement<small>0.5%, paid by seller</small>
-            </span>
-            <span>{usdc(feeMicros(listing.priceMicros))}</span>
-          </div>
-          <div className="breakdown-row">
-            <span>Listing expires</span>
-            <span>{dateLabel(listing.expiresAt)}</span>
-          </div>
-        </div>
+        <Breakdown
+          rows={[
+            {
+              label: 'Ask price',
+              value: usdc(listing.priceMicros),
+              strong: true,
+            },
+            {
+              label: 'Seller fee at settlement',
+              hint: '0.5%, paid by seller',
+              value: usdc(feeMicros(listing.priceMicros)),
+            },
+            { label: 'Listing expires', value: dateLabel(listing.expiresAt) },
+          ]}
+        />
         <Notice>
           Contract settlement is pending launch. This listing is an off-chain
           expression of interest. No purchase, payment or NFT transfer can be
@@ -309,7 +299,7 @@ export function ListingReview({
       </div>
       <div className="dialog-footer">
         <button className="button secondary" onClick={onClose}>
-          Back to positions
+          Back to listings
         </button>
         <button className="button primary" disabled>
           Settlement unavailable
@@ -337,7 +327,7 @@ export function CancellationDialog({
       onClose={onClose}
     >
       <div className="dialog-body">
-        <p>
+        <p className="panel-text">
           The record will be marked cancelled on the server. Its history remains
           in your account. No funds or NFTs move.
         </p>

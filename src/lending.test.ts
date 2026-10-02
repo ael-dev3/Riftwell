@@ -7,6 +7,8 @@ import {
   depositCollateral,
   getLendingMetrics,
   parseLendingState,
+  purchase,
+  purchaseIntoCollateral,
   redeem,
   removeCollateral,
   repay,
@@ -376,5 +378,129 @@ describe('durable preview ledger validation', () => {
     expect(() => advanceEpoch(maximumAssets, '0', '1')).toThrowError(
       expect.objectContaining({ code: 'STATE_LIMIT' }),
     );
+  });
+});
+
+describe('marketplace purchases in the preview ledger', () => {
+  it('pays the full ask from the wallet and books only the seller fee as platform revenue', () => {
+    const before = createLendingState();
+    const state = purchase(before, 'listed', '3100000000');
+    expect(state.walletMicros).toBe('21900000000');
+    expect(state.platformFeesMicros).toBe('15500000');
+    expect(state.debtMicros).toBe('0');
+    expect(state.poolCashMicros).toBe(before.poolCashMicros);
+    expect(state.activity.at(-1)).toMatchObject({
+      kind: 'purchase',
+      amountMicros: '3100000000',
+      feeMicros: '15500000',
+      collateralId: 'listed',
+    });
+    // The seller's net proceeds leave the preview; nothing else moves.
+    expect(cash(before) - cash(state)).toBe(3_084_500_000n);
+    expectInvariants(state);
+  });
+
+  it('floors the seller fee at the micro boundary', () => {
+    const state = purchase(createLendingState(), 'listed', '1000199');
+    expect(state.platformFeesMicros).toBe('5000');
+    expect(state.walletMicros).toBe('24998999801');
+  });
+
+  it('rejects purchases beyond the wallet, invalid amounts and missing positions', () => {
+    const state = createLendingState();
+    expect(() => purchase(state, 'listed', '25000000001')).toThrowError(
+      expect.objectContaining({ code: 'INSUFFICIENT_WALLET' }),
+    );
+    for (const amount of ['0', '-1', '1.5', '1e6', ''])
+      expect(() => purchase(state, 'listed', amount)).toThrowError(
+        expect.objectContaining({ code: 'INVALID_AMOUNT' }),
+      );
+    expect(() => purchase(state, '', '1000000')).toThrowError(
+      expect.objectContaining({ code: 'INVALID_POSITION' }),
+    );
+    expect(() => purchase(state, 'x'.repeat(101), '1000000')).toThrowError(
+      expect.objectContaining({ code: 'INVALID_POSITION' }),
+    );
+  });
+
+  it('buys into collateral by depositing, borrowing against it, then paying', () => {
+    const before = createLendingState();
+    const state = purchaseIntoCollateral(
+      before,
+      'first',
+      '3100000000',
+      '1600000000',
+      limits,
+    );
+    expect(state.collateralIds).toEqual(['first']);
+    expect(state.debtMicros).toBe('1600000000');
+    // 25,000 + 1,600 - 8 origination fee - 3,100 purchase
+    expect(state.walletMicros).toBe('23492000000');
+    expect(state.platformFeesMicros).toBe('23500000');
+    expect(state.activity.map((entry) => entry.kind)).toEqual([
+      'deposit-collateral',
+      'borrow',
+      'purchase',
+    ]);
+    expectInvariants(state);
+    expect(parseLendingState(JSON.stringify(state), limits)).toEqual(state);
+  });
+
+  it('allows buying into collateral without borrowing', () => {
+    const state = purchaseIntoCollateral(
+      createLendingState(),
+      'second',
+      '6800000000',
+      '0',
+      limits,
+    );
+    expect(state.debtMicros).toBe('0');
+    expect(state.collateralIds).toEqual(['second']);
+    expect(state.walletMicros).toBe('18200000000');
+  });
+
+  it('commits nothing when any step of a credit purchase fails', () => {
+    const poor = { ...createLendingState(), walletMicros: '1000000000' };
+    expect(() =>
+      purchaseIntoCollateral(poor, 'first', '3100000000', '1600000000', limits),
+    ).toThrowError(expect.objectContaining({ code: 'INSUFFICIENT_WALLET' }));
+    expect(() =>
+      purchaseIntoCollateral(
+        createLendingState(),
+        'first',
+        '3100000000',
+        '2000000001',
+        limits,
+      ),
+    ).toThrowError(expect.objectContaining({ code: 'INSUFFICIENT_CREDIT' }));
+    expect(() =>
+      purchaseIntoCollateral(
+        createLendingState(),
+        'unknown',
+        '3100000000',
+        '0',
+        limits,
+      ),
+    ).toThrowError(expect.objectContaining({ code: 'INVALID_COLLATERAL' }));
+    expect(() =>
+      purchaseIntoCollateral(
+        createLendingState(),
+        'first',
+        '3100000000',
+        'abc',
+        limits,
+      ),
+    ).toThrowError(expect.objectContaining({ code: 'INVALID_AMOUNT' }));
+    const deposited = depositCollateral(createLendingState(), 'first', limits);
+    expect(() =>
+      purchaseIntoCollateral(deposited, 'first', '3100000000', '0', limits),
+    ).toThrowError(
+      expect.objectContaining({ code: 'COLLATERAL_ALREADY_DEPOSITED' }),
+    );
+  });
+
+  it('round-trips purchase activity through saved state', () => {
+    const state = purchase(createLendingState(), 'listed', '180000000');
+    expect(parseLendingState(JSON.stringify(state), limits)).toEqual(state);
   });
 });

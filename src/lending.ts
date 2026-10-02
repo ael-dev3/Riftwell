@@ -7,7 +7,8 @@ export type LendingActivityKind =
   | 'remove-collateral'
   | 'borrow'
   | 'repay'
-  | 'epoch';
+  | 'epoch'
+  | 'purchase';
 export type LendingActivity = {
   id: string;
   kind: LendingActivityKind;
@@ -61,6 +62,7 @@ const ACTIVITY_KINDS: readonly string[] = [
   'borrow',
   'repay',
   'epoch',
+  'purchase',
 ];
 
 export class LendingError extends Error {
@@ -449,6 +451,61 @@ export function repay(state: LendingState, amountMicros: string): LendingState {
     'repay',
     { amountMicros },
   );
+}
+
+/**
+ * Pay for a sample marketplace position from the demo wallet. The seller's
+ * one-time 0.5% fee is platform revenue; the seller's net proceeds leave the
+ * preview. Ownership of the position is tracked by the purchase receipt.
+ */
+export function purchase(
+  state: LendingState,
+  assetId: string,
+  priceMicros: string,
+): LendingState {
+  checked(state);
+  if (typeof assetId !== 'string' || !assetId || assetId.length > 100)
+    fail('INVALID_POSITION', 'Choose a listed preview position.');
+  const price = positive(priceMicros);
+  if (price > BigInt(state.walletMicros))
+    fail(
+      'INSUFFICIENT_WALLET',
+      'Your preview wallet does not have enough USDC for this purchase.',
+    );
+  const fee = (price * 5n) / 1000n;
+  return finish(
+    state,
+    {
+      walletMicros: (BigInt(state.walletMicros) - price).toString(),
+      platformFeesMicros: (BigInt(state.platformFeesMicros) + fee).toString(),
+    },
+    'purchase',
+    {
+      amountMicros: price.toString(),
+      feeMicros: fee.toString(),
+      collateralId: assetId,
+    },
+  );
+}
+
+/**
+ * Buy a position straight into collateral: deposit it, optionally draw USDC
+ * against the enlarged credit line, then pay the seller. Every step keeps the
+ * usual checks, and nothing is committed unless all of them succeed.
+ */
+export function purchaseIntoCollateral(
+  state: LendingState,
+  assetId: string,
+  priceMicros: string,
+  borrowMicros: string,
+  limits: CollateralLimits,
+): LendingState {
+  let next = depositCollateral(state, assetId, limits);
+  if (raw(borrowMicros) && BigInt(borrowMicros) > 0n)
+    next = borrow(next, borrowMicros, limits);
+  else if (borrowMicros !== '0')
+    fail('INVALID_AMOUNT', 'Enter a borrow amount in exact raw units.');
+  return purchase(next, assetId, priceMicros);
 }
 
 export function advanceEpoch(

@@ -1,9 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowRight, CircleUserRound, Info } from 'lucide-react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { CircleUserRound, Info } from 'lucide-react';
+import { preloadable, preloadWhenIdle } from '../app/preloadable';
+import { useHashRoute, type Page } from '../app/router';
+import { useShortcuts } from '../app/shortcuts';
+import { applyTheme, readTheme } from '../app/theme';
+import { ToastProvider, useToast } from '../app/toast';
+import PageFallback from '../components/PageFallback';
+import AppShell, { ShortcutsDialog } from '../components/shell/AppShell';
 import { DEFAULT_MARKET, type Market } from '../markets';
-import MarketSelector from '../components/MarketSelector';
-import PortalMark from '../components/PortalMark';
 import Dialog from '../components/Dialog';
+import { Notice } from '../components/ui/Bits';
 import {
   api,
   ApiError,
@@ -25,12 +31,19 @@ import {
   type WalletProvider,
 } from './wallet';
 import { shortAddress } from './amounts';
-import { ConnectedLending, CollateralReview } from './ConnectedLending';
+import {
+  CollateralReview,
+  ConnectedBorrow,
+  ConnectedEarn,
+} from './ConnectedLending';
 import { apiMessage, usePages } from './usePages';
 import { CancellationDialog, ListingReview, RecordForm } from './RecordDialogs';
-import { ConnectedAccount, PublicListings } from './ConnectedViews';
+import { ConnectedAccount, ConnectedMarket } from './ConnectedViews';
 
-type Section = 'marketplace' | 'lending';
+const SimulatorPage = preloadable(() => import('../pages/SimulatorPage'));
+const FaqPage = preloadable(() => import('../pages/FaqPage'));
+const VaultDetails = preloadable(() => import('../components/VaultDetails'));
+
 type Intent = {
   type: 'form';
   kind: 'listing';
@@ -38,7 +51,7 @@ type Intent = {
 };
 type Modal =
   | Intent
-  | { type: 'signin' | 'account' }
+  | { type: 'signin' | 'account' | 'about' | 'shortcuts' | 'vault' }
   | { type: 'review'; listing: Listing }
   | { type: 'collateral'; position: Position }
   | {
@@ -48,12 +61,11 @@ type Modal =
     }
   | null;
 
-export default function ConnectedApp() {
+function ConnectedShell() {
+  const { route, navigate } = useHashRoute('borrow');
   const [market, setMarket] = useState<Market>(DEFAULT_MARKET);
-  const [section, setSection] = useState<Section>(() =>
-    location.hash === '#lending' ? 'lending' : 'marketplace',
-  );
-  const [lendingTab, setLendingTab] = useState<'borrow' | 'lend'>('borrow');
+  const toast = useToast();
+  const searchRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<Status | null>(null);
   const [lending, setLending] = useState<LendingStatus | null>(null);
   const [serviceError, setServiceError] = useState('');
@@ -79,7 +91,6 @@ export default function ConnectedApp() {
   const walletConnecting = useRef(false);
   const signInAddress = useRef<string | null>(null);
   const accountRequest = useRef(0);
-  const workspaceRef = useRef<HTMLElement>(null);
   const accountButtonRef = useRef<HTMLButtonElement>(null);
   const lists = usePages(
     (cursor, signal) => api.listings(market.id, cursor, signal),
@@ -103,21 +114,13 @@ export default function ConnectedApp() {
     document.documentElement.style.setProperty('--accent', market.accentColor);
   }, [market]);
 
+  useEffect(() => preloadWhenIdle([SimulatorPage, FaqPage, VaultDetails]), []);
+
   useEffect(() => {
-    if (!['#marketplace', '#lending'].includes(location.hash))
-      history.replaceState(null, '', '#marketplace');
-    const sync = () => {
-      if (!['#marketplace', '#lending'].includes(location.hash)) return;
-      setSection(location.hash === '#lending' ? 'lending' : 'marketplace');
-      closeModal();
-    };
-    window.addEventListener('hashchange', sync);
-    window.addEventListener('popstate', sync);
-    return () => {
-      window.removeEventListener('hashchange', sync);
-      window.removeEventListener('popstate', sync);
-    };
-  }, []);
+    closeModal();
+    // Route changes close any open dialog.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [route.page]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -297,20 +300,25 @@ export default function ConnectedApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.address, session?.expiresAt]);
 
-  function navigate(next: Section, scroll = false) {
-    setSection(next);
-    if (location.hash !== `#${next}`) history.pushState(null, '', `#${next}`);
-    if (scroll)
-      requestAnimationFrame(() => {
-        workspaceRef.current?.scrollIntoView({
-          behavior: window.matchMedia('(prefers-reduced-motion: reduce)')
-            .matches
-            ? 'instant'
-            : 'smooth',
-        });
-        workspaceRef.current?.focus({ preventScroll: true });
-      });
-  }
+  const go = useCallback(
+    (page: Page) => navigate({ page, item: null }),
+    [navigate],
+  );
+
+  useShortcuts({
+    onNavigate: go,
+    onSearch: () => {
+      if (route.page !== 'marketplace') go('marketplace');
+      const focus = (attempt = 0) => {
+        if (searchRef.current) searchRef.current.focus();
+        // The page may still be rendering inside a view transition.
+        else if (attempt < 60) requestAnimationFrame(() => focus(attempt + 1));
+      };
+      requestAnimationFrame(() => focus());
+    },
+    onTheme: () => applyTheme(readTheme() === 'dark' ? 'light' : 'dark'),
+    onHelp: () => setModal({ type: 'shortcuts' }),
+  });
 
   function openIntent(next: Intent) {
     if (!status) {
@@ -380,9 +388,7 @@ export default function ConnectedApp() {
       setSession(verified);
       setModal(intent.current ?? { type: 'account' });
       intent.current = null;
-      setMessage(
-        'Signed in. Your records are saved by the application service.',
-      );
+      toast('Signed in. Your records are saved by the application service.');
     } catch (failure) {
       if (attempt === signInAttempt.current)
         setSignError(
@@ -408,7 +414,7 @@ export default function ConnectedApp() {
       setSession(null);
       setAccount(null);
       closeModal();
-      setMessage('Signed out. Your off-chain records remain on the server.');
+      toast('Signed out. Your off-chain records remain on the server.', 'info');
     } catch (failure) {
       setMessage(apiMessage(failure));
       handleError(failure);
@@ -417,7 +423,7 @@ export default function ConnectedApp() {
 
   function saved(text: string) {
     closeModal();
-    setMessage(text);
+    toast(text);
     lists.refresh();
     void refreshAccount();
   }
@@ -436,258 +442,138 @@ export default function ConnectedApp() {
       lists.refresh();
       await refreshAccount();
       setModal({ type: 'account' });
-      setMessage('The off-chain record was cancelled.');
+      toast('The off-chain record was cancelled.', 'info');
     } catch (failure) {
       handleError(failure);
       throw failure;
     }
   }
 
-  const publicError = section === 'marketplace' ? lists.error : '';
-  const publicLoading = lists.loading;
+  const publicError = route.page === 'marketplace' ? lists.error : '';
   const retry = () => {
     setServiceRevision((value) => value + 1);
     lists.refresh();
     void refreshAccount();
   };
 
-  return (
-    <div className="app-shell" data-market={market.id} data-mode="connected">
-      <a
-        className="skip-link"
-        href="#workspace"
-        onClick={(event) => {
-          event.preventDefault();
-          navigate(section, true);
-        }}
-      >
-        Skip to explore
-      </a>
-      <header className="site-header">
-        <a
-          className="brand"
-          href="#marketplace"
-          aria-label="Riftwell home"
-          onClick={(event) => {
-            event.preventDefault();
-            navigate('marketplace');
-            window.scrollTo({ top: 0, behavior: 'instant' });
-          }}
-        >
-          <span className="brand-mark">
-            <PortalMark />
-          </span>
-          <span className="brand-name">
-            riftwell<span className="brand-period">.</span>
-          </span>
-        </a>
-        <nav className="desktop-nav" aria-label="Main navigation">
-          {(['lending', 'marketplace'] as const).map((next) => (
-            <button
-              key={next}
-              className={`nav-item${section === next ? ' active' : ''}`}
-              aria-current={section === next ? 'page' : undefined}
-              onClick={() => navigate(next)}
-            >
-              {next === 'lending' ? 'Lending' : 'Marketplace'}
-            </button>
-          ))}
-        </nav>
-        <div className="header-actions">
-          <MarketSelector
-            market={market}
-            onChange={(next) => {
-              setMarket(next);
-              closeModal();
-            }}
-          />
-          <span className="preview-badge">
-            <span />
-            Connected
-          </span>
-          <button
-            ref={accountButtonRef}
-            className="button secondary account-button"
-            disabled={signing}
-            onClick={() => {
-              setSignError('');
-              setModal({ type: session ? 'account' : 'signin' });
-              if (session) void refreshAccount();
-            }}
-          >
-            <CircleUserRound aria-hidden="true" />
-            <span>{session ? shortAddress(session.address) : 'Sign in'}</span>
+  const notices = (serviceError || publicError || accountError || message) && (
+    <div className="notices">
+      {(serviceError || publicError || accountError) && (
+        <div className="notice storage-notice service-banner" role="alert">
+          <Info size={18} aria-hidden="true" />
+          <p>
+            {serviceError || publicError || accountError} Current data is
+            unavailable; sample data has not been substituted.
+          </p>
+          <button className="button secondary small" onClick={retry}>
+            Retry service
           </button>
         </div>
-      </header>
-      <main className="page-main">
-        <section className="hero" aria-labelledby="connected-hero-title">
-          <div className="hero-copy">
-            <p className="eyebrow">
-              <span className="eyebrow-dot" />
-              {market.name} · {market.chain}
-            </p>
-            <h1 className="hero-title" id="connected-hero-title">
-              A new orbit
-              <br />
-              for your <span className="accent-text">assets.</span>
-            </h1>
-            <p className="hero-description">
-              A marketplace for veKITTEN positions, with collateral credit lines
-              and pooled USDC lending prepared for launch.
-            </p>
-            <div className="hero-actions">
-              <button
-                className="button primary"
-                onClick={() => navigate('marketplace', true)}
-              >
-                Explore positions <ArrowRight size={16} aria-hidden="true" />
-              </button>
-              <button
-                className="button ghost"
-                onClick={() => navigate('lending', true)}
-              >
-                Explore lending <ArrowRight size={16} aria-hidden="true" />
-              </button>
-            </div>
-            <p className="hero-note">
-              <span />
-              Off-chain records. Contract settlement pending launch.
-            </p>
-          </div>
-          <div className="hero-visual" aria-hidden="true">
-            <div className="portal-scene">
-              <div className="portal-aura" />
-              <div className="portal-orbit orbit-one" />
-              <div className="portal-orbit orbit-two" />
-              <div className="portal-orbit orbit-three" />
-              <div className="portal-core" />
-              <div className="portal-plinth" />
-              <div className="portal-caption">
-                <span className="portal-caption-dot" />
-                KITTENSWAP / HYPEREVM
-              </div>
-              <div className="portal-coordinate top">veKITTEN / RW</div>
-              <div className="portal-coordinate bottom">
-                VERIFIED POSITION READS
-              </div>
-            </div>
-          </div>
-        </section>
-        {(serviceError || publicError || accountError) && (
-          <div className="notice storage-notice" role="alert">
-            <Info size={18} aria-hidden="true" />
-            <p>
-              {serviceError || publicError || accountError} Current data is
-              unavailable; sample data has not been substituted.
-            </p>
-            <button className="inline-link" onClick={retry}>
-              Retry service
-            </button>
-          </div>
-        )}
-        {message && (
-          <div className="notice storage-notice" role="status">
-            <Info size={18} aria-hidden="true" />
-            <p>{message}</p>
-            <button className="inline-link" onClick={() => setMessage('')}>
-              Dismiss
-            </button>
-          </div>
-        )}
-        <section
-          ref={workspaceRef}
-          className="workspace"
-          id="workspace"
-          tabIndex={-1}
+      )}
+      {message && (
+        <div className="notice storage-notice service-banner" role="status">
+          <Info size={18} aria-hidden="true" />
+          <p>{message}</p>
+          <button className="button ghost small" onClick={() => setMessage('')}>
+            Dismiss
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
+  let page;
+  switch (route.page) {
+    case 'borrow':
+      page = (
+        <ConnectedBorrow
+          market={market}
+          status={lending}
+          account={account}
+          signedIn={!!session}
+          loading={accountBusy}
+          onAccount={() => {
+            setModal({ type: session ? 'account' : 'signin' });
+            if (session) void refreshAccount();
+          }}
+          onInspect={(position) => setModal({ type: 'collateral', position })}
+          onNavigate={go}
+        />
+      );
+      break;
+    case 'earn':
+      page = (
+        <ConnectedEarn
+          market={market}
+          status={lending}
+          onDetails={() => setModal({ type: 'vault' })}
+          onNavigate={go}
+        />
+      );
+      break;
+    case 'marketplace':
+      page = publicError ? null : (
+        <ConnectedMarket
+          market={market}
+          items={lists.items}
+          loading={lists.loading}
+          canCreate={!!status}
+          nextCursor={lists.nextCursor}
+          searchRef={searchRef}
+          onLoadMore={lists.loadMore}
+          onReview={(listing) => setModal({ type: 'review', listing })}
+          onCreate={() => openIntent({ type: 'form', kind: 'listing' })}
+        />
+      );
+      break;
+    case 'simulator':
+      page = <SimulatorPage market={market} />;
+      break;
+    case 'faq':
+      page = <FaqPage market={market} mode="connected" />;
+      break;
+  }
+
+  return (
+    <AppShell
+      route={route}
+      onNavigate={go}
+      market={market}
+      onMarketChange={(next) => {
+        setMarket(next);
+        closeModal();
+      }}
+      mode="connected"
+      onAbout={() => setModal({ type: 'about' })}
+      onShortcuts={() => setModal({ type: 'shortcuts' })}
+      notices={notices}
+      account={
+        <button
+          ref={accountButtonRef}
+          type="button"
+          className="button secondary account-button"
           aria-label={
-            section === 'marketplace'
-              ? 'Connected NFT marketplace'
-              : 'Connected NFT lending'
+            session ? `Account ${shortAddress(session.address)}` : 'Sign in'
           }
-        >
-          {section === 'marketplace' ? (
-            <>
-              <div className="section-heading">
-                <div>
-                  <p className="section-eyebrow">KittenSwap MARKETPLACE</p>
-                  <h2 className="section-title">List your NFT position.</h2>
-                  <p className="section-description">
-                    Ownership-verified listings. Purchases await contract
-                    settlement.
-                  </p>
-                </div>
-                <button
-                  className="button primary"
-                  disabled={!status}
-                  onClick={() => openIntent({ type: 'form', kind: 'listing' })}
-                >
-                  Create listing
-                </button>
-              </div>
-              {!publicError && (
-                <PublicListings
-                  items={lists.items}
-                  loading={lists.loading}
-                  onReview={(listing) => setModal({ type: 'review', listing })}
-                />
-              )}
-              {!publicError && lists.nextCursor && (
-                <div className="connected-pagination">
-                  <button
-                    className="button secondary"
-                    disabled={publicLoading}
-                    onClick={lists.loadMore}
-                  >
-                    {publicLoading ? 'Loading…' : 'Load more'}
-                  </button>
-                </div>
-              )}
-            </>
-          ) : (
-            <ConnectedLending
-              status={lending}
-              tab={lendingTab}
-              onTab={setLendingTab}
-              account={account}
-              signedIn={!!session}
-              loading={accountBusy}
-              onAccount={() => {
-                setModal({ type: session ? 'account' : 'signin' });
-                if (session) void refreshAccount();
-              }}
-              onInspect={(position) =>
-                setModal({ type: 'collateral', position })
-              }
-            />
-          )}
-        </section>
-      </main>
-      <footer className="site-footer">
-        <a
-          className="brand footer-brand"
-          href="#marketplace"
-          onClick={(event) => {
-            event.preventDefault();
-            navigate('marketplace');
+          disabled={signing}
+          onClick={() => {
+            setSignError('');
+            setModal({ type: session ? 'account' : 'signin' });
+            if (session) void refreshAccount();
           }}
         >
-          <span className="brand-mark">
-            <PortalMark size={24} />
+          <CircleUserRound size={17} aria-hidden="true" />
+          <span className="account-label">
+            {session ? shortAddress(session.address) : 'Sign in'}
           </span>
-          <span className="brand-name">riftwell.</span>
-        </a>
-        <p>Durable off-chain records. No funded settlement.</p>
-        <div className="footer-links">
-          <a
-            href="https://github.com/ael-dev3/Riftwell"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Source code<span className="sr-only"> (opens in a new tab)</span>
-          </a>
+        </button>
+      }
+    >
+      <Suspense fallback={<PageFallback />}>
+        <div className="page-body" key={route.page}>
+          {page}
         </div>
-      </footer>
+      </Suspense>
       {modal?.type === 'signin' && (
         <Dialog
           title="Sign in with your wallet"
@@ -698,17 +584,14 @@ export default function ConnectedApp() {
           }}
         >
           <div className="dialog-body">
-            <p>
+            <p className="panel-text">
               Connect your browser wallet and sign the server’s sign-in message
               to manage your off-chain records.
             </p>
-            <div className="notice">
-              <Info size={17} aria-hidden="true" />
-              <p>
-                This signature authenticates your account. It does not approve
-                tokens, transfer NFTs or send a transaction.
-              </p>
-            </div>
+            <Notice>
+              This signature authenticates your account. It does not approve
+              tokens, transfer NFTs or send a transaction.
+            </Notice>
             <p className="form-error" role="alert">
               {signError}
             </p>
@@ -772,6 +655,65 @@ export default function ConnectedApp() {
           onConfirm={() => cancelRecord(modal.kind, modal.record)}
         />
       )}
-    </div>
+      {modal?.type === 'vault' && (
+        <Suspense fallback={null}>
+          <VaultDetails market={market} lending={null} onClose={closeModal} />
+        </Suspense>
+      )}
+      {modal?.type === 'shortcuts' && <ShortcutsDialog onClose={closeModal} />}
+      {modal?.type === 'about' && (
+        <Dialog
+          title="Service status"
+          kicker="CONNECTED MODE"
+          onClose={closeModal}
+        >
+          <div className="dialog-body">
+            <dl className="facts">
+              <div>
+                <dt>Application service</dt>
+                <dd>{status ? 'Available' : 'Unavailable'}</dd>
+              </div>
+              <div>
+                <dt>Network</dt>
+                <dd>HyperEVM · chain 999</dd>
+              </div>
+              <div>
+                <dt>Ownership reads</dt>
+                <dd>Verified at a pinned block</dd>
+              </div>
+              <div>
+                <dt>Listings</dt>
+                <dd>Durable off-chain records</dd>
+              </div>
+              <div>
+                <dt>Lending and vault</dt>
+                <dd>Not launched</dd>
+              </div>
+              <div>
+                <dt>Purchase settlement</dt>
+                <dd>Disabled</dd>
+              </div>
+            </dl>
+            <Notice>
+              Signing in authenticates your account only. Nothing here approves
+              tokens, transfers NFTs or moves funds.
+            </Notice>
+          </div>
+          <div className="dialog-footer">
+            <button className="button primary" onClick={closeModal}>
+              Done
+            </button>
+          </div>
+        </Dialog>
+      )}
+    </AppShell>
+  );
+}
+
+export default function ConnectedApp() {
+  return (
+    <ToastProvider>
+      <ConnectedShell />
+    </ToastProvider>
   );
 }

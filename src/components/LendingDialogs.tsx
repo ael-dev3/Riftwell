@@ -1,23 +1,21 @@
-import { ArrowRight, Info, Layers3 } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useRef, useState, type FormEvent } from 'react';
 import {
   COLLATERAL_LIMITS,
   SAMPLE_CREDIT_EPOCHS,
   SAMPLE_REWARD_MICROS,
 } from '../data';
-import {
-  formatBalance,
-  formatMicros,
-  microsToDecimal,
-  parseUSDCMicros,
-} from '../domain';
+import { formatMicros, microsToDecimal, parseUSDCMicros } from '../domain';
+import { formatShares } from '../format';
 import {
   getLendingMetrics,
   MAX_EPOCH_INPUT_MICROS,
   type LendingState,
 } from '../lending';
+import type { LendingAction } from '../preview/actions';
 import Dialog from './Dialog';
-import type { LendingAction } from './Lending';
+import { AmountField, AssetSummary, Breakdown, Notice } from './ui/Bits';
+import { Meter } from './ui/Meter';
 
 export type LendingActionInput = {
   amountMicros?: string;
@@ -33,7 +31,7 @@ type Props = {
 const titles: Readonly<Record<LendingAction['kind'], string>> = {
   'deposit-collateral': 'Deposit collateral',
   'remove-collateral': 'Remove collateral',
-  borrow: 'Review borrowing',
+  borrow: 'Borrow USDC',
   repay: 'Repay your balance',
   supply: 'Supply USDC',
   withdraw: 'Withdraw USDC',
@@ -41,6 +39,7 @@ const titles: Readonly<Record<LendingAction['kind'], string>> = {
   how: 'How pooled lending works',
 };
 const min = (a: bigint, b: bigint) => (a < b ? a : b);
+const ceilDiv = (a: bigint, b: bigint) => (a + b - 1n) / b;
 
 export default function LendingActionDialog({
   action,
@@ -64,11 +63,17 @@ export default function LendingActionDialog({
       action.kind === 'supply' ? min(maximum, 1000_000000n) : maximum,
     ),
   );
-  const initialReward = state.collateralIds.reduce(
+  const sampleReward = state.collateralIds.reduce(
     (sum, id) => sum + BigInt(SAMPLE_REWARD_MICROS[id] ?? '0'),
     0n,
   );
-  const [reward, setReward] = useState(microsToDecimal(initialReward));
+  const [reward, setReward] = useState(
+    microsToDecimal(
+      action.kind === 'epoch' && action.rewardMicros
+        ? BigInt(action.rewardMicros)
+        : sampleReward,
+    ),
+  );
   const [poolYield, setPoolYield] = useState('200');
   const [error, setError] = useState('');
   const amountRef = useRef<HTMLInputElement>(null);
@@ -100,6 +105,8 @@ export default function LendingActionDialog({
   const isAmount = ['borrow', 'repay', 'supply', 'withdraw'].includes(
     action.kind,
   );
+  const credit = BigInt(metrics.totalCreditMicros);
+  const debtAfterBorrow = BigInt(state.debtMicros) + amountMicros;
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -150,48 +157,45 @@ export default function LendingActionDialog({
         onClose={onClose}
       >
         <div className="dialog-body">
-          <dl className="details-list">
-            <div>
-              <dt>Supply &amp; shares</dt>
-              <dd>
+          <ol className="steps">
+            <li>
+              <strong>Supply &amp; shares</strong>
+              <p>
                 Supplying USDC adds liquid funds to a shared vault and gives you
                 shares. Your share value includes both cash and outstanding loan
                 principal.
-              </dd>
-            </div>
-            <div>
-              <dt>Variable rewards</dt>
-              <dd>
+              </p>
+            </li>
+            <li>
+              <strong>Borrowing</strong>
+              <p>
+                Deposited collateral creates a portfolio credit limit based on
+                an example net reward history. Drawing USDC creates debt; net
+                collateral rewards can reduce it over variable time.
+              </p>
+            </li>
+            <li>
+              <strong>Variable rewards</strong>
+              <p>
                 Net revenue received by the pool can increase share value. No
                 historical yield rate or forecast is provided; future returns
                 may vary or be zero.
-              </dd>
-            </div>
-            <div>
-              <dt>Withdrawals</dt>
-              <dd>
+              </p>
+            </li>
+            <li>
+              <strong>Withdrawals</strong>
+              <p>
                 Redeeming burns shares and returns available USDC. Your
                 withdrawal is bounded by your share value and the vault’s liquid
                 funds. At full utilization, repayment or new supply must restore
                 liquidity.
-              </dd>
-            </div>
-            <div>
-              <dt>Borrowing</dt>
-              <dd>
-                Deposited collateral creates a portfolio credit limit based on
-                an example net reward history. Drawing USDC creates debt; net
-                collateral rewards can reduce it over variable time.
-              </dd>
-            </div>
-          </dl>
-          <div className="notice">
-            <Info size={17} aria-hidden="true" />
-            <p>
-              Everything here is a local simulation. The displayed vault and
-              collateral policy are not live or verified on-chain.
-            </p>
-          </div>
+              </p>
+            </li>
+          </ol>
+          <Notice>
+            Everything here is a local simulation. The displayed vault and
+            collateral policy are not live or verified on-chain.
+          </Notice>
         </div>
         <div className="dialog-footer">
           <button className="button primary" onClick={onClose}>
@@ -200,6 +204,15 @@ export default function LendingActionDialog({
         </div>
       </Dialog>
     );
+
+  const amountLabel =
+    action.kind === 'borrow'
+      ? 'Borrow amount'
+      : action.kind === 'repay'
+        ? 'Repayment amount'
+        : action.kind === 'supply'
+          ? 'Supply amount'
+          : 'Withdrawal amount';
 
   return (
     <Dialog
@@ -210,82 +223,40 @@ export default function LendingActionDialog({
       <form onSubmit={submit} noValidate>
         <div className="dialog-body">
           {isCollateral && (
-            <div className="review-asset">
-              <img
-                className="dialog-image"
-                src={action.asset.artwork}
-                alt=""
-                width="72"
-                height="72"
-              />
-              <div>
-                <p className="asset-collection">Separate demo account</p>
-                <h3>{action.asset.name}</h3>
-                <span className="text-muted">
-                  {formatBalance(
-                    action.asset.underlyingBalance,
-                    action.asset.underlyingSymbol,
-                  )}{' '}
-                  · {action.asset.lockTerm} lock
-                </span>
-              </div>
-            </div>
+            <AssetSummary
+              asset={action.asset}
+              kicker={
+                action.kind === 'deposit-collateral'
+                  ? 'From your demo wallet'
+                  : 'Deposited collateral'
+              }
+            />
           )}
           {isAmount && (
-            <div className="form-field">
-              <div className="field-label">
-                <label htmlFor="pooled-amount">
-                  {action.kind === 'borrow'
-                    ? 'Borrow amount'
-                    : action.kind === 'repay'
-                      ? 'Repayment amount'
-                      : action.kind === 'supply'
-                        ? 'Supply amount'
-                        : 'Withdrawal amount'}
-                </label>
-                <button
-                  type="button"
-                  className="inline-link"
-                  onClick={() => {
-                    setAmount(microsToDecimal(maximum));
-                    setError('');
-                  }}
-                >
-                  Use max.
-                </button>
-              </div>
-              <div className="amount-input">
-                <input
-                  ref={amountRef}
-                  id="pooled-amount"
-                  className="input-control"
-                  type="text"
-                  inputMode="decimal"
-                  autoComplete="off"
-                  maxLength={24}
-                  value={amount}
-                  onChange={(event) => {
-                    setAmount(event.target.value);
-                    setError('');
-                  }}
-                  aria-invalid={Boolean(error)}
-                  aria-describedby="pooled-amount-hint pooled-action-error"
-                />
-                <span>USDC</span>
-              </div>
-              <p className="form-hint" id="pooled-amount-hint">
-                Maximum {formatMicros(maximum)}
-                {action.kind === 'withdraw'
+            <AmountField
+              id="pooled-amount"
+              label={amountLabel}
+              value={amount}
+              onChange={(value) => {
+                setAmount(value);
+                setError('');
+              }}
+              maximum={maximum}
+              hint={`Maximum ${formatMicros(maximum)}${
+                action.kind === 'withdraw'
                   ? ' · bounded by your shares and liquid USDC'
                   : action.kind === 'borrow'
                     ? ' · credit and vault liquidity'
-                    : ''}
-              </p>
-            </div>
+                    : ''
+              }`}
+              error={Boolean(error)}
+              inputRef={amountRef}
+              describedBy="pooled-amount-hint pooled-action-error"
+            />
           )}
           {action.kind === 'epoch' && (
             <>
-              <p>
+              <p className="dialog-lede">
                 Choose net amounts for one example 7-day period, after any
                 reward fee deductions. Zero repayment rewards leave debt
                 unchanged. These inputs do not predict the next real epoch or
@@ -312,7 +283,7 @@ export default function LendingActionDialog({
                       }}
                       aria-describedby="epoch-reward-hint pooled-action-error"
                     />
-                    <span>USDC</span>
+                    <span className="amount-unit">USDC</span>
                   </div>
                   <p className="form-hint" id="epoch-reward-hint">
                     {state.collateralIds.length
@@ -339,7 +310,7 @@ export default function LendingActionDialog({
                       }}
                       aria-describedby="pool-reward-hint pooled-action-error"
                     />
-                    <span>USDC</span>
+                    <span className="amount-unit">USDC</span>
                   </div>
                   <p className="form-hint" id="pool-reward-hint">
                     Separate net revenue from other example pool positions,
@@ -349,133 +320,164 @@ export default function LendingActionDialog({
               </div>
             </>
           )}
-          <div className="cost-breakdown">
-            {isCollateral && (
-              <>
-                <div className="breakdown-row">
-                  <span>
-                    Example net reward history
-                    <small>Per 7-day epoch · not a forecast</small>
-                  </span>
+          {isCollateral && (
+            <Breakdown
+              rows={[
+                {
+                  label: 'Example net reward history',
+                  hint: 'Per 7-day epoch · not a forecast',
+                  value: formatMicros(SAMPLE_REWARD_MICROS[action.asset.id]),
+                  strong: true,
+                },
+                {
+                  label: 'Illustrative credit policy',
+                  value: `Reward × ${SAMPLE_CREDIT_EPOCHS} epochs`,
+                },
+                {
+                  label: `Portfolio credit after ${
+                    action.kind === 'deposit-collateral' ? 'deposit' : 'removal'
+                  }`,
+                  value: formatMicros(
+                    credit +
+                      (action.kind === 'deposit-collateral' ? 1n : -1n) *
+                        BigInt(COLLATERAL_LIMITS[action.asset.id]),
+                  ),
+                  strong: true,
+                },
+                {
+                  label: 'Existing debt',
+                  value: formatMicros(state.debtMicros),
+                  total: true,
+                },
+              ]}
+            />
+          )}
+          {action.kind === 'borrow' && (
+            <>
+              <Breakdown
+                rows={[
+                  {
+                    label: 'Principal drawn',
+                    value: formatMicros(amountMicros),
+                    strong: true,
+                  },
+                  {
+                    label: 'Origination fee',
+                    hint: 'One-time 0.5% of principal',
+                    value: formatMicros(fee),
+                  },
+                  {
+                    label: 'Added to demo balance',
+                    value: formatMicros(amountMicros - fee),
+                    strong: true,
+                  },
+                  {
+                    label: 'Total debt after borrowing',
+                    value: formatMicros(debtAfterBorrow),
+                    total: true,
+                  },
+                ]}
+              />
+              <div className="credit-after">
+                <div className="credit-after-head">
+                  <span>Credit used after borrowing</span>
                   <strong>
-                    {formatMicros(SAMPLE_REWARD_MICROS[action.asset.id])}
+                    {credit > 0n
+                      ? `${(Number((debtAfterBorrow * 10_000n) / credit) / 100).toFixed(2)}%`
+                      : '—'}
                   </strong>
                 </div>
-                <div className="breakdown-row">
-                  <span>Illustrative credit policy</span>
-                  <span>Reward × {SAMPLE_CREDIT_EPOCHS} epochs</span>
-                </div>
-                <div className="breakdown-row">
-                  <span>
-                    Portfolio credit after{' '}
-                    {action.kind === 'deposit-collateral'
-                      ? 'deposit'
-                      : 'removal'}
-                  </span>
-                  <strong>
-                    {formatMicros(
-                      BigInt(metrics.totalCreditMicros) +
-                        (action.kind === 'deposit-collateral' ? 1n : -1n) *
-                          BigInt(COLLATERAL_LIMITS[action.asset.id]),
-                    )}
-                  </strong>
-                </div>
-                <div className="breakdown-row total">
-                  <span>Existing debt</span>
-                  <strong>{formatMicros(state.debtMicros)}</strong>
-                </div>
-              </>
-            )}
-            {action.kind === 'borrow' && (
-              <>
-                <div className="breakdown-row">
-                  <span>Principal drawn</span>
-                  <strong>{formatMicros(amountMicros)}</strong>
-                </div>
-                <div className="breakdown-row">
-                  <span>
-                    Origination fee<small>One-time 0.5% of principal</small>
-                  </span>
-                  <span>{formatMicros(fee)}</span>
-                </div>
-                <div className="breakdown-row">
-                  <span>Added to demo balance</span>
-                  <strong>{formatMicros(amountMicros - fee)}</strong>
-                </div>
-                <div className="breakdown-row total">
-                  <span>Total debt after borrowing</span>
-                  <strong>
-                    {formatMicros(BigInt(state.debtMicros) + amountMicros)}
-                  </strong>
-                </div>
-              </>
-            )}
-            {action.kind === 'repay' && (
-              <>
-                <div className="breakdown-row">
-                  <span>Paid from demo balance</span>
-                  <strong>{formatMicros(amountMicros)}</strong>
-                </div>
-                <div className="breakdown-row total">
-                  <span>Debt remaining</span>
-                  <strong>
-                    {formatMicros(BigInt(state.debtMicros) - amountMicros)}
-                  </strong>
-                </div>
-              </>
-            )}
-            {(action.kind === 'supply' || action.kind === 'withdraw') && (
-              <>
-                <div className="breakdown-row">
-                  <span>
-                    Shares {action.kind === 'supply' ? 'received' : 'burned'}
-                  </span>
-                  <strong>{microsToDecimal(quotedShares)}</strong>
-                </div>
-                <div className="breakdown-row">
-                  <span>Demo balance after action</span>
-                  <span>
-                    {formatMicros(
-                      BigInt(state.walletMicros) +
-                        (action.kind === 'supply'
-                          ? -amountMicros
-                          : amountMicros),
-                    )}
-                  </span>
-                </div>
-                <div className="breakdown-row total">
-                  <span>
-                    {action.kind === 'supply'
+                <Meter
+                  value={
+                    credit > 0n
+                      ? Number((debtAfterBorrow * 10_000n) / credit) / 100
+                      : 0
+                  }
+                  label="Credit used after borrowing"
+                  tone={
+                    credit > 0n && debtAfterBorrow * 100n >= credit * 85n
+                      ? 'warning'
+                      : 'accent'
+                  }
+                />
+                {sampleReward > 0n && debtAfterBorrow > 0n && (
+                  <p className="form-hint">
+                    At the example reward of {formatMicros(sampleReward)} per
+                    epoch, this balance would clear in about{' '}
+                    {ceilDiv(debtAfterBorrow, sampleReward).toString()} epochs.
+                    Real rewards vary.
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+          {action.kind === 'repay' && (
+            <Breakdown
+              rows={[
+                {
+                  label: 'Paid from demo balance',
+                  value: formatMicros(amountMicros),
+                  strong: true,
+                },
+                {
+                  label: 'Debt remaining',
+                  value: formatMicros(BigInt(state.debtMicros) - amountMicros),
+                  total: true,
+                },
+              ]}
+            />
+          )}
+          {(action.kind === 'supply' || action.kind === 'withdraw') && (
+            <Breakdown
+              rows={[
+                {
+                  label: `Shares ${action.kind === 'supply' ? 'received' : 'burned'}`,
+                  value: formatShares(quotedShares),
+                  strong: true,
+                },
+                {
+                  label: 'Demo balance after action',
+                  value: formatMicros(
+                    BigInt(state.walletMicros) +
+                      (action.kind === 'supply' ? -amountMicros : amountMicros),
+                  ),
+                },
+                {
+                  label:
+                    action.kind === 'supply'
                       ? 'Supply to vault'
-                      : 'Receive from vault'}
-                  </span>
-                  <strong>{formatMicros(amountMicros)}</strong>
-                </div>
-              </>
-            )}
-            {action.kind === 'epoch' && (
-              <>
-                <div className="breakdown-row">
-                  <span>Debt repaid by net rewards</span>
-                  <strong>{formatMicros(repaidReward)}</strong>
-                </div>
-                <div className="breakdown-row">
-                  <span>Net surplus to demo balance</span>
-                  <strong>{formatMicros(rewardMicros - repaidReward)}</strong>
-                </div>
-                <div className="breakdown-row">
-                  <span>Net lender revenue added to pool</span>
-                  <span>{formatMicros(poolMicros)}</span>
-                </div>
-                <div className="breakdown-row total">
-                  <span>Debt after epoch</span>
-                  <strong>
-                    {formatMicros(BigInt(state.debtMicros) - repaidReward)}
-                  </strong>
-                </div>
-              </>
-            )}
-          </div>
+                      : 'Receive from vault',
+                  value: formatMicros(amountMicros),
+                  total: true,
+                },
+              ]}
+            />
+          )}
+          {action.kind === 'epoch' && (
+            <Breakdown
+              rows={[
+                {
+                  label: 'Debt repaid by net rewards',
+                  value: formatMicros(repaidReward),
+                  strong: true,
+                },
+                {
+                  label: 'Net surplus to demo balance',
+                  value: formatMicros(rewardMicros - repaidReward),
+                  strong: true,
+                },
+                {
+                  label: 'Net lender revenue added to pool',
+                  value: formatMicros(poolMicros),
+                },
+                {
+                  label: 'Debt after epoch',
+                  value: formatMicros(BigInt(state.debtMicros) - repaidReward),
+                  total: true,
+                },
+              ]}
+            />
+          )}
           {action.kind === 'borrow' && (
             <p className="form-hint">
               The fee is deducted from proceeds and rounded down to six USDC
@@ -499,13 +501,10 @@ export default function LendingActionDialog({
           <p className="form-error" id="pooled-action-error" role="alert">
             {error}
           </p>
-          <div className="notice">
-            <Info size={17} aria-hidden="true" />
-            <p>
-              Local simulation only. No wallet, real funds or collateral
-              custody. Example rewards are not guaranteed.
-            </p>
-          </div>
+          <Notice>
+            Local simulation only. No wallet, real funds or collateral custody.
+            Example rewards are not guaranteed.
+          </Notice>
         </div>
         <div className="dialog-footer">
           <button className="button secondary" type="button" onClick={onClose}>
@@ -528,9 +527,6 @@ export default function LendingActionDialog({
             <ArrowRight size={16} aria-hidden="true" />
           </button>
         </div>
-        <p className="sr-only">
-          <Layers3 aria-hidden="true" /> Saved locally to this browser.
-        </p>
       </form>
     </Dialog>
   );
