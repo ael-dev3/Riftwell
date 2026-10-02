@@ -46,6 +46,10 @@ const seedLedger = {
   platformFeesMicros: '0',
   collateralIds: [],
   relayerIds: [],
+  relayerRepayBps: 0,
+  tokenUnits: '20000',
+  lockIncreases: {},
+  mergedInto: {},
   epoch: 0,
   activity: [],
 };
@@ -1038,6 +1042,242 @@ try {
   );
   await audit('vault history ranges');
   await close();
+
+  // ---------- Merge and increase lock, from a fresh preview ----------
+  // Run apart from the main ledger, then restore it for the remaining checks.
+  const savedStorage = await page.evaluate(() =>
+    Object.fromEntries(Object.entries(localStorage)),
+  );
+  // A hash-only navigation keeps the running app, so reload it explicitly.
+  await visit('borrow');
+  await page.evaluate(() => localStorage.clear());
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.locator('.page-body').waitFor();
+  await page.waitForFunction(
+    (key) => localStorage.getItem(key) !== null,
+    lendingStorageKey,
+  );
+  let merging = await ledger();
+  check(
+    'A fresh preview starts with demo KITTEN to lock and no merges',
+    merging.tokenUnits === '20000' &&
+      isDeepStrictEqual(merging.lockIncreases, {}) &&
+      isDeepStrictEqual(merging.mergedInto, {}),
+  );
+  await button('Deposit Demo veKITTEN #012').click();
+  let previous = merging;
+  await apply('Deposit in preview');
+  merging = await changedLedger(
+    'A position is deposited before merging',
+    previous,
+    'deposit-collateral',
+    {},
+    '305000000000',
+  );
+  await button('Merge a wallet position into Demo veKITTEN #012').click();
+  const mergeSource = dialog().getByLabel('Wallet position to merge', {
+    exact: true,
+  });
+  const firstMerge = await dialog().textContent();
+  check(
+    'The merge review starts with the first wallet position',
+    (await mergeSource.inputValue()) === 'rift-041' &&
+      firstMerge.includes('150,000 KITTEN') &&
+      firstMerge.includes('6,000 USDC'),
+  );
+  await mergeSource.selectOption('rift-018');
+  const mergeReview = await dialog().textContent();
+  check(
+    'The merge review shows the combined lock, later unlock and credit',
+    mergeReview.includes('180,000 KITTEN') &&
+      mergeReview.includes('1 Oct 2028') &&
+      mergeReview.includes('180 USDC') &&
+      mergeReview.includes('7,200 USDC'),
+  );
+  await audit('merge review');
+  await capture('merge-review.jpg');
+  previous = merging;
+  await apply('Merge in preview');
+  merging = await changedLedger(
+    'Merging records the merge and moves no USDC',
+    previous,
+    'merge',
+    { debtMicros: '0', walletMicros: '25000000000' },
+    '305000000000',
+  );
+  const collateralBlock = page.locator('[aria-labelledby="collateral-title"]');
+  check(
+    'The merged position joins the collateral and leaves the wallet',
+    isDeepStrictEqual(merging.mergedInto, { 'rift-018': 'rift-012' }) &&
+      isDeepStrictEqual(merging.collateralIds, ['rift-012']) &&
+      sameMoney(merging, previous) &&
+      (await button('Deposit Demo veKITTEN #018').count()) === 0 &&
+      (await collateralBlock.textContent()).includes('180,000 KITTEN') &&
+      (await page.locator('.credit-metrics').textContent()).includes(
+        '7,200 USDC',
+      ),
+  );
+  await button('Increase the lock of Demo veKITTEN #012').click();
+  const lockUnits = dialog().getByLabel('KITTEN to add', { exact: true });
+  check(
+    'A lock increase starts from the whole demo KITTEN balance',
+    (await lockUnits.inputValue()) === '20000',
+  );
+  await lockUnits.fill('25000');
+  await button('Increase lock in preview', dialog()).click();
+  check(
+    'Lock increases above the demo balance are rejected without changes',
+    (await dialog().getByRole('alert').textContent()).includes(
+      'from 1 to 20,000 KITTEN',
+    ) &&
+      (await focused(lockUnits)) &&
+      isDeepStrictEqual(await ledger(), merging),
+  );
+  await lockUnits.fill('5,000');
+  const increaseReview = await dialog().textContent();
+  check(
+    'The lock increase review shows the new lock, credit and balance',
+    increaseReview.includes('185,000 KITTEN') &&
+      increaseReview.includes('7,400 USDC') &&
+      increaseReview.includes('15,000 KITTEN'),
+  );
+  await audit('lock increase review');
+  previous = merging;
+  await apply('Increase lock in preview');
+  merging = await changedLedger(
+    'A lock increase moves demo KITTEN, not USDC',
+    previous,
+    'increase-lock',
+    { tokenUnits: '15000' },
+    '305000000000',
+  );
+  check(
+    'The increased lock raises credit',
+    isDeepStrictEqual(merging.lockIncreases, { 'rift-012': '5000' }) &&
+      sameMoney(merging, previous) &&
+      (await collateralBlock.textContent()).includes('185,000 KITTEN') &&
+      (await page.locator('.credit-metrics').textContent()).includes(
+        '7,400 USDC',
+      ),
+  );
+  await button('Borrow USDC').click();
+  await dialog().getByLabel('Borrow amount', { exact: true }).fill('7000');
+  previous = merging;
+  await apply('Borrow in preview');
+  merging = await changedLedger(
+    'Credit from merged and added units can be borrowed',
+    previous,
+    'borrow',
+    { debtMicros: '7000000000', walletMicros: '31965000000' },
+    '305000000000',
+  );
+  check(
+    'Collateral backing that debt cannot be removed',
+    await button('Remove Demo veKITTEN #012').isDisabled(),
+  );
+  await button('Add Demo veKITTEN #041 to the relayer').click();
+  previous = merging;
+  await apply('Add to relayer in preview');
+  merging = await changedLedger(
+    'A wallet position joins the relayer beside merged collateral',
+    previous,
+    'relayer-deposit',
+    {},
+    '305000000000',
+  );
+  await button('Relayer strategy: Rewards paid out').click();
+  await dialog()
+    .getByLabel('Share that repays debt', { exact: true })
+    .fill('50');
+  const strategyReview = await dialog().textContent();
+  check(
+    'The relayer strategy previews how its rewards are split',
+    strategyReview.includes('50% repays debt') &&
+      strategyReview.includes('25 USDC') &&
+      strategyReview.includes('7,000 USDC'),
+  );
+  await audit('relayer strategy');
+  previous = merging;
+  await apply('Save strategy');
+  await page.waitForFunction(
+    (key) => JSON.parse(localStorage.getItem(key))?.relayerRepayBps === 5000,
+    lendingStorageKey,
+  );
+  merging = await ledger();
+  check(
+    'Saving a relayer strategy changes only its repayment share',
+    merging.activity.length === previous.activity.length &&
+      sameMoney(merging, previous) &&
+      (await visible(button('Relayer strategy: 50% repays debt'))),
+  );
+  await button('Simulate an epoch').click();
+  await dialog()
+    .getByLabel('Net rewards for repayment', { exact: true })
+    .fill('0');
+  check(
+    'The epoch prefills the relayer position’s example rewards',
+    (await dialog()
+      .getByLabel('Net relayer rewards', { exact: true })
+      .inputValue()) === '50',
+  );
+  await dialog().getByLabel('Net lender revenue', { exact: true }).fill('0');
+  const splitReview = await dialog().textContent();
+  check(
+    'The epoch review splits relayer rewards between debt and balance',
+    splitReview.includes('Relayer rewards repaying debt') &&
+      splitReview.includes('6,975 USDC'),
+  );
+  previous = merging;
+  await apply('Apply example rewards');
+  merging = await changedLedger(
+    'Half of the relayer rewards repays debt and half is paid out',
+    previous,
+    'epoch',
+    { debtMicros: '6975000000', walletMicros: '31990000000' },
+    '305050000000',
+  );
+  check(
+    'The epoch records the relayer repayment',
+    merging.activity.at(-1).relayerRewardMicros === '50000000' &&
+      merging.activity.at(-1).relayerRepaidMicros === '25000000',
+  );
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.locator('.page-body').waitFor();
+  check(
+    'Merges, increases and the debt they support survive a reload',
+    isDeepStrictEqual(await ledger(), merging) &&
+      (await page.locator('.credit-metrics').textContent()).includes(
+        '7,400 USDC',
+      ),
+  );
+  await page.getByRole('tab', { name: 'Activity' }).click();
+  const mergeActivity = await page.locator('.activity-table').textContent();
+  check(
+    'Activity lists the merge, the lock increase and relayer repayment',
+    mergeActivity.includes('Positions merged') &&
+      mergeActivity.includes('Demo veKITTEN #018 into Demo veKITTEN #012') &&
+      mergeActivity.includes('Lock increased') &&
+      mergeActivity.includes('+5,000 KITTEN') &&
+      mergeActivity.includes('(25 USDC to debt)'),
+  );
+  await page.getByRole('tab', { name: 'Positions' }).click();
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await fits(`merged collateral at ${width}px`);
+  }
+  await audit('merged collateral mobile');
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.evaluate((saved) => {
+    localStorage.clear();
+    for (const [key, value] of Object.entries(saved))
+      localStorage.setItem(key, value);
+  }, savedStorage);
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.locator('.page-body').waitFor();
+  check(
+    'The main preview is restored after the merge checks',
+    isDeepStrictEqual(await ledger(), state),
+  );
 
   // ---------- Marketplace: buy, buy into relayer and credit, sweep, list ----------
   await nav.getByRole('link', { name: 'Marketplace' }).click();

@@ -1,6 +1,6 @@
 {
   "status": "passed",
-  "checkedAt": "2026-10-02T21:36:33.137Z",
+  "checkedAt": "2026-10-02T22:07:43.765Z",
   "browser": "isolated headless Chrome",
   "suiteVersion": "interface-v2",
   "scope": "Built connected frontend + real HTTP/SQLite, simulated read-only chain and ephemeral EOA providers; no real funds, wallets or transactions",
@@ -212,11 +212,11 @@
     },
     {
       "method": "DELETE",
-      "path": "/api/v1/listings/a137e460-04f7-4a67-bcfd-0d7fb87f1f00"
+      "path": "/api/v1/listings/1cbccd4e-3557-477a-95bf-594ce1f0c8bc"
     },
     {
       "method": "DELETE",
-      "path": "/api/v1/loan-requests/73542646-c508-45f5-883d-c99352afda96"
+      "path": "/api/v1/loan-requests/0196d1e8-09aa-464f-9a26-23c4705f622a"
     },
     {
       "method": "POST",
