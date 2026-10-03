@@ -1,10 +1,10 @@
 {
   "status": "passed",
-  "baseURL": "http://127.0.0.1:5205",
+  "baseURL": "http://127.0.0.1:5193/Riftwell",
   "browser": "isolated headless Chrome",
   "suiteVersion": "interface-v2",
   "scope": "Local preview of Borrow, Earn, Marketplace, Simulator, Statistics, FAQ, brand kit and privacy pages with sample positions, sample sales and synthetic pooled balances; no live liquidity, wallet or settlement",
-  "checkedAt": "2026-10-03T09:06:23.559Z",
+  "checkedAt": "2026-10-03T10:54:58.182Z",
   "checks": [
     "Default route is Borrow",
     "Borrow page heading",
@@ -12,8 +12,9 @@
     "Current section is marked for assistive technology",
     "Skip link is the first stop and becomes visible on focus",
     "Skip link moves focus to the main content",
-    "KittenSwap is the selected market",
-    "KittenSwap is the only available market",
+    "The static build carries a content security policy without inline styles",
+    "KittenSwap, the only market, is a label rather than a one-item menu",
+    "The context bar does not repeat the page name",
     "Supplied KittenSwap logo loads",
     "Selected market accent is applied to the document root",
     "Epoch countdown follows weekly UTC periods",
@@ -22,10 +23,9 @@
     "Balances conserve funds including debt and fees: initial examples",
     "Three starting demo positions wait in the wallet",
     "Borrowing waits for collateral",
-    "Stat details disclose exact example balances",
-    "Stat details paint above the workspace below",
-    "Accessibility: borrow stat details",
-    "Escape closes stat details and returns focus",
+    "Borrow opens on the credit line, with vault liquidity in one line",
+    "Utilization only warns when the vault runs low on cash",
+    "Empty sections take a single row",
     "Accessibility: borrow desktop",
     "No horizontal overflow: borrow 320",
     "No horizontal overflow: borrow 390",
@@ -67,6 +67,8 @@
     "No horizontal overflow: privacy 768",
     "No horizontal overflow: privacy 1440",
     "No horizontal overflow: privacy 1920",
+    "Phone marketplace opens on its listings at 320px",
+    "Phone marketplace opens on its listings at 390px",
     "Accessibility: borrow mobile",
     "Dialog mounts in body: mobile menu",
     "Market accent and Riftwell identity reach dialog: mobile menu",
@@ -86,7 +88,10 @@
     "Select all picks every visible listing",
     "Clearing the selection hides the sweep bar",
     "The sweep slider selects the first listings in view",
-    "Each listing row copies its deep link",
+    "Filtering drops selections that are out of view, so they cannot be swept",
+    "Clearing the filter does not bring back hidden selections",
+    "Rows already named Demo carry no Demo pill or copy button",
+    "A listing’s details copy its deep link",
     "Market stats switch metric and range",
     "Details open as a shareable link",
     "Position lock and reference value shown",
@@ -100,6 +105,8 @@
     "A deep link opens that listing",
     "Details lead into the purchase review",
     "Earn route",
+    "A new page opens at the top",
+    "Earn is one vault card carrying the position and every action",
     "Withdraw is disabled before supplying",
     "Dialog mounts in body: vault supply review",
     "Market accent and Riftwell identity reach dialog: vault supply review",
@@ -247,8 +254,15 @@
     "The epoch records the relayer repayment",
     "Merges, increases and the debt they support survive a reload",
     "Activity lists the merge, the lock increase and relayer repayment",
+    "A change made in another tab appears here without reloading",
+    "A deposit here keeps the other tab’s change",
+    "Other borrowers and suppliers retain their baseline: A deposit here keeps the other tab’s change",
+    "Balances conserve funds including debt and fees: A deposit here keeps the other tab’s change",
+    "Both tabs’ changes are saved and shown in both tabs",
     "No horizontal overflow: merged collateral at 320px",
+    "The context bar keeps the market, countdown and status in view at 320px",
     "No horizontal overflow: merged collateral at 390px",
+    "The context bar keeps the market, countdown and status in view at 390px",
     "Accessibility: merged collateral mobile",
     "The main preview is restored after the merge checks",
     "Purchase review defaults to the wallet when the balance covers the ask",
@@ -373,7 +387,9 @@
     "Market accent and Riftwell identity reach dialog: about this preview",
     "Accessibility: about this preview",
     "What’s new lists the release notes",
+    "Release notes paint above the page below",
     "Accessibility: whats new",
+    "Escape closes the release notes and returns focus",
     "Borrowing controls occupy the first viewport without introductory blocks",
     "Statistics page",
     "Statistics summarize the vault, rewards and market",
@@ -402,19 +418,14 @@
   "externalRequests": [],
   "accessibility": [
     {
-      "view": "borrow stat details",
-      "violations": [],
-      "passes": 31
-    },
-    {
       "view": "borrow desktop",
       "violations": [],
-      "passes": 31
+      "passes": 29
     },
     {
       "view": "borrow mobile",
       "violations": [],
-      "passes": 32
+      "passes": 28
     },
     {
       "view": "mobile menu",
@@ -454,7 +465,7 @@
     {
       "view": "earn desktop",
       "violations": [],
-      "passes": 30
+      "passes": 28
     },
     {
       "view": "collateral deposit mobile",
@@ -464,7 +475,7 @@
     {
       "view": "vote planner",
       "violations": [],
-      "passes": 33
+      "passes": 32
     },
     {
       "view": "pooled borrowing review",
@@ -484,7 +495,7 @@
     {
       "view": "borrow activity",
       "violations": [],
-      "passes": 30
+      "passes": 28
     },
     {
       "view": "relayer review",
@@ -519,7 +530,7 @@
     {
       "view": "merged collateral mobile",
       "violations": [],
-      "passes": 32
+      "passes": 28
     },
     {
       "view": "purchase review",
@@ -554,7 +565,7 @@
     {
       "view": "your listings",
       "violations": [],
-      "passes": 34
+      "passes": 32
     },
     {
       "view": "cancel listing",
@@ -564,7 +575,7 @@
     {
       "view": "otc tab",
       "violations": [],
-      "passes": 34
+      "passes": 30
     },
     {
       "view": "private listing review",
@@ -574,7 +585,7 @@
     {
       "view": "sales history",
       "violations": [],
-      "passes": 36
+      "passes": 32
     },
     {
       "view": "preview account",
@@ -599,12 +610,12 @@
     {
       "view": "borrow light",
       "violations": [],
-      "passes": 31
+      "passes": 29
     },
     {
       "view": "earn light",
       "violations": [],
-      "passes": 28
+      "passes": 26
     },
     {
       "view": "keyboard shortcuts",
@@ -624,7 +635,7 @@
     {
       "view": "faq",
       "violations": [],
-      "passes": 27
+      "passes": 25
     },
     {
       "view": "about this preview",
@@ -634,27 +645,27 @@
     {
       "view": "whats new",
       "violations": [],
-      "passes": 33
+      "passes": 31
     },
     {
       "view": "statistics",
       "violations": [],
-      "passes": 30
+      "passes": 28
     },
     {
       "view": "brand kit",
       "violations": [],
-      "passes": 30
+      "passes": 28
     },
     {
       "view": "privacy",
       "violations": [],
-      "passes": 30
+      "passes": 28
     },
     {
       "view": "not found",
       "violations": [],
-      "passes": 26
+      "passes": 24
     }
   ],
   "screenshots": [

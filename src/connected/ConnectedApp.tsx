@@ -1,5 +1,7 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { CircleUserRound, Info } from 'lucide-react';
+import { withLocalTransition } from '../app/motion';
 import { preloadable, preloadWhenIdle } from '../app/preloadable';
 import { useHashRoute, type Page } from '../app/router';
 import { useShortcuts } from '../app/shortcuts';
@@ -130,7 +132,7 @@ function ConnectedShell() {
     market.id,
   );
 
-  function closeModal() {
+  function closeModal(animate = false) {
     intent.current = null;
     if (signingRef.current) {
       authEpoch.current++;
@@ -142,12 +144,24 @@ function ConnectedShell() {
         setSigning(false);
       }
     }
-    setModal(null);
-    requestAnimationFrame(() => {
+    const restoreFocus = () => {
       if (!document.activeElement || document.activeElement === document.body)
         accountButtonRef.current?.focus();
-    });
+    };
+    // A dialog someone dismisses eases out. Programmatic closes (route, market
+    // and session changes, some from effects) update with the state they
+    // follow, outside any transition.
+    if (animate)
+      withLocalTransition(() => {
+        flushSync(() => setModal(null));
+        restoreFocus();
+      });
+    else {
+      setModal(null);
+      requestAnimationFrame(restoreFocus);
+    }
   }
+  const dismissModal = () => closeModal(true);
 
   useEffect(() => {
     document.documentElement.style.setProperty('--accent', market.accentColor);
@@ -780,7 +794,7 @@ function ConnectedShell() {
           kicker="HYPEREVM · CHAIN 999"
           onClose={() => {
             intent.current = null;
-            closeModal();
+            dismissModal();
           }}
         >
           <div className="dialog-body">
@@ -800,7 +814,7 @@ function ConnectedShell() {
             </p>
           </div>
           <div className="dialog-footer">
-            <button className="button secondary" onClick={closeModal}>
+            <button className="button secondary" onClick={dismissModal}>
               Cancel
             </button>
             <button
@@ -814,16 +828,16 @@ function ConnectedShell() {
         </Dialog>
       )}
       {modal?.type === 'review' && (
-        <ListingReview listing={modal.listing} onClose={closeModal} />
+        <ListingReview listing={modal.listing} onClose={dismissModal} />
       )}
       {modal?.type === 'sweep' && (
-        <SweepReview listings={modal.listings} onClose={closeModal} />
+        <SweepReview listings={modal.listings} onClose={dismissModal} />
       )}
       {modal?.type === 'picker' && session && (
         <ListingPicker
           account={account}
           loading={accountBusy}
-          onClose={closeModal}
+          onClose={dismissModal}
           onChoose={(position) =>
             setModal({ type: 'form', kind: 'listing', position })
           }
@@ -837,20 +851,20 @@ function ConnectedShell() {
           listing={modal.listing}
           position={modal.listing.position}
           session={session}
-          onClose={closeModal}
+          onClose={dismissModal}
           onSaved={saved}
           onError={recordError}
         />
       )}
       {modal?.type === 'collateral' && (
-        <CollateralReview position={modal.position} onClose={closeModal} />
+        <CollateralReview position={modal.position} onClose={dismissModal} />
       )}
       {modal?.type === 'form' && session && (
         <RecordForm
           key={modal.position?.id ?? 'new'}
           position={modal.position}
           session={session}
-          onClose={closeModal}
+          onClose={dismissModal}
           onSaved={saved}
           onError={recordError}
         />
@@ -859,7 +873,7 @@ function ConnectedShell() {
         <ConnectedAccount
           account={account}
           loading={accountBusy}
-          onClose={closeModal}
+          onClose={dismissModal}
           onRefresh={() => void refreshAccount()}
           onMore={() => void refreshAccount(true)}
           onList={(position) =>
@@ -886,15 +900,17 @@ function ConnectedShell() {
       )}
       {modal?.type === 'vault' && (
         <Suspense fallback={null}>
-          <VaultDetails market={market} lending={null} onClose={closeModal} />
+          <VaultDetails market={market} lending={null} onClose={dismissModal} />
         </Suspense>
       )}
-      {modal?.type === 'shortcuts' && <ShortcutsDialog onClose={closeModal} />}
+      {modal?.type === 'shortcuts' && (
+        <ShortcutsDialog onClose={dismissModal} />
+      )}
       {modal?.type === 'about' && (
         <Dialog
           title="Service status"
           kicker="CONNECTED MODE"
-          onClose={closeModal}
+          onClose={dismissModal}
         >
           <div className="dialog-body">
             <dl className="facts">
@@ -929,7 +945,7 @@ function ConnectedShell() {
             </Notice>
           </div>
           <div className="dialog-footer">
-            <button className="button primary" onClick={closeModal}>
+            <button className="button primary" onClick={dismissModal}>
               Done
             </button>
           </div>

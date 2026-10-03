@@ -28,6 +28,16 @@ export function applyTheme(theme: Theme, persist = true) {
   listeners.forEach((listener) => listener());
 }
 
+// Keep every open tab on the theme chosen most recently in any of them.
+if (typeof window !== 'undefined')
+  window.addEventListener('storage', (event) => {
+    if (
+      event.key === THEME_STORAGE_KEY &&
+      (event.newValue === 'light' || event.newValue === 'dark')
+    )
+      applyTheme(event.newValue, false);
+  });
+
 function subscribe(listener: () => void) {
   listeners.add(listener);
   return () => listeners.delete(listener);

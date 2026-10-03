@@ -73,7 +73,6 @@ export default function BrandPage({ market }: { market: Market }) {
   return (
     <>
       <PageHead
-        eyebrow="BRAND"
         title="Brand kit"
         lede="The Riftwell mark, colors and type, for articles, integrations and community content."
       />

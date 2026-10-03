@@ -1,4 +1,3 @@
-import { Notice } from '../components/ui/Bits';
 import { PageHead } from '../components/page';
 import { AreaChart, BarChart } from '../components/ui/Charts';
 import { Meter } from '../components/ui/Meter';
@@ -77,12 +76,11 @@ export default function StatsPage({
   return (
     <>
       <PageHead
-        eyebrow={`${market.name} · ${market.chain}`}
         title="Statistics"
         lede={
           model.mode === 'preview'
-            ? 'Vault, reward and market totals from the sample market and the simulation in this browser.'
-            : 'Market totals from the listings this service has loaded. Vault figures appear after lending launches.'
+            ? 'Vault, reward and market totals from the sample market and the simulation in this browser, not on-chain metrics.'
+            : 'Market totals from the off-chain listings this service has loaded. Vault and reward figures appear after lending launches.'
         }
       />
       <section className="stat-grid four" aria-label="Totals">
@@ -243,11 +241,6 @@ export default function StatsPage({
           )}
         </section>
       </div>
-      <Notice>
-        {model.mode === 'preview'
-          ? 'Preview statistics use sample data and your local simulation. They are not on-chain metrics.'
-          : 'Lending has not launched, so vault and reward totals are not shown. Listings are off-chain records.'}
-      </Notice>
     </>
   );
 }

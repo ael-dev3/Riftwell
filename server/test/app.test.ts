@@ -1575,6 +1575,15 @@ test('same-origin frontend serving has CSP, immutable hashed assets, index reval
       "frame-ancestors 'none'",
     ),
   );
+  // Styles are applied through the DOM, so no inline styles or scripts run.
+  assert.ok(
+    header(index.headers['content-security-policy']).includes(
+      "style-src 'self';",
+    ) &&
+      !header(index.headers['content-security-policy']).includes(
+        "'unsafe-inline'",
+      ),
+  );
   const revalidated = await f.app.inject({
     method: 'GET',
     url: '/',

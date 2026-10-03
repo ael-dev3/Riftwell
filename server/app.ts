@@ -231,7 +231,7 @@ export async function createApp({
     reply.header('cross-origin-opener-policy', 'same-origin-allow-popups');
     reply.header(
       'content-security-policy',
-      `default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'${config.production ? '; upgrade-insecure-requests' : ''}`,
+      `default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'${config.production ? '; upgrade-insecure-requests' : ''}`,
     );
     if (config.production)
       reply.header('strict-transport-security', 'max-age=31536000');

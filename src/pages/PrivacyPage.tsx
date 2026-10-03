@@ -20,7 +20,6 @@ export default function PrivacyPage({
   return (
     <>
       <PageHead
-        eyebrow="PRIVACY"
         title="What Riftwell stores"
         lede="Where your data lives in each version of the app. This page describes the open-source software; a hosted service may publish its own policies."
       />

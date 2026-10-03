@@ -28,6 +28,13 @@ describe('connected exact amounts', () => {
     expect(parseAmount('1.000001')).toBe('1000001');
     expect(parseApr('12.34')).toBe(1234);
   });
+  it('forgives surrounding spaces and bare decimal points in listing prices', () => {
+    expect(parseAmount(' 250 ')).toBe('250000000');
+    expect(parseAmount('.5')).toBe('500000');
+    expect(parseAmount('5.')).toBe('5000000');
+    for (const input of ['1,5', '. 5', '.'])
+      expect(parseAmount(input)).toBeNull();
+  });
 });
 
 describe('lending offer consent', () => {

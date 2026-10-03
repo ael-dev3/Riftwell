@@ -5,7 +5,6 @@ import {
   CircleHelp,
   HandCoins,
 } from 'lucide-react';
-import { Notice } from '../components/ui/Bits';
 import { ActivityTable, EmptyState, PageHead } from '../components/page';
 import { Sparkline } from '../components/ui/Charts';
 import CountUp from '../components/ui/CountUp';
@@ -15,7 +14,7 @@ import { formatMicros, roundAmount } from '../domain';
 import { getLendingMetrics, type LendingState } from '../lending';
 import type { Market } from '../markets';
 import { VAULT_KINDS, type LendingAction } from '../preview/actions';
-import { formatShares } from '../format';
+import { formatShares, usd } from '../format';
 
 type Props = {
   market: Market;
@@ -45,6 +44,8 @@ export function simulatedYield(lending: LendingState) {
     series: epochs.map((entry) => roundAmount(BigInt(entry.poolYieldMicros))),
   };
 }
+
+const money = (micros: bigint) => `${usd(roundAmount(micros))} USDC`;
 
 export default function EarnPage({
   market,
@@ -76,22 +77,8 @@ export default function EarnPage({
             $
           </span>
           <div className="vault-name">
-            <h2 id="vault-title">USDC Vault</h2>
-            <p>
-              <span className="badge-inline">
-                <img
-                  src={`${import.meta.env.BASE_URL}${market.logoPath}`}
-                  alt=""
-                  width="14"
-                  height="14"
-                />
-                {market.name}
-              </span>
-              <span className="badge-inline">
-                <span className="chain-dot" aria-hidden="true" />
-                {market.chain}
-              </span>
-            </p>
+            <h2 id="vault-title">USDC vault</h2>
+            <p>Pooled USDC lent against {market.positionSymbol} collateral</p>
           </div>
           <div className="vault-yield">
             {yieldInfo ? (
@@ -119,14 +106,22 @@ export default function EarnPage({
           <div>
             <dt>Vault assets</dt>
             <dd>
-              {formatMicros(assets)}
+              <CountUp
+                value={roundAmount(assets)}
+                format={(value) => `${usd(value)} USDC`}
+                exact={formatMicros(assets)}
+              />
               <small>Idle USDC plus loans</small>
             </dd>
           </div>
           <div>
             <dt>Active loans</dt>
             <dd>
-              {formatMicros(outstanding)}
+              <CountUp
+                value={roundAmount(outstanding)}
+                format={(value) => `${usd(value)} USDC`}
+                exact={formatMicros(outstanding)}
+              />
               <small>Includes example borrowers</small>
             </dd>
           </div>
@@ -140,16 +135,28 @@ export default function EarnPage({
                 tone={utilization >= 80 ? 'warning' : 'accent'}
                 size="thin"
               />
-              <small>{formatMicros(cash)} available</small>
+              <small>{money(cash)} available</small>
             </dd>
           </div>
           <div>
             <dt>Your position</dt>
-            <dd>
-              {shares > 0n ? formatMicros(supplied) : '—'}
+            <dd className={shares > 0n ? 'accent-text' : undefined}>
+              {shares > 0n ? (
+                <CountUp
+                  value={roundAmount(supplied)}
+                  format={(value) => `${usd(value)} USDC`}
+                  exact={formatMicros(supplied)}
+                />
+              ) : (
+                '—'
+              )}
               <small>
                 {shares > 0n
-                  ? `${formatShares(shares)} shares`
+                  ? `${formatShares(shares)} shares · ${
+                      withdrawable === supplied
+                        ? 'all withdrawable now'
+                        : `${formatMicros(withdrawable)} withdrawable now`
+                    }`
                   : 'No shares yet'}
               </small>
             </dd>
@@ -172,6 +179,13 @@ export default function EarnPage({
           <span className="vault-foot-actions">
             <button
               type="button"
+              className="button ghost"
+              onClick={() => onAction({ kind: 'epoch' })}
+            >
+              <Clock3 size={16} aria-hidden="true" /> Simulate an epoch
+            </button>
+            <button
+              type="button"
               className="button secondary"
               disabled={withdrawable === 0n}
               onClick={() => onAction({ kind: 'withdraw' })}
@@ -190,54 +204,9 @@ export default function EarnPage({
         </footer>
       </section>
 
-      <div className="earn-grid">
-        <section className="panel" aria-labelledby="supply-position-title">
-          <div className="block-head">
-            <h2 id="supply-position-title">Your position</h2>
-            <span className="text-muted">Share value includes loans</span>
-          </div>
-          <dl className="mini-stats two">
-            <div>
-              <dt>Supplied value</dt>
-              <dd>{formatMicros(supplied)}</dd>
-            </div>
-            <div>
-              <dt>Vault shares</dt>
-              <dd>{formatShares(shares)}</dd>
-            </div>
-            <div>
-              <dt>Withdrawable now</dt>
-              <dd className="accent-text">{formatMicros(withdrawable)}</dd>
-            </div>
-            <div>
-              <dt>Demo wallet</dt>
-              <dd>{formatMicros(wallet)}</dd>
-            </div>
-          </dl>
-          <Notice>Withdrawals depend on available liquidity.</Notice>
-        </section>
-        <section className="panel" aria-labelledby="revenue-title">
-          <div className="block-head">
-            <h2 id="revenue-title">Variable rewards</h2>
-            <span className="text-muted">Scenario you choose</span>
-          </div>
-          <p className="panel-text">
-            Choose example revenue for the next epoch.
-          </p>
-          <button
-            type="button"
-            className="button secondary"
-            onClick={() => onAction({ kind: 'epoch' })}
-          >
-            <Clock3 size={16} aria-hidden="true" /> Simulate an epoch
-          </button>
-        </section>
-      </div>
-
       <section className="panel" aria-labelledby="vault-activity-title">
         <div className="block-head">
           <h2 id="vault-activity-title">Vault activity</h2>
-          <span className="text-muted">Local simulation</span>
         </div>
         <ActivityTable
           entries={vaultActivity}
@@ -253,8 +222,8 @@ export default function EarnPage({
             { id: 'epochs', label: 'Epochs', kinds: ['epoch'] },
           ]}
           empty={
-            <EmptyState icon={HandCoins} title="No vault activity yet." compact>
-              Supplies, withdrawals and simulated revenue appear here.
+            <EmptyState icon={HandCoins} title="No vault activity yet." inline>
+              Supplies, withdrawals and simulated lender revenue appear here.
             </EmptyState>
           }
         />

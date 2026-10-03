@@ -6,8 +6,24 @@ type Props = {
   onChange: (market: Market) => void;
 };
 
-/** Native select for robust keyboard and screen-reader support. */
+/**
+ * Native select for robust keyboard and screen-reader support. With a single
+ * market there is nothing to choose, so it renders as a plain label.
+ */
 export default function MarketSelector({ market, onChange }: Props) {
+  if (MARKETS.length < 2)
+    return (
+      <span className="market-selector static">
+        <img
+          className="market-logo"
+          src={`${import.meta.env.BASE_URL}${market.logoPath}`}
+          alt=""
+          width={20}
+          height={20}
+        />
+        <span className="market-name">{market.name}</span>
+      </span>
+    );
   return (
     <label className="market-selector">
       <img

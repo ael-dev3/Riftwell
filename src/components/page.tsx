@@ -1,4 +1,4 @@
-import { ArrowRight, type LucideIcon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { assetById } from '../data';
 import { formatBalance, formatDate, formatMicros } from '../domain';
@@ -7,39 +7,29 @@ import type { LendingActivity } from '../lending';
 import { activityLabel } from '../preview/actions';
 
 export function PageHead({
-  eyebrow,
   title,
   lede,
   actions,
   titleId,
   compact = false,
 }: {
-  eyebrow?: string;
   title: ReactNode;
   lede?: ReactNode;
   actions?: ReactNode;
   titleId?: string;
   compact?: boolean;
 }) {
-  if (compact) {
+  // Workspaces open straight on their controls; the heading stays for
+  // assistive technology.
+  if (compact)
     return (
-      <>
-        <h1 className="sr-only" id={titleId}>
-          {title}
-        </h1>
-        {actions && <div className="workspace-actions">{actions}</div>}
-      </>
+      <h1 className="sr-only" id={titleId}>
+        {title}
+      </h1>
     );
-  }
   return (
     <div className="page-head">
       <div>
-        {eyebrow && (
-          <p className="eyebrow">
-            <span className="eyebrow-dot" aria-hidden="true" />
-            {eyebrow}
-          </p>
-        )}
         <h1 className="page-title" id={titleId}>
           {title}
         </h1>
@@ -56,15 +46,20 @@ export function EmptyState({
   children,
   action,
   compact = false,
+  inline = false,
 }: {
   icon: LucideIcon;
   title: string;
   children: ReactNode;
   action?: ReactNode;
   compact?: boolean;
+  /** A single row, for empty sections above the content people act on. */
+  inline?: boolean;
 }) {
   return (
-    <div className={`empty${compact ? ' compact' : ''}`}>
+    <div
+      className={`empty${compact ? ' compact' : ''}${inline ? ' inline' : ''}`}
+    >
       <span className="empty-icon" aria-hidden="true">
         <Icon size={20} />
       </span>
@@ -72,35 +67,6 @@ export function EmptyState({
       <p>{children}</p>
       {action}
     </div>
-  );
-}
-
-export function PromoBanner({
-  icon: Icon,
-  children,
-  href,
-  onClick,
-}: {
-  icon: LucideIcon;
-  children: ReactNode;
-  href: string;
-  onClick: () => void;
-}) {
-  return (
-    <a
-      className="promo-banner"
-      href={href}
-      onClick={(event) => {
-        event.preventDefault();
-        onClick();
-      }}
-    >
-      <span className="promo-icon" aria-hidden="true">
-        <Icon size={18} />
-      </span>
-      <span className="promo-text">{children}</span>
-      <ArrowRight size={18} aria-hidden="true" className="promo-arrow" />
-    </a>
   );
 }
 

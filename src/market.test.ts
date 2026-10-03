@@ -64,7 +64,7 @@ describe('sample market history', () => {
     expect(receiptSales([{ ...receipt, assetId: 'missing' }])).toEqual([]);
     const swept = receiptSales([receipt, { ...receipt, id: 'r2' }]);
     expect(swept.every((item) => item.swept)).toBe(true);
-    const all = marketSales([receipt]);
+    const all = marketSales([receipt], 0);
     expect(all.at(0)).toMatchObject({ source: 'yours' });
     expect(all).toHaveLength(49);
   });

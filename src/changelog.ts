@@ -13,6 +13,15 @@ const DOCS = 'https://github.com/ael-dev3/Riftwell/blob/main/docs';
 
 export const RELEASE_NOTES: readonly ReleaseNote[] = [
   {
+    id: 'production-audit',
+    date: '2026-10-03',
+    kind: 'Update',
+    title: 'A calmer, safer interface',
+    summary:
+      'Fewer repeated panels, smoother motion, tabs that stay in sync and a stricter content security policy.',
+    href: `${DOCS}/AUDIT.md`,
+  },
+  {
     id: 'interface-redesign',
     date: '2026-10-02',
     kind: 'Update',

@@ -13,6 +13,8 @@ import {
   formatDate,
   formatMicros,
   microsToDecimal,
+  normalizeAmountInput,
+  parseTokenUnits,
   parseUSDCMicros,
   type Asset,
 } from '../domain';
@@ -61,11 +63,6 @@ const titles: Readonly<Record<LendingAction['kind'], string>> = {
 };
 const min = (a: bigint, b: bigint) => (a < b ? a : b);
 const ceilDiv = (a: bigint, b: bigint) => (a + b - 1n) / b;
-/** Whole token units; separators are allowed while typing. */
-const parseUnits = (value: string) => {
-  const plain = value.replace(/[\s,]/g, '');
-  return /^[1-9][0-9]{0,8}$/.test(plain) ? BigInt(plain) : null;
-};
 
 export default function LendingActionDialog({
   action,
@@ -119,15 +116,15 @@ export default function LendingActionDialog({
   const poolYieldRef = useRef<HTMLInputElement>(null);
   const unitsRef = useRef<HTMLInputElement>(null);
   const source = wallet.find((asset) => asset.id === sourceId);
-  const unitsParsed = parseUnits(units);
+  const unitsParsed = parseTokenUnits(units);
   const unitsValid =
     unitsParsed !== null && unitsParsed <= tokens ? unitsParsed : 0n;
-  const parsed = parseUSDCMicros(amount);
+  const parsed = parseUSDCMicros(normalizeAmountInput(amount));
   const amountMicros = parsed !== null && parsed <= maximum ? parsed : 0n;
   const fee = (amountMicros * 5n) / 1000n;
-  const rewardParsed = parseUSDCMicros(reward);
-  const poolParsed = parseUSDCMicros(poolYield);
-  const relayerParsed = parseUSDCMicros(relayerReward);
+  const rewardParsed = parseUSDCMicros(normalizeAmountInput(reward));
+  const poolParsed = parseUSDCMicros(normalizeAmountInput(poolYield));
+  const relayerParsed = parseUSDCMicros(normalizeAmountInput(relayerReward));
   const relayerMicros =
     state.relayerIds.length &&
     relayerParsed !== null &&
@@ -195,7 +192,7 @@ export default function LendingActionDialog({
       if (parsed === null || parsed <= 0n || parsed > maximum) {
         setError(
           parsed === null
-            ? 'Use a plain decimal amount with up to six decimal places.'
+            ? 'Enter a number such as 250 or 250.50, with up to six decimal places and no commas.'
             : `Enter an amount above zero and up to ${formatMicros(maximum)}.`,
         );
         amountRef.current?.focus();

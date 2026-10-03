@@ -7,6 +7,7 @@ import {
   rewardMicros,
 } from './data';
 import type { Asset } from './domain';
+import { sampleDate } from './sample-time';
 
 const asset = (id: string): Asset => {
   const found = assetById(id);
@@ -32,7 +33,7 @@ describe('sample positions after merges and lock increases', () => {
       underlyingBalance: 155_000,
       referenceValue: 15_500,
       price: 12_865,
-      unlockDate: '2028-10-01',
+      unlockDate: sampleDate('2028-10-01'),
       category: 'Max lock',
     });
     expect(view.description).toContain('155,000 sample KITTEN');
@@ -43,7 +44,7 @@ describe('sample positions after merges and lock increases', () => {
     });
     expect(later).toMatchObject({
       underlyingBalance: 130_000,
-      unlockDate: '2028-10-01',
+      unlockDate: sampleDate('2028-10-01'),
       lockTerm: '24 months',
       category: 'Max lock',
     });

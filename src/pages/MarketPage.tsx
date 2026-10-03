@@ -6,8 +6,6 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  Copy,
-  History,
   Lock,
   Search,
   ShoppingBag,
@@ -15,9 +13,13 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import { useMemo, useState, type CSSProperties, type RefObject } from 'react';
-import { assetLink, copyText } from '../app/links';
-import { useToast } from '../app/toast';
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type RefObject,
+} from 'react';
 import { EmptyState, PageHead } from '../components/page';
 import { AreaChart, BarChart } from '../components/ui/Charts';
 import { TabPanel, Tabs } from '../components/ui/Tabs';
@@ -206,7 +208,6 @@ export default function MarketPage({
   onSell,
   onCancel,
 }: Props) {
-  const toast = useToast();
   const [tab, setTab] = useState<Tab>('listings');
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<string>('All');
@@ -250,14 +251,23 @@ export default function MarketPage({
     [pool, query, category, sort, hideSmall],
   );
   const selectable = rows.filter((asset) => !own.has(asset.id));
-  const selection = holdings.market.filter((asset) => selected.has(asset.id));
+  // Only listings in view can be swept; filtering drops the rest.
+  const selection = selectable.filter((asset) => selected.has(asset.id));
+  useEffect(() => {
+    setSelected((current) => {
+      const visible = new Set(selectable.map((asset) => asset.id));
+      return [...current].every((id) => visible.has(id))
+        ? current
+        : new Set([...current].filter((id) => visible.has(id)));
+    });
+    // selectable is derived from rows and own on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, own]);
   const selectionTotal = selection.reduce(
     (sum, asset) => sum + priceMicros(asset.price),
     0n,
   );
-  const sweepCount = selectable.filter((asset) =>
-    selected.has(asset.id),
-  ).length;
+  const sweepCount = selection.length;
   const marketDiscounts = holdings.market.map((asset) => discountBps(asset));
   const floor = holdings.market.reduce<Asset | null>(
     (lowest, asset) => (!lowest || asset.price < lowest.price ? asset : lowest),
@@ -274,7 +284,12 @@ export default function MarketPage({
   const summary = summarize(inRange);
   const series = marketSeries(sales, range, metric, now);
   const pages = Math.max(1, Math.ceil(sales.length / PAGE_SIZE));
-  const pageSales = sales.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  // A reset can shorten the history while a later page is open.
+  const currentPage = Math.min(page, pages - 1);
+  const pageSales = sales.slice(
+    currentPage * PAGE_SIZE,
+    (currentPage + 1) * PAGE_SIZE,
+  );
   const discountBuckets = [
     ['Under 10%', 0, 1000],
     ['10–15%', 1000, 1500],
@@ -305,16 +320,6 @@ export default function MarketPage({
     setSelected(new Set(selectable.slice(0, count).map((asset) => asset.id)));
   }
 
-  async function copy(asset: Asset) {
-    const copied = await copyText(assetLink(asset));
-    toast(
-      copied
-        ? `Link to ${asset.name} copied.`
-        : 'Copy failed. Open the listing to share its link.',
-      copied ? 'info' : 'warning',
-    );
-  }
-
   const resetFilters = () => {
     setQuery('');
     setCategory('All');
@@ -338,9 +343,7 @@ export default function MarketPage({
           />
           <div>
             <h2>{market.positionSymbol}</h2>
-            <p>
-              {market.name} · {market.chain} · sample listings
-            </p>
+            <p>Sample listings</p>
           </div>
         </div>
         <dl className="collection-stats">
@@ -378,9 +381,11 @@ export default function MarketPage({
           <button
             type="button"
             className="button primary"
+            aria-label="List a position"
             onClick={() => onSell()}
           >
-            <Tag size={16} aria-hidden="true" /> List a position
+            <Tag size={16} aria-hidden="true" /> List
+            <span className="label-long"> a position</span>
           </button>
         </div>
       </section>
@@ -608,10 +613,8 @@ export default function MarketPage({
                                   </strong>
                                   <small>
                                     {asset.category}
-                                    {mine ? (
+                                    {mine && (
                                       <span className="pill accent">Yours</span>
-                                    ) : (
-                                      <span className="pill muted">Demo</span>
                                     )}
                                   </small>
                                 </span>
@@ -657,15 +660,6 @@ export default function MarketPage({
                             </td>
                             <td className="numeric action-cell">
                               <span className="row-actions">
-                                <button
-                                  type="button"
-                                  className="icon-button ghost small"
-                                  aria-label={`Copy link to ${asset.name}`}
-                                  title="Copy link"
-                                  onClick={() => void copy(asset)}
-                                >
-                                  <Copy size={15} aria-hidden="true" />
-                                </button>
                                 {mine ? (
                                   <button
                                     type="button"
@@ -717,6 +711,12 @@ export default function MarketPage({
                     ? 'Try another search or change the lock filter.'
                     : 'Every sample listing is in your preview account. Reset the preview to explore again.'}
                 </EmptyState>
+              )}
+              {rows.length > 0 && (
+                <p className="table-note">
+                  Discount compares each ask with a sample reference value of
+                  0.1 USDC per {market.tokenSymbol}.
+                </p>
               )}
               {selection.length > 0 && (
                 <div
@@ -870,8 +870,7 @@ export default function MarketPage({
           {tab === 'history' && (
             <TabPanel idBase="market" id="history">
               <p className="panel-text history-note">
-                Sample sales with fictional positions and prices, plus purchases
-                saved in this browser. No chain data is shown.
+                Sample sales and your preview purchases, newest first.
               </p>
               <div className="table-scroll">
                 <table className="data-table sales-table">
@@ -961,14 +960,14 @@ export default function MarketPage({
               </div>
               <nav className="pager" aria-label="Sales pages">
                 <span>
-                  Page {page + 1} of {pages}
+                  Page {currentPage + 1} of {pages}
                 </span>
                 <span className="pager-buttons">
                   <button
                     type="button"
                     className="icon-button ghost small"
                     aria-label="First page"
-                    disabled={page === 0}
+                    disabled={currentPage === 0}
                     onClick={() => setPage(0)}
                   >
                     <ChevronsLeft size={16} aria-hidden="true" />
@@ -977,8 +976,8 @@ export default function MarketPage({
                     type="button"
                     className="icon-button ghost small"
                     aria-label="Previous page"
-                    disabled={page === 0}
-                    onClick={() => setPage(page - 1)}
+                    disabled={currentPage === 0}
+                    onClick={() => setPage(currentPage - 1)}
                   >
                     <ChevronLeft size={16} aria-hidden="true" />
                   </button>
@@ -986,8 +985,8 @@ export default function MarketPage({
                     type="button"
                     className="icon-button ghost small"
                     aria-label="Next page"
-                    disabled={page >= pages - 1}
-                    onClick={() => setPage(page + 1)}
+                    disabled={currentPage >= pages - 1}
+                    onClick={() => setPage(currentPage + 1)}
                   >
                     <ChevronRight size={16} aria-hidden="true" />
                   </button>
@@ -995,7 +994,7 @@ export default function MarketPage({
                     type="button"
                     className="icon-button ghost small"
                     aria-label="Last page"
-                    disabled={page >= pages - 1}
+                    disabled={currentPage >= pages - 1}
                     onClick={() => setPage(pages - 1)}
                   >
                     <ChevronsRight size={16} aria-hidden="true" />
@@ -1129,58 +1128,8 @@ export default function MarketPage({
               other sellers.
             </p>
           </section>
-          <section className="panel" aria-labelledby="purchases-title">
-            <div className="block-head">
-              <h2 id="purchases-title">Your purchases</h2>
-              <span className="text-muted">This browser</span>
-            </div>
-            {receipts.length ? (
-              <ul className="history-feed">
-                {receipts
-                  .slice(-5)
-                  .reverse()
-                  .map((receipt) => {
-                    const asset = assetById(receipt.assetId);
-                    return (
-                      <li key={receipt.id}>
-                        <span>
-                          <strong>{asset?.name ?? 'Sample position'}</strong>
-                          <small>
-                            {formatDate(receipt.createdAt)} ·{' '}
-                            {receipt.destination === 'collateral'
-                              ? 'into credit line'
-                              : receipt.destination === 'relayer'
-                                ? 'into relayer'
-                                : 'to wallet'}
-                          </small>
-                        </span>
-                        <span className="numeric">
-                          {formatAmount(receipt.price)}
-                          <small>
-                            {asset
-                              ? `${formatBps(discountBps({ ...asset, price: receipt.price }))} off`
-                              : ''}
-                          </small>
-                        </span>
-                      </li>
-                    );
-                  })}
-              </ul>
-            ) : (
-              <p className="panel-text">
-                Buy a position to see it here. Purchases spend your demo USDC
-                and never leave this browser.
-              </p>
-            )}
-          </section>
         </aside>
       </div>
-      <p className="page-note">
-        <History size={14} aria-hidden="true" /> Demo {market.positionSymbol}{' '}
-        positions, sample {market.tokenSymbol} units and sample sales. Discounts
-        compare each ask with a fixed example reference value; no chain data or
-        yield is shown.
-      </p>
     </>
   );
 }

@@ -1,4 +1,4 @@
-import { parseUSDCMicros } from '../domain';
+import { normalizeAmountInput, parseUSDCMicros } from '../domain';
 
 /** Keep server integer amounts exact, including values beyond Number's range. */
 export function decimalAmount(raw: string, decimals: number): string {
@@ -33,7 +33,7 @@ export const dateLabel = (value: string | number) => {
 };
 
 export function parseAmount(value: string): string | null {
-  const micros = parseUSDCMicros(value);
+  const micros = parseUSDCMicros(normalizeAmountInput(value));
   return micros !== null && micros > 0n ? micros.toString() : null;
 }
 

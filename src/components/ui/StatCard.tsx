@@ -1,9 +1,5 @@
-import { Info } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import CountUp from './CountUp';
-import Popover from './Popover';
-
-export type StatDetail = { label: string; value: string; hint?: string };
 
 type Props = {
   label: string;
@@ -15,12 +11,6 @@ type Props = {
   unit?: string | undefined;
   sub?: ReactNode;
   tone?: 'accent' | 'violet' | 'sky' | 'amber';
-  details?: {
-    title: string;
-    description?: string;
-    rows: readonly StatDetail[];
-    note?: string;
-  };
   index?: number;
 };
 
@@ -32,7 +22,6 @@ export default function StatCard({
   unit,
   sub,
   tone = 'accent',
-  details,
   index = 0,
 }: Props) {
   return (
@@ -45,35 +34,6 @@ export default function StatCard({
           <span className="stat-dot" aria-hidden="true" />
           {label}
         </h3>
-        {details && (
-          <Popover
-            trigger={
-              <>
-                Details <Info size={13} aria-hidden="true" />
-              </>
-            }
-            triggerLabel={`${label} details`}
-            title={details.title}
-            className="stat-popover"
-            triggerClassName="chip-button"
-          >
-            {details.description && (
-              <p className="popover-text">{details.description}</p>
-            )}
-            <dl className="popover-rows">
-              {details.rows.map((row) => (
-                <div key={row.label}>
-                  <dt>
-                    {row.label}
-                    {row.hint && <small>{row.hint}</small>}
-                  </dt>
-                  <dd>{row.value}</dd>
-                </div>
-              ))}
-            </dl>
-            {details.note && <p className="popover-note">{details.note}</p>}
-          </Popover>
-        )}
       </div>
       <p className="stat-value">
         {numeric !== undefined && format ? (
