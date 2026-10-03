@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { flushSync } from 'react-dom';
 import Dialog from '../components/Dialog';
 import { Breakdown, Notice } from '../components/ui/Bits';
 import { api, type Listing, type Position, type Session } from './api';
@@ -156,8 +157,11 @@ export function RecordForm({
     )
       validation = 'Enter a valid buyer address different from your own.';
     if (validation) {
-      setError(validation);
-      requestAnimationFrame(() => errorRef.current?.focus());
+      // Show the error and move focus in this same task. A deferred focus
+      // could take focus from a field someone had already started editing,
+      // and a half-edited buyer address would then save the listing public.
+      flushSync(() => setError(validation));
+      errorRef.current?.focus();
       return;
     }
     const expiresAt = new Date(
