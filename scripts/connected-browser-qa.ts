@@ -2,7 +2,13 @@ import assert from 'node:assert/strict';
 import { isDeepStrictEqual } from 'node:util';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
-import { chromium, type Browser, type Page, type Locator } from 'playwright';
+import {
+  chromium,
+  type Browser,
+  type Page,
+  type Locator,
+  type APIResponse,
+} from 'playwright';
 import type { HDNodeWallet } from 'ethers';
 import {
   readListing,
@@ -124,6 +130,57 @@ const apiResponse = (page: Page, method: string, path: string) =>
       new URL(response.url()).origin === base &&
       new URL(response.url()).pathname === path,
   );
+// Process a real fixture mutation, but hold its browser response so a successor
+// dialog/session can become active before the original completion is delivered.
+async function holdMutation(
+  page: Page,
+  method: string,
+  path: string,
+  withoutSession = false,
+) {
+  let responseReady!: (response: APIResponse) => void;
+  let deliver!: () => void;
+  const ready = new Promise<APIResponse>((resolve) => {
+    responseReady = resolve;
+  });
+  const released = new Promise<void>((resolve) => {
+    deliver = resolve;
+  });
+  const match = (url: URL) => url.origin === base && url.pathname === path;
+  const completed = apiResponse(page, method, path);
+  // Preserve the original assertion error if cleanup closes an unreleased page.
+  void completed.catch(() => {});
+  await page.route(match, async (route) => {
+    if (route.request().method() !== method) {
+      await route.continue();
+      return;
+    }
+    const response = await route.fetch(
+      withoutSession
+        ? { headers: { ...route.request().headers(), cookie: '' } }
+        : {},
+    );
+    responseReady(response);
+    await released;
+    await route.fulfill({ response });
+  });
+  return {
+    ready,
+    async release() {
+      deliver();
+      const response = await completed;
+      await response.finished();
+      await page.unroute(match);
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+          ),
+      );
+      return response;
+    },
+  };
+}
 const formatUSDC = (raw: string | bigint) => {
   const value = BigInt(raw);
   const fraction = (value % 1_000_000n)
@@ -167,7 +224,7 @@ async function close(page: Page) {
   await dialog(page).waitFor({ state: 'hidden' });
 }
 async function signin(page: Page) {
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await page.locator('.account-button').click();
   await page
     .getByRole('button', { name: 'Sign in with wallet', exact: true })
     .click();
@@ -271,6 +328,15 @@ try {
     'Connected mode without demo records',
     (await page.locator('[data-mode="connected"]').count()) === 1 &&
       (await page.locator('.asset-card').count()) === 0,
+  );
+  check(
+    'Connected marketplace starts at listing controls with an accessible compact heading',
+    (await page.locator('h1.sr-only#connected-market-title').count()) === 1 &&
+      (await page.locator('main .page-head').count()) === 0 &&
+      (await page
+        .locator('.market-table-nav .collection-actions')
+        .getByRole('button', { name: 'List yours', exact: true })
+        .isVisible()),
   );
   const marketSelect = page.getByLabel('Select market', { exact: true });
   const options = await marketSelect.locator('option').evaluateAll((items) =>
@@ -433,6 +499,11 @@ try {
       (await marketRow(page, '101').getByRole('checkbox').isDisabled()) &&
       (await page.locator('.asset-card').count()) === 0,
   );
+  await page.screenshot({
+    path: new URL('connected-marketplace-compact-desktop.png', output).pathname,
+    fullPage: false,
+    animations: 'disabled',
+  });
 
   await page.getByRole('button', { name: 'List yours', exact: true }).click();
   await dialog(page)
@@ -663,7 +734,7 @@ try {
     .getByRole('heading', { name: 'Edit listing', exact: true })
     .waitFor();
   await page.getByLabel('Ask price', { exact: true }).fill('125.000007');
-  const repriceResponse = apiResponse(
+  const heldReprice = await holdMutation(
     page,
     'PATCH',
     `/api/v1/listings/${fixedListing.id}`,
@@ -671,7 +742,20 @@ try {
   await dialog(page)
     .getByRole('button', { name: 'Save changes', exact: true })
     .click();
-  const reprice = await repriceResponse;
+  assert.ok((await heldReprice.ready).ok());
+  await close(page);
+  await account(page);
+  const reprice = await heldReprice.release();
+  check(
+    'A late save from a closed form cannot close its successor account dialog or announce stale success',
+    (await dialog(page)
+      .getByRole('heading', { name: 'Your account', exact: true })
+      .isVisible()) &&
+      (await page
+        .locator('.toast-region')
+        .getByText('Listing updated.', { exact: true })
+        .count()) === 0,
+  );
   const updatedListing = await readListing(reprice);
   check(
     'Owner repricing checks the prior revision and retains exact money',
@@ -681,7 +765,8 @@ try {
       updatedListing.priceMicros === '125000007' &&
       updatedListing.revision === fixedListing.revision + 1,
   );
-  await dialog(page).waitFor({ state: 'hidden' });
+  await close(page);
+  await page.getByRole('button', { name: 'Refresh', exact: true }).click();
   await marketRow(page, '101')
     .getByText('125.000007 USDC', { exact: true })
     .waitFor();
@@ -861,7 +946,7 @@ try {
   await lender.page.route(listRoute, (route) =>
     route.fulfill({ json: preCancellationPage }),
   );
-  const cancelDutchResponse = apiResponse(
+  const heldCancellation = await holdMutation(
     page,
     'DELETE',
     `/api/v1/listings/${dutchListing.id}`,
@@ -872,10 +957,28 @@ try {
   await dialog(page)
     .getByRole('button', { name: 'Confirm cancellation', exact: true })
     .click();
+  assert.ok((await heldCancellation.ready).ok());
+  await page.evaluate(() => window.fixtureWalletDisconnect());
+  await page.locator('.account-button').click();
   check(
     'Owner cancels their reserved Dutch intent without moving assets',
-    (await cancelDutchResponse).ok(),
+    (await heldCancellation.release()).ok(),
   );
+  check(
+    'A late cancellation after wallet disconnect preserves the new sign-in dialog without account or toast takeover',
+    (await dialog(page)
+      .getByRole('heading', { name: 'Sign in with your wallet', exact: true })
+      .isVisible()) &&
+      (await page.locator('.account-button').getAttribute('aria-label')) ===
+        'Sign in' &&
+      (await page
+        .locator('.toast-region')
+        .getByText('The off-chain record was cancelled.', { exact: true })
+        .count()) === 0,
+  );
+  await dialog(page)
+    .getByRole('button', { name: 'Sign in with wallet', exact: true })
+    .click();
   await dialog(page)
     .getByRole('heading', { name: 'Your account', exact: true })
     .waitFor();
@@ -934,6 +1037,48 @@ try {
         )
         .get(dutchListing.id)?.status === 'cancelled',
   );
+  const successor = await actor(alice);
+  await signin(successor.page);
+  await close(successor.page);
+  await marketRow(successor.page, '101')
+    .getByRole('button', { name: 'Edit', exact: true })
+    .click();
+  await successor.page.getByLabel('Ask price', { exact: true }).fill('130');
+  const heldExpiredSave = await holdMutation(
+    successor.page,
+    'PATCH',
+    `/api/v1/listings/${fixedListing.id}`,
+    true,
+  );
+  await dialog(successor.page)
+    .getByRole('button', { name: 'Save changes', exact: true })
+    .click();
+  assert.equal((await heldExpiredSave.ready).status(), 401);
+  await successor.page.evaluate(() => window.fixtureWalletDisconnect());
+  await signin(successor.page);
+  const successorAccountLabel = await successor.page
+    .locator('.account-button')
+    .getAttribute('aria-label');
+  await heldExpiredSave.release();
+  check(
+    'A late authentication failure from an old form cannot clear a successor session or replace its dialog',
+    (await dialog(successor.page)
+      .getByRole('heading', { name: 'Your account', exact: true })
+      .isVisible()) &&
+      (await successor.page
+        .locator('.account-button')
+        .getAttribute('aria-label')) === successorAccountLabel &&
+      successorAccountLabel?.startsWith('Account ') &&
+      (await successor.page
+        .getByRole('heading', { name: 'Sign in with your wallet', exact: true })
+        .count()) === 0 &&
+      service.app.store
+        .prepare<[string], { price_micros: string }>(
+          'SELECT price_micros FROM listings WHERE id = ?',
+        )
+        .get(fixedListing.id)?.price_micros === updatedListing.priceMicros,
+  );
+  await successor.context.close();
   await go(page, 'Borrow', 'Borrow against veKITTEN');
   await page.locator('main .wallet-position').first().waitFor();
   check(
@@ -1043,6 +1188,7 @@ try {
   await page.keyboard.press('Escape');
   await page.goto(`${base}/#stats`, { waitUntil: 'networkidle' });
   await heading(page, 'Statistics').waitFor();
+  await page.getByText('1 active listing', { exact: true }).waitFor();
   check(
     'Connected statistics show no vault, reward or sales totals before launch',
     (await page.locator('main .stat-grid .stat-value').count()) === 4 &&
@@ -1256,6 +1402,21 @@ try {
           document.documentElement.scrollWidth <=
           document.documentElement.clientWidth,
       ),
+    );
+    check(
+      `Marketplace list action remains visible in the first viewport at ${width}px`,
+      await page
+        .locator('.market-table-nav .collection-actions')
+        .getByRole('button', { name: 'List yours', exact: true })
+        .evaluate((button) => {
+          const { top, bottom, left, right } = button.getBoundingClientRect();
+          return (
+            top >= 0 &&
+            bottom <= innerHeight &&
+            left >= 0 &&
+            right <= innerWidth
+          );
+        }),
     );
   }
   await page.setViewportSize({ width: 320, height: 900 });

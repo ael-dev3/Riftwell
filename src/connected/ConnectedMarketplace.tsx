@@ -277,15 +277,9 @@ export default function ConnectedMarketplace({
   return (
     <>
       <PageHead
-        eyebrow={`${market.name} · USDC`}
+        compact
         title={`${market.positionSymbol} marketplace`}
         titleId="connected-market-title"
-        lede="Browse verified positions, or list one from your wallet."
-        actions={
-          <button type="button" className="button primary" onClick={onList}>
-            <Plus size={16} aria-hidden="true" /> List yours
-          </button>
-        }
       />
       <section
         className="workspace-card panel connected-marketplace"
@@ -312,14 +306,19 @@ export default function ConnectedMarketplace({
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            className="button ghost small"
-            disabled={busy}
-            onClick={onRefresh}
-          >
-            <RefreshCw size={14} aria-hidden="true" /> Refresh
-          </button>
+          <div className="collection-actions">
+            <button
+              type="button"
+              className="button ghost small"
+              disabled={busy}
+              onClick={onRefresh}
+            >
+              <RefreshCw size={14} aria-hidden="true" /> Refresh
+            </button>
+            <button type="button" className="button primary" onClick={onList}>
+              <Plus size={16} aria-hidden="true" /> List yours
+            </button>
+          </div>
         </div>
         <div className="market-toolbar">
           <div className="search-field">

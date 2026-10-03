@@ -8,7 +8,7 @@ The preview models collateral deposits, credit drawdowns, manual/reward repaymen
 
 Connected mode supports EOA sign-in, block-pinned wallet position reads and persistent marketplace listings. Lending reports an undeployed status with null accounting and terms. Prior unfunded intents remain historical/cancellable; they cannot be converted into funded loans or vault shares.
 
-Firebase hosts the illustrative preview at `https://riftwell-ael.web.app`. The Deno API at `https://riftwell.ael-dev3.deno.net` uses separate managed PostgreSQL databases and session secrets for production and preview. Hosted API checks pass; the connected frontend build awaits recovery and actual-wallet verification before replacing the preview. The latest source remains local while the required GitHub publication check is blocked by account billing.
+Firebase hosts the illustrative preview at `https://riftwell-ael.web.app`. The Deno API at `https://riftwell.ael-dev3.deno.net` uses separate managed PostgreSQL databases and session secrets for production and preview. Hosted API checks pass; the connected frontend build awaits recovery and actual-wallet verification before replacing the preview. Source is published on GitHub. The latest code checks and Linux container smoke test pass; the separate Pages deployment fails because no configured Pages site is found. See [current release evidence](VALIDATION.md#publication-and-hosted-preview--3-october-2026).
 
 ## Separate funded release
 

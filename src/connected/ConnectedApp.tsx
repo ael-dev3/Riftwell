@@ -92,6 +92,8 @@ function ConnectedShell() {
   const [accountBusy, setAccountBusy] = useState(false);
   const [accountError, setAccountError] = useState('');
   const [modal, setModal] = useState<Modal>(null);
+  const modalRef = useRef<Modal>(null);
+  modalRef.current = modal;
   const [message, setMessage] = useState('');
   const [signing, setSigning] = useState(false);
   const [signError, setSignError] = useState('');
@@ -500,7 +502,20 @@ function ConnectedShell() {
     }
   }
 
+  // A response from an old wallet or closed dialog cannot take over its successor.
+  const mutationContext = { epoch: authEpoch.current, session, modal };
+  const mutationIsCurrent = () =>
+    mutationContext.session !== null &&
+    mutationContext.epoch === authEpoch.current &&
+    mutationContext.session.csrfToken === sessionRef.current?.csrfToken &&
+    mutationContext.modal === modalRef.current;
+
+  function recordError(failure: unknown) {
+    if (mutationIsCurrent()) handleError(failure);
+  }
+
   function saved(text: string) {
+    if (!mutationIsCurrent()) return;
     closeModal();
     toast(text);
     lists.refresh();
@@ -519,12 +534,15 @@ function ConnectedShell() {
       else if (kind === 'request')
         await api.cancelLoanRequest(record.id, session.csrfToken);
       else await api.cancelOffer(record.id, session.csrfToken);
+      if (!mutationIsCurrent()) return;
       lists.refresh();
       ownLists.refresh();
       await refreshAccount();
+      if (!mutationIsCurrent()) return;
       setModal({ type: 'account' });
       toast('The off-chain record was cancelled.', 'info');
     } catch (failure) {
+      if (!mutationIsCurrent()) return;
       handleError(failure);
       throw failure;
     }
@@ -769,7 +787,7 @@ function ConnectedShell() {
           session={session}
           onClose={closeModal}
           onSaved={saved}
-          onError={handleError}
+          onError={recordError}
         />
       )}
       {modal?.type === 'collateral' && (
@@ -782,7 +800,7 @@ function ConnectedShell() {
           session={session}
           onClose={closeModal}
           onSaved={saved}
-          onError={handleError}
+          onError={recordError}
         />
       )}
       {modal?.type === 'account' && session && (

@@ -4,7 +4,7 @@
 
 Riftwell supports two deployments: a single-instance Node 24 service with persistent SQLite and same-origin cookie sessions, or Firebase Hosting with an API-only Deno Deploy service and shared PostgreSQL. Settlement is hard-disabled. There are no custody keys, backend signers or payment rails.
 
-GitHub Pages remains a static preview. Source publication does not provision a connected service. Provider setup and host verification are separate from the existing [publication evidence](VALIDATION.md#publication-status).
+The live Firebase frontend remains a static preview. Source publication does not itself provision a connected service. Provider setup and host verification are recorded separately in the [current release evidence](VALIDATION.md#publication-and-hosted-preview--3-october-2026).
 
 ## Firebase and Deno Deploy
 
