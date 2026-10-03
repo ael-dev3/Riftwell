@@ -6,6 +6,8 @@ Riftwell supports two deployments: a single-instance Node 24 service with persis
 
 The live Firebase frontend remains a static preview. Source publication does not itself provision a connected service. Provider setup and host verification are recorded separately in the [current release evidence](VALIDATION.md#publication-and-hosted-preview--3-october-2026).
 
+GitHub Actions validates frontend/server tests, types, formatting, the connected container and the preview build. Hosting releases use the direct Firebase and Deno tools; CI has no Pages deployment or Pages/OIDC write permissions. Preserve all validation checks and the conservative publication preflight.
+
 ## Firebase and Deno Deploy
 
 Firebase project `riftwell-ael` serves the preview at `https://riftwell-ael.web.app`. Use that exact origin consistently; the `firebaseapp.com` alias is a different origin. Deno organization `ael-dev3`, application `riftwell`, serves the API at `https://riftwell.ael-dev3.deno.net`. Revision `y91af7xr00p2` passed the rollout continuity checks recorded in [validation](VALIDATION.md). The connected frontend build has not replaced the preview; recovery and actual-wallet verification remain release checks. Follow [the deployment guide](FIREBASE_DENO.md); no GitHub Actions job is needed for direct provider uploads.

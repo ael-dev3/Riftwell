@@ -30,25 +30,56 @@ export class WalletError extends Error {
 
 export function getWalletProvider(): WalletProvider | null {
   if (typeof window === 'undefined') return null;
-  const candidate = (window as Window & { ethereum?: unknown }).ethereum;
-  if (
-    candidate &&
-    typeof candidate === 'object' &&
-    'request' in candidate &&
-    typeof candidate.request === 'function'
-  ) {
-    return candidate as WalletProvider;
+  try {
+    const candidate = (window as Window & { ethereum?: unknown }).ethereum;
+    if (
+      candidate &&
+      typeof candidate === 'object' &&
+      'request' in candidate &&
+      typeof candidate.request === 'function'
+    )
+      return candidate as WalletProvider;
+  } catch {
+    // Injected accessors are outside the application's control.
   }
   return null;
 }
 
+function unsupportedProvider() {
+  return new WalletError(
+    'UNSUPPORTED_PROVIDER',
+    'This wallet cannot report account or network changes reliably. Use a compatible Ethereum wallet browser or extension.',
+  );
+}
+
+function lifecycleMethods(provider: WalletProvider) {
+  let on: WalletProvider['on'];
+  let removeListener: WalletProvider['removeListener'];
+  try {
+    on = provider.on;
+    removeListener = provider.removeListener;
+  } catch {
+    throw unsupportedProvider();
+  }
+  if (typeof on !== 'function' || typeof removeListener !== 'function')
+    throw unsupportedProvider();
+  return { on, removeListener };
+}
+
 function requireProvider(provider: WalletProvider | null | undefined) {
-  if (!provider || typeof provider.request !== 'function') {
+  let request: WalletProvider['request'] | undefined;
+  try {
+    request = provider?.request;
+  } catch {
+    throw unsupportedProvider();
+  }
+  if (!provider || typeof request !== 'function') {
     throw new WalletError(
       'NO_PROVIDER',
       'Open Riftwell in a browser with an Ethereum wallet installed.',
     );
   }
+  lifecycleMethods(provider);
   return provider;
 }
 
@@ -135,9 +166,21 @@ export function subscribeWallet(
   provider: WalletProvider,
   listener: (change: WalletChange) => void,
 ): () => void {
-  if (!provider.on || !provider.removeListener) return () => {};
+  const wallet = requireProvider(provider);
+  const { on, removeListener } = lifecycleMethods(wallet);
+  let active = true;
+  let applicationFailure: { error: unknown } | undefined;
+  const emit = (change: WalletChange) => {
+    if (!active) return;
+    try {
+      listener(change);
+    } catch (error) {
+      applicationFailure = { error };
+      throw error;
+    }
+  };
   const accountsChanged = (accounts: unknown) => {
-    listener({
+    emit({
       type: 'accountsChanged',
       accounts: Array.isArray(accounts)
         ? accounts
@@ -150,20 +193,40 @@ export function subscribeWallet(
     });
   };
   const chainChanged = (chainId: unknown) => {
-    listener({
+    emit({
       type: 'chainChanged',
       chainId: typeof chainId === 'string' ? chainId : '',
     });
   };
-  const disconnected = () => listener({ type: 'disconnect' });
-  provider.on('accountsChanged', accountsChanged);
-  provider.on('chainChanged', chainChanged);
-  provider.on('disconnect', disconnected);
-  return () => {
-    provider.removeListener?.('accountsChanged', accountsChanged);
-    provider.removeListener?.('chainChanged', chainChanged);
-    provider.removeListener?.('disconnect', disconnected);
+  const disconnected = () => emit({ type: 'disconnect' });
+  const attempted: [string, (...args: unknown[]) => void][] = [];
+  const stop = () => {
+    if (!active) return;
+    active = false;
+    for (const [event, callback] of attempted) {
+      try {
+        removeListener.call(wallet, event, callback);
+      } catch {
+        // Disabled wrappers remain inert even if the provider cannot remove them.
+      }
+    }
   };
+  try {
+    for (const [event, callback] of [
+      ['accountsChanged', accountsChanged],
+      ['chainChanged', chainChanged],
+      ['disconnect', disconnected],
+    ] as const) {
+      // A provider may register a callback before throwing, so include the attempt.
+      attempted.push([event, callback]);
+      on.call(wallet, event, callback);
+    }
+  } catch (error) {
+    stop();
+    if (applicationFailure && applicationFailure.error === error) throw error;
+    throw unsupportedProvider();
+  }
+  return stop;
 }
 
 export function walletErrorMessage(error: unknown): string {

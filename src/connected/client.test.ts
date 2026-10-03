@@ -24,6 +24,7 @@ import {
   signChallenge,
   subscribeWallet,
   walletErrorMessage,
+  WalletError,
   type WalletProvider,
 } from './wallet';
 
@@ -833,6 +834,18 @@ describe('successful API response validation', () => {
 describe('wallet sign-in boundary', () => {
   const address = '0x' + 'a'.repeat(40);
 
+  function expectUnsupportedProvider(action: () => unknown): WalletError {
+    let failure: unknown;
+    try {
+      action();
+    } catch (error) {
+      failure = error;
+    }
+    expect(failure).toBeInstanceOf(WalletError);
+    expect(failure).toMatchObject({ code: 'UNSUPPORTED_PROVIDER' });
+    return failure as WalletError;
+  }
+
   function mockWallet(initialChain = '0x3e7') {
     let chain = initialChain;
     const request = vi
@@ -853,7 +866,14 @@ describe('wallet sign-in boundary', () => {
             throw new Error(`Unexpected wallet method: ${args.method}`);
         }
       });
-    return { provider: { request } satisfies WalletProvider, request };
+    return {
+      provider: {
+        request,
+        on: vi.fn(),
+        removeListener: vi.fn(),
+      } satisfies WalletProvider,
+      request,
+    };
   }
 
   it('requests chain 999 and signs the exact UTF-8 challenge without a transaction', async () => {
@@ -914,13 +934,28 @@ describe('wallet sign-in boundary', () => {
     const { provider } = mockWallet();
     vi.stubGlobal('window', { ethereum: provider });
     expect(getWalletProvider()).toBe(provider);
-    const rejected = { request: vi.fn().mockRejectedValue({ code: 4001 }) };
+    const rejected = {
+      request: vi.fn().mockRejectedValue({ code: 4001 }),
+      on: vi.fn(),
+      removeListener: vi.fn(),
+    };
     await expect(connectWallet(rejected)).rejects.toEqual({ code: 4001 });
     expect(walletErrorMessage({ code: 4001 })).toContain('cancelled');
     expect(walletErrorMessage({ code: 4902 })).toContain('chain 999');
     expect(
       walletErrorMessage({ message: 'Untrusted provider text' }),
     ).not.toContain('Untrusted provider text');
+  });
+
+  it('keeps public wallet discovery safe when the injected request getter throws', () => {
+    vi.stubGlobal('window', {
+      ethereum: {
+        get request() {
+          throw new Error('Provider internal discovery failure');
+        },
+      },
+    });
+    expect(getWalletProvider()).toBeNull();
   });
 
   it('subscribes to account, chain and disconnect events and removes all listeners', () => {
@@ -948,4 +983,210 @@ describe('wallet sign-in boundary', () => {
     stop();
     expect(listeners.size).toBe(0);
   });
+
+  it.each([
+    { name: 'missing subscription method', methods: { on: undefined } },
+    { name: 'non-callable subscription method', methods: { on: true } },
+    { name: 'missing removal method', methods: { removeListener: undefined } },
+    { name: 'non-callable removal method', methods: { removeListener: true } },
+    {
+      name: 'both lifecycle methods missing',
+      methods: { on: undefined, removeListener: undefined },
+    },
+  ])(
+    'rejects $name before requesting accounts or a signature',
+    async ({ methods }) => {
+      const { provider: working, request } = mockWallet();
+      const provider = { ...working, ...methods } as unknown as WalletProvider;
+      vi.stubGlobal('window', { ethereum: provider });
+      expect(getWalletProvider()).toBe(provider);
+      await expect(connectWallet(provider)).rejects.toMatchObject({
+        name: 'WalletError',
+        code: 'UNSUPPORTED_PROVIDER',
+      });
+      await expect(
+        signChallenge(provider, address, 'Challenge'),
+      ).rejects.toMatchObject({
+        name: 'WalletError',
+        code: 'UNSUPPORTED_PROVIDER',
+      });
+      expectUnsupportedProvider(() => subscribeWallet(provider, vi.fn()));
+      expect(request).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['accountsChanged', 'chainChanged', 'disconnect'])(
+    'rolls back callbacks when registration stores %s and then throws',
+    (failedEvent) => {
+      const listeners = new Map<string, (...args: unknown[]) => void>();
+      const callbacks = new Map<string, (...args: unknown[]) => void>();
+      const removeListener = vi.fn((event: string) => listeners.delete(event));
+      const changed = vi.fn();
+      const provider: WalletProvider = {
+        request: vi.fn(),
+        on: (event, listener) => {
+          listeners.set(event, listener);
+          callbacks.set(event, listener);
+          if (event === failedEvent)
+            throw new Error('Provider registration failed');
+        },
+        removeListener,
+      };
+      const failure = expectUnsupportedProvider(() =>
+        subscribeWallet(provider, changed),
+      );
+      expect(walletErrorMessage(failure)).not.toContain(
+        'Provider registration failed',
+      );
+      expect(listeners.size).toBe(0);
+      expect(removeListener.mock.calls.map(([event]) => event)).toEqual(
+        expect.arrayContaining([...callbacks.keys()]),
+      );
+      callbacks.get('accountsChanged')?.([address]);
+      callbacks.get('chainChanged')?.('0x1');
+      callbacks.get('disconnect')?.();
+      expect(changed).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['accountsChanged', 'chainChanged', 'disconnect'])(
+    'deactivates every callback and attempts all removals when %s removal throws',
+    (failedEvent) => {
+      const listeners = new Map<string, (...args: unknown[]) => void>();
+      const callbacks = new Map<string, (...args: unknown[]) => void>();
+      const removeListener = vi.fn((event: string) => {
+        if (event === failedEvent) throw new Error('Provider removal failed');
+        listeners.delete(event);
+      });
+      const provider: WalletProvider = {
+        request: vi.fn(),
+        on: (event, listener) => {
+          listeners.set(event, listener);
+          callbacks.set(event, listener);
+        },
+        removeListener,
+      };
+      const changed = vi.fn();
+      const stop = subscribeWallet(provider, changed);
+      expect(stop).not.toThrow();
+      expect(removeListener.mock.calls.map(([event]) => event)).toEqual(
+        expect.arrayContaining([
+          'accountsChanged',
+          'chainChanged',
+          'disconnect',
+        ]),
+      );
+      expect([...listeners.keys()]).toEqual([failedEvent]);
+      callbacks.get('accountsChanged')?.([address]);
+      callbacks.get('chainChanged')?.('0x1');
+      callbacks.get('disconnect')?.();
+      expect(changed).not.toHaveBeenCalled();
+      expect(stop).not.toThrow();
+      expect(removeListener).toHaveBeenCalledTimes(3);
+    },
+  );
+
+  it('deactivates partial registrations even when rollback removal throws', () => {
+    const listeners = new Map<string, (...args: unknown[]) => void>();
+    const callbacks = new Map<string, (...args: unknown[]) => void>();
+    const removeListener = vi.fn((event: string) => {
+      if (event === 'accountsChanged')
+        throw new Error('Provider removal failed');
+      listeners.delete(event);
+    });
+    const provider: WalletProvider = {
+      request: vi.fn(),
+      on: (event, listener) => {
+        listeners.set(event, listener);
+        callbacks.set(event, listener);
+        if (event === 'chainChanged')
+          throw new Error('Provider registration failed');
+      },
+      removeListener,
+    };
+    const changed = vi.fn();
+    const failure = expectUnsupportedProvider(() =>
+      subscribeWallet(provider, changed),
+    );
+    expect(walletErrorMessage(failure)).not.toContain(
+      'Provider registration failed',
+    );
+    expect(walletErrorMessage(failure)).not.toContain(
+      'Provider removal failed',
+    );
+    expect(removeListener.mock.calls.map(([event]) => event)).toEqual(
+      expect.arrayContaining(['accountsChanged', 'chainChanged']),
+    );
+    expect([...listeners.keys()]).toEqual(['accountsChanged']);
+    callbacks.get('accountsChanged')?.([address]);
+    callbacks.get('chainChanged')?.('0x1');
+    expect(changed).not.toHaveBeenCalled();
+  });
+
+  it('preserves the provider receiver while registering and removing listeners', () => {
+    const receivers: unknown[] = [];
+    const provider: WalletProvider = {
+      request: vi.fn(),
+      on() {
+        receivers.push(this);
+      },
+      removeListener() {
+        receivers.push(this);
+      },
+    };
+    const stop = subscribeWallet(provider, vi.fn());
+    stop();
+    expect(receivers).toHaveLength(6);
+    expect(receivers.every((receiver) => receiver === provider)).toBe(true);
+  });
+
+  it('propagates an application listener failure emitted synchronously during registration', () => {
+    const listeners = new Map<string, (...args: unknown[]) => void>();
+    const failure = new Error(
+      'Application listener failed during registration',
+    );
+    const provider: WalletProvider = {
+      request: vi.fn(),
+      on: (event, listener) => {
+        listeners.set(event, listener);
+        listener([address]);
+      },
+      removeListener: (event) => listeners.delete(event),
+    };
+    let received: unknown;
+    try {
+      subscribeWallet(provider, () => {
+        throw failure;
+      });
+    } catch (error) {
+      received = error;
+    }
+    expect(received).toBe(failure);
+    expect(listeners.size).toBe(0);
+  });
+
+  it.each(['accountsChanged', 'chainChanged', 'disconnect'])(
+    'propagates application listener failures for %s',
+    (event) => {
+      const listeners = new Map<string, (...args: unknown[]) => void>();
+      const provider: WalletProvider = {
+        request: vi.fn(),
+        on: (name, listener) => listeners.set(name, listener),
+        removeListener: (name) => listeners.delete(name),
+      };
+      const failure = new Error('Application listener failed');
+      const stop = subscribeWallet(provider, () => {
+        throw failure;
+      });
+      const args =
+        event === 'accountsChanged'
+          ? [[address]]
+          : event === 'chainChanged'
+            ? ['0x1']
+            : [];
+      expect(() => listeners.get(event)?.(...args)).toThrow(failure);
+      stop();
+      expect(listeners.size).toBe(0);
+    },
+  );
 });

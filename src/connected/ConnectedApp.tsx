@@ -28,6 +28,8 @@ import {
   signChallenge,
   subscribeWallet,
   walletErrorMessage,
+  WalletError,
+  type WalletChange,
   type WalletProvider,
 } from './wallet';
 import { shortAddress } from './amounts';
@@ -100,6 +102,10 @@ function ConnectedShell() {
   const [provider, setProvider] = useState<WalletProvider | null>(() =>
     getWalletProvider(),
   );
+  const walletSubscription = useRef<{
+    provider: WalletProvider;
+    stop: () => void;
+  } | null>(null);
   const intent = useRef<Intent | null>(null);
   const sessionRef = useRef<Session | null>(null);
   sessionRef.current = session;
@@ -111,6 +117,14 @@ function ConnectedShell() {
   const signInAddress = useRef<string | null>(null);
   const accountRequest = useRef(0);
   const accountButtonRef = useRef<HTMLButtonElement>(null);
+  useEffect(
+    () => () => {
+      // Manual sign-in can attach a new wallet before its state update commits.
+      walletSubscription.current?.stop();
+      walletSubscription.current = null;
+    },
+    [],
+  );
   const lists = usePages(
     (cursor, signal) => api.listings(market.id, cursor, signal),
     market.id,
@@ -213,36 +227,66 @@ function ConnectedShell() {
     return () => controller.abort();
   }, []);
 
+  const onWalletChange = useCallback((change: WalletChange) => {
+    const active = sessionRef.current;
+    const changed =
+      change.type === 'disconnect' ||
+      (change.type === 'chainChanged' &&
+        (!/^0x[0-9a-f]+$/i.test(change.chainId) ||
+          BigInt(change.chainId) !== 999n)) ||
+      (change.type === 'accountsChanged' &&
+        !(walletConnecting.current && !active && change.accounts.length > 0) &&
+        change.accounts[0]?.toLowerCase() !==
+          (active?.address ?? signInAddress.current)?.toLowerCase());
+    if (!changed) return;
+    authEpoch.current++;
+    setSession(null);
+    setAccount(null);
+    if (active) {
+      setModal(null);
+      intent.current = null;
+    }
+    setMessage('Your wallet changed. Sign in again to manage your records.');
+    if (active) void api.logout(active.csrfToken).catch(() => {});
+    else api.clearSession();
+  }, []);
+
+  const watchWallet = useCallback(
+    (wallet: WalletProvider) => {
+      if (walletSubscription.current?.provider === wallet)
+        return walletSubscription.current;
+      walletSubscription.current?.stop();
+      walletSubscription.current = null;
+      const subscription = {
+        provider: wallet,
+        stop: subscribeWallet(wallet, onWalletChange),
+      };
+      walletSubscription.current = subscription;
+      return subscription;
+    },
+    [onWalletChange],
+  );
+
   useEffect(() => {
     if (!provider) return;
-    return subscribeWallet(provider, (change) => {
-      const active = sessionRef.current;
-      const changed =
-        change.type === 'disconnect' ||
-        (change.type === 'chainChanged' &&
-          (!/^0x[0-9a-f]+$/i.test(change.chainId) ||
-            BigInt(change.chainId) !== 999n)) ||
-        (change.type === 'accountsChanged' &&
-          !(
-            walletConnecting.current &&
-            !active &&
-            change.accounts.length > 0
-          ) &&
-          change.accounts[0]?.toLowerCase() !==
-            (active?.address ?? signInAddress.current)?.toLowerCase());
-      if (!changed) return;
+    try {
+      const subscription = watchWallet(provider);
+      return () => {
+        subscription.stop();
+        if (walletSubscription.current === subscription)
+          walletSubscription.current = null;
+      };
+    } catch (failure) {
+      if (!(failure instanceof WalletError)) throw failure;
       authEpoch.current++;
-      setSession(null);
-      setAccount(null);
-      if (active) {
-        setModal(null);
-        intent.current = null;
-      }
-      setMessage('Your wallet changed. Sign in again to manage your records.');
+      const active = sessionRef.current;
       if (active) void api.logout(active.csrfToken).catch(() => {});
       else api.clearSession();
-    });
-  }, [provider]);
+      setSession(null);
+      setAccount(null);
+      setSignError(walletErrorMessage(failure));
+    }
+  }, [provider, watchWallet]);
 
   const handleError = useCallback((failure: unknown) => {
     if (api.isCurrentSessionError(failure)) {
@@ -401,6 +445,14 @@ function ConnectedShell() {
       setSignError(
         'Open Riftwell in a browser with an Ethereum wallet installed.',
       );
+      return;
+    }
+    try {
+      // Listener setup must succeed before a wallet prompt or auth request.
+      watchWallet(wallet);
+    } catch (failure) {
+      if (!(failure instanceof WalletError)) throw failure;
+      setSignError(walletErrorMessage(failure));
       return;
     }
     setProvider(wallet);

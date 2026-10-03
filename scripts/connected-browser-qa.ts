@@ -45,7 +45,12 @@ const check = (name: string, condition: unknown) => {
   assert.ok(condition, name);
   checks.push(name);
 };
-async function actor(wallet: HDNodeWallet) {
+type WalletLifecycleFixture =
+  'valid' | 'request-only' | 'non-callable' | 'registration-throw';
+async function actor(
+  wallet: HDNodeWallet,
+  lifecycle: WalletLifecycleFixture = 'valid',
+) {
   assert.ok(browser, 'QA browser must be initialized before creating an actor');
   const context = await browser.newContext({
     viewport: { width: 1440, height: 1000 },
@@ -74,7 +79,7 @@ async function actor(wallet: HDNodeWallet) {
       assert.fail(`Unexpected wallet method: ${request.method}`);
     },
   );
-  await context.addInitScript(() => {
+  await context.addInitScript((lifecycle: WalletLifecycleFixture) => {
     const listeners = new Map<string, WalletListener[]>();
     window.ethereum = {
       request: (request) => window.fixtureWalletRequest(request),
@@ -82,6 +87,8 @@ async function actor(wallet: HDNodeWallet) {
         const list = listeners.get(event) ?? [];
         list.push(fn);
         listeners.set(event, list);
+        if (lifecycle === 'registration-throw' && event === 'chainChanged')
+          throw new Error('External provider registration failed');
       },
       removeListener: (event, fn) =>
         listeners.set(
@@ -89,9 +96,20 @@ async function actor(wallet: HDNodeWallet) {
           (listeners.get(event) ?? []).filter((item) => item !== fn),
         ),
     };
-    window.fixtureWalletDisconnect = () =>
-      (listeners.get('disconnect') ?? []).forEach((fn) => fn());
-  });
+    // Deliberately malformed injected objects exercise the runtime boundary.
+    if (lifecycle === 'request-only')
+      Object.assign(window.ethereum, {
+        on: undefined,
+        removeListener: undefined,
+      });
+    if (lifecycle === 'non-callable')
+      Object.assign(window.ethereum, { on: true });
+    window.fixtureWalletDisconnect = () => {
+      if (lifecycle === 'registration-throw')
+        [...listeners.values()].flat().forEach((fn) => fn([]));
+      else (listeners.get('disconnect') ?? []).forEach((fn) => fn());
+    };
+  }, lifecycle);
   const page = await context.newPage();
   page.on('pageerror', (error) => errors.push(error.message));
   page.on('request', (request) => {
@@ -322,6 +340,58 @@ try {
         ?.includes("script-src 'self'"),
   );
   browser = await chromium.launch({ channel: 'chrome', headless: true });
+  for (const lifecycle of [
+    'request-only',
+    'non-callable',
+    'registration-throw',
+  ] as const) {
+    const unsupported = await actor(alice, lifecycle);
+    const page = unsupported.page;
+    const walletRequestsBefore = walletMethods.length;
+    const authMutationsBefore = apiMutations.filter(({ path }) =>
+      path.startsWith('/api/v1/auth/'),
+    ).length;
+    await page.locator('.account-button').click();
+    await dialog(page)
+      .getByRole('button', { name: 'Sign in with wallet', exact: true })
+      .click();
+    const guidance = dialog(page)
+      .getByRole('alert')
+      .filter({ hasText: 'compatible Ethereum wallet' });
+    await guidance.waitFor();
+    await page.evaluate(() => window.fixtureWalletDisconnect());
+    check(
+      `${lifecycle} wallet fails safely before prompts/authentication and leaves its failed callbacks inert`,
+      walletMethods.length === walletRequestsBefore &&
+        apiMutations.filter(({ path }) => path.startsWith('/api/v1/auth/'))
+          .length === authMutationsBefore &&
+        !(await guidance.innerText()).includes('External provider') &&
+        !(await page.locator('.notices').allTextContents())
+          .join(' ')
+          .includes('wallet changed'),
+    );
+    if (lifecycle === 'non-callable')
+      await page.screenshot({
+        path: new URL('connected-unsupported-wallet.png', output).pathname,
+        animations: 'disabled',
+      });
+    await close(page);
+    await page
+      .getByLabel('Search loaded listings by token ID or seller', {
+        exact: true,
+      })
+      .fill('101');
+    check(
+      `${lifecycle} wallet preserves the public marketplace and its controls`,
+      (await page
+        .getByRole('button', { name: 'List yours', exact: true })
+        .isVisible()) &&
+        (await page
+          .getByRole('button', { name: 'Clear search', exact: true })
+          .isVisible()),
+    );
+    await unsupported.context.close();
+  }
   const holder = await actor(alice);
   const page = holder.page;
   check(
