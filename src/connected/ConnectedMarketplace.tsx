@@ -10,6 +10,7 @@ import {
   shortAddress,
   usdc,
 } from './amounts';
+import { listingMatches } from './search';
 
 export type ConnectedMarketplaceProps = {
   market: Market;
@@ -177,12 +178,9 @@ export default function ConnectedMarketplace({
                   !activeAt(listing, now),
               )
             : [];
-    const search = query.trim().toLowerCase();
     return source
       .filter((listing) =>
-        `${market.positionSymbol} #${listing.tokenId} ${listing.owner}`
-          .toLowerCase()
-          .includes(search),
+        listingMatches(listing, query, market.positionSymbol),
       )
       .sort((left, right) => {
         const difference =
