@@ -20,12 +20,14 @@ import {
 import { DEFAULT_MARKET } from '../markets';
 import {
   connectWallet,
+  discoverWallets,
   getWalletProvider,
   signChallenge,
   subscribeWallet,
   walletErrorMessage,
   WalletError,
   type WalletProvider,
+  type WalletOption,
 } from './wallet';
 
 afterEach(() => {
@@ -925,6 +927,294 @@ describe('wallet sign-in boundary', () => {
         ([args]) => args.method === 'personal_sign',
       ),
     ).toBe(false);
+  });
+
+  it.each([4902, '4902'])(
+    'adds an unknown HyperEVM network after %s, explicitly switches and rereads the selected account',
+    async (code) => {
+      let added = false;
+      let chain = '0x1';
+      const switchedAccount = '0x' + 'c'.repeat(40);
+      const request = vi
+        .fn<WalletProvider['request']>()
+        .mockImplementation(async (args) => {
+          if (args.method === 'eth_requestAccounts') return [address];
+          if (args.method === 'eth_accounts') return [switchedAccount];
+          if (args.method === 'eth_chainId') return chain;
+          if (args.method === 'wallet_switchEthereumChain') {
+            if (!added) throw { code };
+            chain = '0x3e7';
+            return null;
+          }
+          if (args.method === 'wallet_addEthereumChain') {
+            added = true;
+            return null;
+          }
+          throw new Error('Unexpected wallet operation');
+        });
+      const provider = { request, on: vi.fn(), removeListener: vi.fn() };
+      expect(await connectWallet(provider)).toBe(switchedAccount);
+      expect(
+        request.mock.calls.find(
+          ([args]) => args.method === 'wallet_addEthereumChain',
+        ),
+      ).toEqual([
+        {
+          method: 'wallet_addEthereumChain',
+          params: [
+            {
+              chainId: '0x3e7',
+              chainName: 'HyperEVM',
+              nativeCurrency: { name: 'HYPE', symbol: 'HYPE', decimals: 18 },
+              rpcUrls: ['https://rpc.hyperliquid.xyz/evm'],
+              blockExplorerUrls: ['https://hyperevmscan.io'],
+            },
+          ],
+        },
+      ]);
+      expect(request.mock.calls.map(([args]) => args.method)).toEqual([
+        'eth_requestAccounts',
+        'eth_chainId',
+        'wallet_switchEthereumChain',
+        'wallet_addEthereumChain',
+        'wallet_switchEthereumChain',
+        'eth_chainId',
+        'eth_accounts',
+      ]);
+    },
+  );
+
+  it.each([4001, 4100, -32002])(
+    'does not add a network or hide a switch rejection with code %s',
+    async (code) => {
+      const request = vi
+        .fn<WalletProvider['request']>()
+        .mockImplementation(async (args) => {
+          if (args.method === 'eth_requestAccounts') return [address];
+          if (args.method === 'eth_chainId') return '0x1';
+          throw { code };
+        });
+      await expect(
+        connectWallet({ request, on: vi.fn(), removeListener: vi.fn() }),
+      ).rejects.toEqual({ code });
+      expect(
+        request.mock.calls.some(
+          ([args]) => args.method === 'wallet_addEthereumChain',
+        ),
+      ).toBe(false);
+    },
+  );
+
+  it('preserves a declined add-network prompt and rejects a wallet that stays on another chain', async () => {
+    for (const decline of [true, false]) {
+      let added = false;
+      const request = vi
+        .fn<WalletProvider['request']>()
+        .mockImplementation(async (args) => {
+          if (args.method === 'eth_requestAccounts') return [address];
+          if (args.method === 'eth_chainId') return '0x1';
+          if (args.method === 'wallet_switchEthereumChain') {
+            if (!added) throw { code: 4902 };
+            return null;
+          }
+          if (args.method === 'wallet_addEthereumChain') {
+            if (decline) throw { code: 4001 };
+            added = true;
+            return null;
+          }
+          throw new Error('Unexpected account or signing call');
+        });
+      const result = connectWallet({
+        request,
+        on: vi.fn(),
+        removeListener: vi.fn(),
+      });
+      await expect(result).rejects.toMatchObject({
+        code: decline ? 4001 : 'WRONG_CHAIN',
+      });
+      expect(
+        request.mock.calls.some(([args]) =>
+          ['eth_accounts', 'personal_sign'].includes(args.method),
+        ),
+      ).toBe(false);
+    }
+  });
+
+  it('discovers multiple providers on request, deduplicates the legacy wallet and never replaces announced identities', () => {
+    const first = mockWallet().provider;
+    const second = mockWallet().provider;
+    const third = mockWallet().provider;
+    const target = Object.assign(new EventTarget(), { ethereum: first });
+    vi.stubGlobal('window', target);
+    let choices: readonly WalletOption[] = [];
+    let requests = 0;
+    const announce = (uuid: string, name: string, provider: WalletProvider) =>
+      target.dispatchEvent(
+        new CustomEvent('eip6963:announceProvider', {
+          detail: { info: { uuid, name }, provider },
+        }),
+      );
+    target.addEventListener('eip6963:requestProvider', () => {
+      requests++;
+      announce('00000000-0000-4000-8000-000000000001', 'First Wallet', first);
+      announce('00000000-0000-4000-8000-000000000002', 'Second Wallet', second);
+    });
+    const discovery = discoverWallets((value) => {
+      choices = value;
+    });
+    expect(choices.map((option) => option.name)).toEqual(['Browser wallet']);
+    expect(requests).toBe(0);
+    discovery.request();
+    expect(requests).toBe(1);
+    expect(choices.map((option) => option.name)).toEqual([
+      'First Wallet',
+      'Second Wallet',
+    ]);
+    expect(choices.map((option) => option.provider)).toEqual([first, second]);
+    announce('00000000-0000-4000-8000-000000000001', 'Impersonator', third);
+    announce(
+      '00000000-0000-4000-8000-000000000003',
+      'Duplicate provider',
+      second,
+    );
+    expect(choices.map((option) => option.provider)).toEqual([first, second]);
+    expect(choices[0]?.name).toBe('First Wallet');
+    discovery.stop();
+    discovery.request();
+    expect(requests).toBe(1);
+    announce('00000000-0000-4000-8000-000000000004', 'Late Wallet', third);
+    expect(choices).toHaveLength(2);
+    expect(first.request).not.toHaveBeenCalled();
+    expect(second.request).not.toHaveBeenCalled();
+  });
+
+  it('ignores malformed discovery metadata and throwing accessors without reading icons or provider URLs', () => {
+    const target = new EventTarget();
+    vi.stubGlobal('window', target);
+    let choices: readonly WalletOption[] = [];
+    const discovery = discoverWallets((value) => {
+      choices = value;
+    });
+    const provider = mockWallet().provider;
+    const valid = {
+      uuid: '00000000-0000-4000-8000-000000000001',
+      name: 'Friendly Wallet',
+    };
+    for (const detail of [
+      null,
+      { info: { ...valid, uuid: 'wrong' }, provider },
+      { info: { ...valid, name: 'x'.repeat(81) }, provider },
+      { info: { ...valid, name: 'Spoof\u202eWallet' }, provider },
+      {
+        get info() {
+          throw new Error('Untrusted getter');
+        },
+      },
+      {
+        info: valid,
+        provider: {
+          get request() {
+            throw new Error('Untrusted provider');
+          },
+        },
+      },
+    ])
+      target.dispatchEvent(
+        new CustomEvent('eip6963:announceProvider', { detail }),
+      );
+    expect(choices).toHaveLength(0);
+    target.dispatchEvent(
+      new CustomEvent('eip6963:announceProvider', {
+        detail: {
+          info: {
+            ...valid,
+            get icon() {
+              throw new Error('Never read image');
+            },
+            get rdns() {
+              throw new Error('Never trust brand');
+            },
+          },
+          provider,
+        },
+      }),
+    );
+    expect(choices[0]?.name).toBe('Friendly Wallet');
+    discovery.stop();
+  });
+
+  it('finds a late legacy injection only on user discovery request', () => {
+    const target = Object.assign(new EventTarget(), {
+      ethereum: undefined as WalletProvider | undefined,
+    });
+    vi.stubGlobal('window', target);
+    let choices: readonly WalletOption[] = [];
+    const discovery = discoverWallets((value) => {
+      choices = value;
+    });
+    expect(choices).toHaveLength(0);
+    target.ethereum = mockWallet().provider;
+    discovery.request();
+    expect(choices[0]?.provider).toBe(target.ethereum);
+    discovery.stop();
+  });
+
+  it.each(['before the first request', 'after reopening sign-in'])(
+    'offers a replaced legacy provider %s without changing a retained selection',
+    (phase) => {
+      const first = mockWallet();
+      const second = mockWallet();
+      const target = Object.assign(new EventTarget(), {
+        ethereum: first.provider,
+      });
+      vi.stubGlobal('window', target);
+      let choices: readonly WalletOption[] = [];
+      const discovery = discoverWallets((value) => {
+        choices = value;
+      });
+      const selected = choices[0];
+      if (phase === 'after reopening sign-in') discovery.request();
+      target.ethereum = second.provider;
+      discovery.request();
+      discovery.request();
+      expect(choices).toHaveLength(2);
+      expect(choices.map((option) => option.id)).toEqual([
+        'browser-wallet',
+        'browser-wallet-2',
+      ]);
+      expect(choices.map((option) => option.provider)).toEqual([
+        first.provider,
+        second.provider,
+      ]);
+      expect(selected?.provider).toBe(first.provider);
+      expect(selected?.id).toBe('browser-wallet');
+      expect(first.provider.request).not.toHaveBeenCalled();
+      expect(second.provider.request).not.toHaveBeenCalled();
+      discovery.stop();
+    },
+  );
+
+  it('bounds discovery announcements', () => {
+    const target = new EventTarget();
+    vi.stubGlobal('window', target);
+    let choices: readonly WalletOption[] = [];
+    const discovery = discoverWallets((value) => {
+      choices = value;
+    });
+    for (let index = 1; index <= 30; index++)
+      target.dispatchEvent(
+        new CustomEvent('eip6963:announceProvider', {
+          detail: {
+            info: {
+              uuid: `00000000-0000-4000-8000-${index.toString(16).padStart(12, '0')}`,
+              name: 'Wallet',
+            },
+            provider: mockWallet().provider,
+          },
+        }),
+      );
+    expect(choices).toHaveLength(16);
+    discovery.stop();
   });
 
   it('detects missing wallets and gives useful rejection and missing-chain messages', async () => {

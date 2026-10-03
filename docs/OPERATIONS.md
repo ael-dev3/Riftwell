@@ -52,6 +52,8 @@ For this combined SQLite service, production requires `NODE_ENV=production`, exa
 
 Sessions expire after eight hours; sign-in challenges after five minutes. Challenges are consumed atomically. Rotating `SESSION_SECRET` invalidates sessions and cursors; records persist. Authentication supports EOA browser providers. Contract wallets and desktop WalletConnect require future integration.
 
+The sign-in dialog discovers announced providers using [EIP-6963](https://eips.ethereum.org/EIPS/eip-6963), with a legacy browser-provider fallback. Multiple providers require an explicit choice; that provider stays fixed throughout the attempt. Discovery requests run when sign-in opens and do not request accounts or signatures. Display names are self-reported, and provider icons/URLs are not loaded. Required account/network listeners must work before any wallet prompt. Only a missing-network error (`4902`) offers [EIP-3085](https://eips.ethereum.org/EIPS/eip-3085) setup using [official HyperEVM metadata](https://hyperliquid.gitbook.io/hyperliquid-docs/onboarding/how-to-use-the-hyperevm). Adding the network is followed by an explicit switch and fresh account/network reads; rejection never starts a retry loop.
+
 The chain reader bounds concurrency, payloads and retries. It requires a fresh head and canonical hash-pinned block. Public pages are bounded. Account history returns the most recent 500 entries of each type with a truncation flag. Position pagination uses short-lived block-pinned cursors; refresh the account when one expires. Public records are unavailable on RPC failure, while owner history remains accessible for cancellation.
 
 ## Backups and restore

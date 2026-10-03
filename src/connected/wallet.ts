@@ -18,6 +18,108 @@ export type WalletChange =
 export const HYPEREVM_CHAIN_ID = '0x3e7';
 const ADDRESS = /^0x[0-9a-f]{40}$/i;
 
+export interface WalletOption {
+  id: string;
+  name: string;
+  provider: WalletProvider;
+}
+
+export function discoverWallets(
+  listener: (options: readonly WalletOption[]) => void,
+): { request(): void; stop(): void } {
+  const options: WalletOption[] = [];
+  let legacyCount = 0;
+  const legacyProviders = new WeakSet<WalletProvider>();
+  const addLegacy = (provider: WalletProvider) => {
+    legacyCount++;
+    legacyProviders.add(provider);
+    options.push({
+      id:
+        legacyCount === 1 ? 'browser-wallet' : `browser-wallet-${legacyCount}`,
+      name:
+        legacyCount === 1 ? 'Browser wallet' : `Browser wallet ${legacyCount}`,
+      provider,
+    });
+  };
+  const legacy = getWalletProvider();
+  if (legacy) addLegacy(legacy);
+  let active = true;
+  const emit = () => listener(options.map((option) => ({ ...option })));
+  const announce = (event: Event) => {
+    if (!active || options.length >= 16) return;
+    let option: WalletOption;
+    try {
+      const detail: unknown = (event as CustomEvent<unknown>).detail;
+      if (!detail || typeof detail !== 'object') return;
+      const { info, provider } = detail as {
+        info?: unknown;
+        provider?: unknown;
+      };
+      if (!info || typeof info !== 'object') return;
+      const { uuid, name } = info as { uuid?: unknown; name?: unknown };
+      if (
+        typeof uuid !== 'string' ||
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          uuid,
+        ) ||
+        typeof name !== 'string' ||
+        !name.trim() ||
+        name.length > 80 ||
+        /[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/.test(name) ||
+        !provider ||
+        typeof provider !== 'object' ||
+        typeof (provider as WalletProvider).request !== 'function'
+      )
+        return;
+      option = {
+        id: uuid.toLowerCase(),
+        name: name.trim(),
+        provider: provider as WalletProvider,
+      };
+    } catch {
+      // Announcement metadata and provider accessors are untrusted.
+      return;
+    }
+    if (options.some((item) => item.id === option.id)) return;
+    const existing = options.findIndex(
+      (item) => item.provider === option.provider,
+    );
+    if (existing >= 0) {
+      if (!legacyProviders.has(option.provider)) return;
+      legacyProviders.delete(option.provider);
+      options[existing] = option;
+    } else options.push(option);
+    // Display names are self-reported, not an endorsement. Icons/URLs are never loaded.
+    emit();
+  };
+  if (typeof window !== 'undefined')
+    window.addEventListener('eip6963:announceProvider', announce);
+  emit();
+  return {
+    request() {
+      if (active && typeof window !== 'undefined') {
+        const currentLegacy = getWalletProvider();
+        if (
+          currentLegacy &&
+          options.length < 16 &&
+          !options.some((option) => option.provider === currentLegacy)
+        ) {
+          // Keep old provider identity and explicit choices intact when a
+          // different extension later replaces the legacy global.
+          addLegacy(currentLegacy);
+          emit();
+        }
+        window.dispatchEvent(new Event('eip6963:requestProvider'));
+      }
+    },
+    stop() {
+      active = false;
+      if (typeof window !== 'undefined')
+        window.removeEventListener('eip6963:announceProvider', announce);
+    },
+  };
+}
+
 export class WalletError extends Error {
   readonly code: string;
 
@@ -109,10 +211,35 @@ export async function connectWallet(provider: WalletProvider): Promise<string> {
   const wallet = requireProvider(provider);
   await wallet.request({ method: 'eth_requestAccounts' });
   if (!isHyperEvm(await wallet.request({ method: 'eth_chainId' }))) {
-    await wallet.request({
-      method: 'wallet_switchEthereumChain',
-      params: [{ chainId: HYPEREVM_CHAIN_ID }],
-    });
+    const switchChain = () =>
+      wallet.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: HYPEREVM_CHAIN_ID }],
+      });
+    try {
+      await switchChain();
+    } catch (error) {
+      let code: unknown;
+      try {
+        if (error && typeof error === 'object' && 'code' in error)
+          code = error.code;
+      } catch {}
+      if (code !== 4902 && code !== '4902') throw error;
+      await wallet.request({
+        method: 'wallet_addEthereumChain',
+        params: [
+          {
+            chainId: HYPEREVM_CHAIN_ID,
+            chainName: 'HyperEVM',
+            nativeCurrency: { name: 'HYPE', symbol: 'HYPE', decimals: 18 },
+            rpcUrls: ['https://rpc.hyperliquid.xyz/evm'],
+            blockExplorerUrls: ['https://hyperevmscan.io'],
+          },
+        ],
+      });
+      // Adding a network does not imply it became the selected network.
+      await switchChain();
+    }
     if (!isHyperEvm(await wallet.request({ method: 'eth_chainId' }))) {
       throw new WalletError('WRONG_CHAIN', 'Switch your wallet to HyperEVM.');
     }

@@ -1,6 +1,6 @@
 {
   "status": "passed",
-  "capturedAt": "2026-10-03T08:17:40.786Z",
+  "capturedAt": "2026-10-03T11:47:14.843Z",
   "evidence": "Real headless Chrome + two localhost origins + PostgreSQL; API uses scoped test HTTPS certificate; simulated read-only NFT data and ephemeral wallet, no funds or transactions",
   "frontend": "http://127.0.0.1:5197",
   "backend": "https://127.0.0.1:5196",

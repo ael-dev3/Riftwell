@@ -47,22 +47,44 @@ const check = (name: string, condition: unknown) => {
 };
 type WalletLifecycleFixture =
   'valid' | 'request-only' | 'non-callable' | 'registration-throw';
+type WalletDiscoveryFixture =
+  'legacy' | 'multiple' | 'announced-only' | 'missing-chain';
 async function actor(
   wallet: HDNodeWallet,
   lifecycle: WalletLifecycleFixture = 'valid',
+  discovery: WalletDiscoveryFixture = 'legacy',
 ) {
   assert.ok(browser, 'QA browser must be initialized before creating an actor');
   const context = await browser.newContext({
     viewport: { width: 1440, height: 1000 },
     reducedMotion: 'reduce',
   });
+  let chain = discovery === 'missing-chain' ? '0x1' : '0x3e7';
+  let added = false;
   await context.exposeBinding(
     'fixtureWalletRequest',
     async (_source, request: WalletRequest) => {
       walletMethods.push(request.method);
       if (['eth_accounts', 'eth_requestAccounts'].includes(request.method))
         return [wallet.address];
-      if (request.method === 'eth_chainId') return '0x3e7';
+      if (request.method === 'eth_chainId') return chain;
+      if (request.method === 'wallet_switchEthereumChain') {
+        if (!added) return { fixtureErrorCode: 4902 };
+        chain = '0x3e7';
+        return null;
+      }
+      if (request.method === 'wallet_addEthereumChain') {
+        assert.ok(Array.isArray(request.params));
+        assert.deepEqual(request.params[0], {
+          chainId: '0x3e7',
+          chainName: 'HyperEVM',
+          nativeCurrency: { name: 'HYPE', symbol: 'HYPE', decimals: 18 },
+          rpcUrls: ['https://rpc.hyperliquid.xyz/evm'],
+          blockExplorerUrls: ['https://hyperevmscan.io'],
+        });
+        added = true;
+        return null;
+      }
       if (request.method === 'personal_sign') {
         assert.ok(
           Array.isArray(request.params) &&
@@ -79,37 +101,96 @@ async function actor(
       assert.fail(`Unexpected wallet method: ${request.method}`);
     },
   );
-  await context.addInitScript((lifecycle: WalletLifecycleFixture) => {
-    const listeners = new Map<string, WalletListener[]>();
-    window.ethereum = {
-      request: (request) => window.fixtureWalletRequest(request),
-      on: (event, fn) => {
-        const list = listeners.get(event) ?? [];
-        list.push(fn);
-        listeners.set(event, list);
-        if (lifecycle === 'registration-throw' && event === 'chainChanged')
-          throw new Error('External provider registration failed');
-      },
-      removeListener: (event, fn) =>
-        listeners.set(
-          event,
-          (listeners.get(event) ?? []).filter((item) => item !== fn),
-        ),
-    };
-    // Deliberately malformed injected objects exercise the runtime boundary.
-    if (lifecycle === 'request-only')
-      Object.assign(window.ethereum, {
-        on: undefined,
-        removeListener: undefined,
-      });
-    if (lifecycle === 'non-callable')
-      Object.assign(window.ethereum, { on: true });
-    window.fixtureWalletDisconnect = () => {
-      if (lifecycle === 'registration-throw')
-        [...listeners.values()].flat().forEach((fn) => fn([]));
-      else (listeners.get('disconnect') ?? []).forEach((fn) => fn());
-    };
-  }, lifecycle);
+  await context.addInitScript(
+    ({
+      lifecycle,
+      discovery,
+    }: {
+      lifecycle: WalletLifecycleFixture;
+      discovery: WalletDiscoveryFixture;
+    }) => {
+      const listeners = new Map<string, WalletListener[]>();
+      window.ethereum = {
+        request: async (request) => {
+          const result = await window.fixtureWalletRequest(request);
+          // Binding failures do not retain custom wallet error properties.
+          if (
+            result &&
+            typeof result === 'object' &&
+            'fixtureErrorCode' in result
+          )
+            throw { code: result.fixtureErrorCode };
+          return result;
+        },
+        on: (event, fn) => {
+          const list = listeners.get(event) ?? [];
+          list.push(fn);
+          listeners.set(event, list);
+          if (lifecycle === 'registration-throw' && event === 'chainChanged')
+            throw new Error('External provider registration failed');
+        },
+        removeListener: (event, fn) =>
+          listeners.set(
+            event,
+            (listeners.get(event) ?? []).filter((item) => item !== fn),
+          ),
+      };
+      // Deliberately malformed injected objects exercise the runtime boundary.
+      if (lifecycle === 'request-only')
+        Object.assign(window.ethereum, {
+          on: undefined,
+          removeListener: undefined,
+        });
+      if (lifecycle === 'non-callable')
+        Object.assign(window.ethereum, { on: true });
+      window.fixtureWalletDisconnect = () => {
+        if (lifecycle === 'registration-throw')
+          [...listeners.values()].flat().forEach((fn) => fn([]));
+        else (listeners.get('disconnect') ?? []).forEach((fn) => fn());
+      };
+      if (discovery === 'multiple' || discovery === 'announced-only') {
+        const selected = window.ethereum;
+        const other = {
+          ...selected,
+          request: async () => {
+            throw new Error('The unselected provider was called');
+          },
+        };
+        // The chosen wallet differs from the legacy default. Using
+        // window.ethereum during sign-in would call the throwing provider.
+        if (discovery === 'multiple') window.ethereum = other;
+        const announce = (uuid: string, name: string, provider: unknown) =>
+          window.dispatchEvent(
+            new CustomEvent('eip6963:announceProvider', {
+              detail: {
+                info: {
+                  uuid,
+                  name,
+                  icon: 'https://invalid.example/never-load.svg',
+                },
+                provider,
+              },
+            }),
+          );
+        window.addEventListener('eip6963:requestProvider', () => {
+          announce(
+            '00000000-0000-4000-8000-000000000001',
+            'Fixture Wallet',
+            selected,
+          );
+          if (discovery === 'multiple')
+            announce(
+              '00000000-0000-4000-8000-000000000002',
+              'Other Wallet',
+              other,
+            );
+        });
+        if (discovery === 'announced-only')
+          Reflect.deleteProperty(window, 'ethereum');
+      }
+    },
+    { lifecycle, discovery },
+  );
   const page = await context.newPage();
   page.on('pageerror', (error) => errors.push(error.message));
   page.on('request', (request) => {
@@ -340,6 +421,93 @@ try {
         ?.includes("script-src 'self'"),
   );
   browser = await chromium.launch({ channel: 'chrome', headless: true });
+  for (const discovery of [
+    'multiple',
+    'announced-only',
+    'missing-chain',
+  ] as const) {
+    const selected = await actor(alice, 'valid', discovery);
+    const page = selected.page;
+    const methodsBefore = walletMethods.length;
+    await page.locator('.account-button').click();
+    const selector = dialog(page).getByLabel('Wallet', { exact: true });
+    await selector.waitFor();
+    check(
+      `${discovery} discovery reads no accounts or signatures before user sign-in`,
+      walletMethods.length === methodsBefore,
+    );
+    if (discovery === 'multiple') {
+      await selector.getByRole('option', { name: 'Fixture Wallet' }).waitFor({
+        state: 'attached',
+      });
+      await selector.getByRole('option', { name: 'Other Wallet' }).waitFor({
+        state: 'attached',
+      });
+      check(
+        'Announced legacy provider is deduplicated and both wallets are selectable',
+        (await selector.locator('option').count()) === 3,
+      );
+      await dialog(page)
+        .getByRole('button', { name: 'Sign in with wallet', exact: true })
+        .click();
+      await dialog(page)
+        .getByRole('alert')
+        .filter({ hasText: 'Choose the wallet' })
+        .waitFor();
+      check(
+        'Multiple providers require explicit choice before any wallet prompt',
+        walletMethods.length === methodsBefore,
+      );
+      await selector.selectOption({ label: 'Fixture Wallet' });
+      await audit(page, 'Explicit wallet choice');
+      await page.setViewportSize({ width: 320, height: 900 });
+      check(
+        'Wallet choice fits a 320px viewport',
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      );
+      await audit(page, 'Explicit wallet choice at 320px');
+      await page.setViewportSize({ width: 1440, height: 1000 });
+      await page.screenshot({
+        path: new URL('connected-wallet-choice.png', output).pathname,
+        animations: 'disabled',
+      });
+    }
+    await dialog(page)
+      .getByRole('button', { name: 'Sign in with wallet', exact: true })
+      .click();
+    await dialog(page)
+      .getByRole('heading', { name: 'Your account', exact: true })
+      .waitFor();
+    check(
+      `${discovery} provider signs in with the intended account`,
+      (await page.locator('.account-label').innerText()).toLowerCase() ===
+        `${alice.address.slice(0, 6)}…${alice.address.slice(-4)}`.toLowerCase(),
+    );
+    if (discovery === 'missing-chain')
+      check(
+        'Unknown HyperEVM is added once then explicitly selected',
+        walletMethods
+          .slice(methodsBefore)
+          .filter((method) => method === 'wallet_addEthereumChain').length ===
+          1 &&
+          walletMethods
+            .slice(methodsBefore)
+            .filter((method) => method === 'wallet_switchEthereumChain')
+            .length === 2,
+      );
+    await close(page);
+    await page.locator('.account-button').click();
+    await dialog(page)
+      .getByRole('button', { name: 'Sign out', exact: true })
+      .click();
+    await dialog(page).waitFor({ state: 'hidden' });
+    await selected.context.close();
+  }
+  // Give the independent marketplace phase a fresh in-memory auth window.
+  // Production rate limits stay unchanged; these fixture sessions are revoked.
+  await service.restart();
   for (const lifecycle of [
     'request-only',
     'non-callable',
@@ -1541,7 +1709,7 @@ try {
         .count()) === 0,
   );
   check(
-    'Only account reads and personal sign reached test wallet',
+    'Only account reads, explicit network setup and personal sign reached test wallet',
     walletMethods.includes('personal_sign') &&
       walletMethods.includes('eth_chainId') &&
       walletMethods.every((method) =>
@@ -1550,6 +1718,8 @@ try {
           'eth_requestAccounts',
           'eth_chainId',
           'personal_sign',
+          'wallet_switchEthereumChain',
+          'wallet_addEthereumChain',
         ].includes(method),
       ),
   );
@@ -1580,7 +1750,8 @@ try {
         status,
         checkedAt: new Date().toISOString(),
         browser: 'isolated headless Chrome',
-        suiteVersion: 'redesign-integrated-authoritative-marketplace-v3',
+        suiteVersion:
+          'redesign-integrated-authoritative-marketplace-v4-wallet-choice',
         scope:
           'Built connected frontend + real HTTP/SQLite, simulated read-only chain and ephemeral EOA providers; no real funds, wallets or transactions',
         checks,

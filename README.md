@@ -34,7 +34,7 @@ VITE_APP_MODE=connected npm run build
 APP_ORIGIN=http://127.0.0.1:8080 npm --prefix server start
 ```
 
-The development database is `server/data/riftwell.sqlite`. Authentication supports EOA accounts through an Ethereum browser wallet on HyperEVM (chain 999). Open the site inside a compatible mobile wallet browser or use an extension. Desktop WalletConnect and contract-wallet authentication are not implemented.
+The development database is `server/data/riftwell.sqlite`. Authentication supports EOA accounts through an Ethereum browser wallet on HyperEVM (chain 999). Open the site inside a compatible mobile wallet browser or use an extension. Sign-in lets you choose among announced browser wallets and offers HyperEVM setup when the selected wallet reports the network missing. Desktop WalletConnect and contract-wallet authentication are not implemented.
 
 ```sh
 npm run check

@@ -24,6 +24,7 @@ import {
 } from './api';
 import {
   connectWallet,
+  discoverWallets,
   getWalletProvider,
   signChallenge,
   subscribeWallet,
@@ -31,6 +32,7 @@ import {
   WalletError,
   type WalletChange,
   type WalletProvider,
+  type WalletOption,
 } from './wallet';
 import { shortAddress } from './amounts';
 import {
@@ -102,6 +104,26 @@ function ConnectedShell() {
   const [provider, setProvider] = useState<WalletProvider | null>(() =>
     getWalletProvider(),
   );
+  const [walletOptions, setWalletOptions] = useState<readonly WalletOption[]>(
+    [],
+  );
+  const [selectedWallet, setSelectedWallet] = useState<WalletProvider | null>(
+    null,
+  );
+  const walletDiscovery = useRef<ReturnType<typeof discoverWallets> | null>(
+    null,
+  );
+  useEffect(() => {
+    const discovery = discoverWallets(setWalletOptions);
+    walletDiscovery.current = discovery;
+    return () => {
+      discovery.stop();
+      walletDiscovery.current = null;
+    };
+  }, []);
+  useEffect(() => {
+    if (modal?.type === 'signin') walletDiscovery.current?.request();
+  }, [modal?.type]);
   const walletSubscription = useRef<{
     provider: WalletProvider;
     stop: () => void;
@@ -440,7 +462,14 @@ function ConnectedShell() {
   }
 
   async function signIn() {
-    const wallet = getWalletProvider();
+    if (signingRef.current) return;
+    const wallet =
+      selectedWallet ??
+      (walletOptions.length === 1 ? walletOptions[0]?.provider : null);
+    if (!wallet && walletOptions.length > 1) {
+      setSignError('Choose the wallet you want to use.');
+      return;
+    }
     if (!wallet) {
       setSignError(
         'Open Riftwell in a browser with an Ethereum wallet installed.',
@@ -455,7 +484,9 @@ function ConnectedShell() {
       setSignError(walletErrorMessage(failure));
       return;
     }
+    setSelectedWallet(wallet);
     setProvider(wallet);
+    signingRef.current = true;
     setSigning(true);
     setSignError('');
     const attempt = ++signInAttempt.current;
@@ -521,6 +552,7 @@ function ConnectedShell() {
       ) {
         walletConnecting.current = false;
         signInAddress.current = null;
+        signingRef.current = false;
         setSigning(false);
       }
     }
@@ -784,6 +816,41 @@ function ConnectedShell() {
           }}
         >
           <div className="dialog-body">
+            {walletOptions.length > 0 && (
+              <div className="form-field">
+                <label className="field-label" htmlFor="signin-wallet">
+                  Wallet
+                </label>
+                <select
+                  id="signin-wallet"
+                  className="input-control"
+                  disabled={signing}
+                  value={
+                    walletOptions.find(
+                      (option) => option.provider === selectedWallet,
+                    )?.id ??
+                    (walletOptions.length === 1 ? walletOptions[0]?.id : '')
+                  }
+                  onChange={(event) => {
+                    setSelectedWallet(
+                      walletOptions.find(
+                        (option) => option.id === event.target.value,
+                      )?.provider ?? null,
+                    );
+                    setSignError('');
+                  }}
+                >
+                  {walletOptions.length > 1 && (
+                    <option value="">Choose a wallet</option>
+                  )}
+                  {walletOptions.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <p className="panel-text">
               Connect your browser wallet and sign the server’s sign-in message
               to manage your off-chain records.

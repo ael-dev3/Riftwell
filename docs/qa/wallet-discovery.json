@@ -1,0 +1,48 @@
+{
+  "checkedAt": "2026-10-03T11:49:31.882027+00:00",
+  "status": "passed",
+  "scope": "Built local connected UI and synthetic EOA providers; same-origin temporary SQLite and separate-origin HTTPS/disposable PostgreSQL. No actual user wallet, funds, token approvals, NFT transfers or chain transactions. Public frontend remains the unchanged illustrative preview.",
+  "sourceFiles": {
+    "src/connected/wallet.ts": "c2cb9b7921b9557583b08d43c9eeb46ea67ca0f23744b81e28adc2b3a086b72e",
+    "src/connected/ConnectedApp.tsx": "063ed0567f67518d13340a22c4f54ec53027706ce06d68bdd8e7e15d5155d014",
+    "src/connected/client.test.ts": "14e3c65618f40c60a71a8c3d5346069bf10b3527d9b24cafefc63f826259d11a",
+    "scripts/connected-browser-qa.ts": "bddd36319f278fb7c0e69e3d5857ad0fa0b541a5dca1e1dd8746e5369105b127",
+    "scripts/bearer-browser-qa.ts": "7ccf012baeab4df59452a3020e07a5c7a3fe8a757006a87ccfd189b65b00cb77"
+  },
+  "frontendTests": {
+    "passed": 255,
+    "failed": 0
+  },
+  "connectedBrowser": {
+    "passed": 135,
+    "auditedViews": 24,
+    "checkedAt": "2026-10-03T11:47:54.006Z",
+    "report": "docs/qa/connected-browser-report.json"
+  },
+  "bearerBrowser": {
+    "passed": 14,
+    "checkedAt": "2026-10-03T11:47:14.843Z",
+    "report": "docs/qa/bearer-browser-report.json"
+  },
+  "checks": {
+    "selectedAnnouncedProviderDiffersFromLegacyDefault": true,
+    "announcedOnlyProviderAuthenticates": true,
+    "explicitChoiceBeforeWalletPrompts": true,
+    "legacyReplacementPreservesProviderIdentity": true,
+    "discoveryDoesNotRequestAccountsOrSignatures": true,
+    "metadataAndGetterBoundariesCovered": true,
+    "remoteProviderIconsAndUrlsNotLoaded": true,
+    "fixedNetworkSetupOnlyOn4902": true,
+    "addOnceThenExplicitSwitchAndReadAccounts": true,
+    "rejectionAndWrongNetworkFailWithoutRetryLoop": true,
+    "walletLifecycleGuardsRetained": true,
+    "selectorFits320px": true,
+    "sessionsRevoked": true,
+    "typesAndFormattingPass": true
+  },
+  "remainingEvidence": [
+    "Actual supported browser-extension/mobile-wallet verification at the final HTTPS origin",
+    "Production recovery and multi-replica evidence",
+    "Separately authorized funded contract release"
+  ]
+}

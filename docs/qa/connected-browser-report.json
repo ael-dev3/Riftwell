@@ -1,11 +1,25 @@
 {
   "status": "passed",
-  "checkedAt": "2026-10-03T10:13:31.485Z",
+  "checkedAt": "2026-10-03T11:47:54.006Z",
   "browser": "isolated headless Chrome",
-  "suiteVersion": "redesign-integrated-authoritative-marketplace-v3",
+  "suiteVersion": "redesign-integrated-authoritative-marketplace-v4-wallet-choice",
   "scope": "Built connected frontend + real HTTP/SQLite, simulated read-only chain and ephemeral EOA providers; no real funds, wallets or transactions",
   "checks": [
     "Liveness and security headers",
+    "multiple discovery reads no accounts or signatures before user sign-in",
+    "Announced legacy provider is deduplicated and both wallets are selectable",
+    "Multiple providers require explicit choice before any wallet prompt",
+    "Dialog mounts in body with selected market accent: Explicit wallet choice",
+    "Accessibility: Explicit wallet choice",
+    "Wallet choice fits a 320px viewport",
+    "Dialog mounts in body with selected market accent: Explicit wallet choice at 320px",
+    "Accessibility: Explicit wallet choice at 320px",
+    "multiple provider signs in with the intended account",
+    "announced-only discovery reads no accounts or signatures before user sign-in",
+    "announced-only provider signs in with the intended account",
+    "missing-chain discovery reads no accounts or signatures before user sign-in",
+    "missing-chain provider signs in with the intended account",
+    "Unknown HyperEVM is added once then explicitly selected",
     "request-only wallet fails safely before prompts/authentication and leaves its failed callbacks inert",
     "request-only wallet preserves the public marketplace and its controls",
     "non-callable wallet fails safely before prompts/authentication and leaves its failed callbacks inert",
@@ -122,12 +136,20 @@
     "Cancelled marketplace listing stays absent after a second service restart",
     "Cancelled legacy history persists without becoming a pool position",
     "Wallet disconnect clears authenticated UI",
-    "Only account reads and personal sign reached test wallet",
+    "Only account reads, explicit network setup and personal sign reached test wallet",
     "No retired lending creation or financial execution endpoint was requested",
     "No external service or chain RPC reached the browser",
     "No browser runtime exceptions"
   ],
   "accessibility": [
+    {
+      "view": "Explicit wallet choice",
+      "violations": []
+    },
+    {
+      "view": "Explicit wallet choice at 320px",
+      "violations": []
+    },
     {
       "view": "connected marketplace empty",
       "violations": []
@@ -229,6 +251,42 @@
     },
     {
       "method": "POST",
+      "path": "/api/v1/auth/logout"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/challenge"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/verify"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/logout"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/challenge"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/verify"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/logout"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/challenge"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/verify"
+    },
+    {
+      "method": "POST",
       "path": "/api/v1/listings"
     },
     {
@@ -245,11 +303,11 @@
     },
     {
       "method": "PATCH",
-      "path": "/api/v1/listings/90f848ec-6133-497e-9683-e2d4d7d202dc"
+      "path": "/api/v1/listings/2c01fddd-7232-4cb7-8b67-f30b88aa2dd0"
     },
     {
       "method": "DELETE",
-      "path": "/api/v1/listings/8fcfceae-8c78-4fa8-be31-c3035a0fa2d9"
+      "path": "/api/v1/listings/6bc736c0-8df5-436b-8377-4ec8c31bfdc9"
     },
     {
       "method": "POST",
@@ -273,7 +331,7 @@
     },
     {
       "method": "PATCH",
-      "path": "/api/v1/listings/90f848ec-6133-497e-9683-e2d4d7d202dc"
+      "path": "/api/v1/listings/2c01fddd-7232-4cb7-8b67-f30b88aa2dd0"
     },
     {
       "method": "POST",
@@ -289,11 +347,11 @@
     },
     {
       "method": "DELETE",
-      "path": "/api/v1/listings/90f848ec-6133-497e-9683-e2d4d7d202dc"
+      "path": "/api/v1/listings/2c01fddd-7232-4cb7-8b67-f30b88aa2dd0"
     },
     {
       "method": "DELETE",
-      "path": "/api/v1/loan-requests/00c81e44-0461-4cb3-bb8c-ceffdee1ad92"
+      "path": "/api/v1/loan-requests/6bd56f80-f90a-4d48-b6f5-89b87c96c8e5"
     },
     {
       "method": "POST",
@@ -302,455 +360,551 @@
   ],
   "apiReads": [
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/status"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/markets"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/lending"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/auth/session"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
-      "path": "/api/v1/listings"
-    },
-    {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
-      "path": "/api/v1/status"
-    },
-    {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
-      "path": "/api/v1/markets"
-    },
-    {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
-      "path": "/api/v1/lending"
-    },
-    {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
-      "path": "/api/v1/auth/session"
-    },
-    {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
-      "path": "/api/v1/listings"
-    },
-    {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
-      "path": "/api/v1/status"
-    },
-    {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
-      "path": "/api/v1/markets"
-    },
-    {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
-      "path": "/api/v1/lending"
-    },
-    {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
-      "path": "/api/v1/auth/session"
-    },
-    {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
-      "path": "/api/v1/listings"
-    },
-    {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
-      "path": "/api/v1/status"
-    },
-    {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
-      "path": "/api/v1/markets"
-    },
-    {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
-      "path": "/api/v1/lending"
-    },
-    {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
-      "path": "/api/v1/auth/session"
-    },
-    {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/listings"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/status"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/markets"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/lending"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/account/listings"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/listings"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/status"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/markets"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/lending"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/account/listings"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/listings"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/status"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/markets"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/lending"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/listings"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/status"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/markets"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/lending"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/listings"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/status"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/markets"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/lending"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/listings"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/status"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/markets"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/lending"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/auth/session"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/account/listings"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
+      "path": "/api/v1/account"
+    },
+    {
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/positions/999"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/positions/101"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
       "path": "/api/v1/status"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
       "path": "/api/v1/markets"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
       "path": "/api/v1/lending"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
       "path": "/api/v1/auth/session"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
-      "path": "/api/v1/listings/90f848ec-6133-497e-9683-e2d4d7d202dc"
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
+      "path": "/api/v1/listings/2c01fddd-7232-4cb7-8b67-f30b88aa2dd0"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/status"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/markets"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/lending"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
-      "path": "/api/v1/listings/90f848ec-6133-497e-9683-e2d4d7d202dc"
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
+      "path": "/api/v1/listings/2c01fddd-7232-4cb7-8b67-f30b88aa2dd0"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
       "path": "/api/v1/status"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
       "path": "/api/v1/markets"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
       "path": "/api/v1/lending"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
-      "path": "/api/v1/listings/8fcfceae-8c78-4fa8-be31-c3035a0fa2d9"
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
+      "path": "/api/v1/listings/6bc736c0-8df5-436b-8377-4ec8c31bfdc9"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
-      "path": "/api/v1/listings/90f848ec-6133-497e-9683-e2d4d7d202dc"
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
+      "path": "/api/v1/listings/2c01fddd-7232-4cb7-8b67-f30b88aa2dd0"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
-      "path": "/api/v1/listings/8fcfceae-8c78-4fa8-be31-c3035a0fa2d9"
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
+      "path": "/api/v1/listings/6bc736c0-8df5-436b-8377-4ec8c31bfdc9"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
       "path": "/api/v1/status"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
       "path": "/api/v1/markets"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
       "path": "/api/v1/lending"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/status"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/markets"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/lending"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/auth/session"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/status"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/markets"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/lending"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/auth/session"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/status"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/markets"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/lending"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/auth/session"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/status"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/markets"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/lending"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/auth/session"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x01a4f42B4903695724841e730C26dB10d882C059",
+      "actor": "0x9f373FaCFd60693060f28ddf12DEA95D47107D2a",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/listings"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/status"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/markets"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/lending"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/auth/session"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account/listings"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account"
     },
     {
-      "actor": "0x30498151AD0E50A6566C3Bd3c17f671D4cE6D4F3",
+      "actor": "0xD044CC85e7F5aBA3a39E92A5dc6D59576846769f",
       "path": "/api/v1/account"
     }
   ],
