@@ -155,15 +155,26 @@ export default function FaqPage({
       ),
     },
     {
-      question: 'What is a private (OTC) listing?',
-      answer: (
-        <>
-          A listing reserved for one buyer address. It stays off the public
-          listings and appears in that buyer’s OTC tab. Like every listing it is
-          an off-chain intent: it never transfers, escrows or approves your
-          position.
-        </>
-      ),
+      question:
+        mode === 'preview'
+          ? 'What is a private (OTC) listing?'
+          : 'What does reserving a buyer do?',
+      answer:
+        mode === 'preview' ? (
+          <>
+            A listing reserved for one buyer address. It stays off the public
+            listings and appears in that buyer’s OTC tab. Like every listing it
+            is an off-chain intent: it never transfers, escrows or approves your
+            position.
+          </>
+        ) : (
+          <>
+            The listing and buyer address remain public. A reservation limits
+            who can buy when settlement is enabled; it does not hide the
+            listing. Saving it is an off-chain intent and never transfers,
+            escrows or approves your position.
+          </>
+        ),
     },
     {
       question: 'Has Riftwell been audited?',

@@ -4,6 +4,8 @@
 
 [riftwell-ael.web.app](https://riftwell-ael.web.app) serves the static preview with illustrative data. It does not authenticate wallets or enable settlement. GitHub hosts and validates the source; Firebase hosts the frontend, and Deno serves the separately deployed API.
 
+An isolated connected review is live on Firebase's `wallet-review` channel. It uses a separate Deno Preview context and database, rather than the production API. See the [review procedure](FIREBASE_DENO.md#isolated-connected-wallet-review) for the exact endpoints, expiry and remaining checks. It does not establish a production connected release.
+
 The GitHub workflow validates both application dependency trees, types, formatting and the connected container, then builds the explicit preview at base `/`. It does not publish a site or deploy contracts. Direct provider deployment remains separate from source publication and CI.
 
 ```sh

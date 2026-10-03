@@ -1,0 +1,428 @@
+{
+  "checkedAt": "2026-10-03T12:33:26.147144+00:00",
+  "state": "isolated-connected-review",
+  "hosting": {
+    "checkedAt": "2026-10-03T12:31:27.827463+00:00",
+    "status": "passed",
+    "origin": "https://riftwell-ael--wallet-review-zebgpmu9.web.app",
+    "mode": "connected",
+    "transport": "bearer",
+    "api": "https://riftwell-k67wac4keewb.ael-dev3.deno.net",
+    "hostingVersion": "828777362ed1807f",
+    "releaseTime": "2026-10-03T12:25:07.895Z",
+    "expiresAt": "2026-10-10T12:25:00.147676929Z",
+    "mainHostingVersion": "7d8ce7b962a3ffdb",
+    "mainUnchanged": true,
+    "headersVerifiedOnAllPaths": [
+      "x-content-type-options",
+      "x-frame-options",
+      "referrer-policy",
+      "permissions-policy",
+      "cross-origin-opener-policy",
+      "content-security-policy"
+    ],
+    "checks": [
+      {
+        "path": "/artwork-0.svg",
+        "bytes": 2299,
+        "sha256": "a4f1942c79970832dfd34b237def01df954f9c8f0f9e6727a08ebe14b1acf287",
+        "cacheControl": "no-store",
+        "contentType": "image/svg+xml"
+      },
+      {
+        "path": "/artwork-1.svg",
+        "bytes": 2359,
+        "sha256": "98033464718bb6ff63ba0211698836bf832fe582fd9fc430de713728b8c3d99e",
+        "cacheControl": "no-store",
+        "contentType": "image/svg+xml"
+      },
+      {
+        "path": "/artwork-2.svg",
+        "bytes": 2462,
+        "sha256": "b44af84b4b1e4040d90ece4e2c223199898042c9bce800fbc386b7ef2d420a2c",
+        "cacheControl": "no-store",
+        "contentType": "image/svg+xml"
+      },
+      {
+        "path": "/artwork-3.svg",
+        "bytes": 2253,
+        "sha256": "2807ab8880620cb5331d09a6956095696eaa05dc05850630bb11a21fe3789d09",
+        "cacheControl": "no-store",
+        "contentType": "image/svg+xml"
+      },
+      {
+        "path": "/artwork-4.svg",
+        "bytes": 2510,
+        "sha256": "7ba1cf72d36d11921457051fe3ce64bad5f93a2c19c77d64a0bd7ab0c2c99449",
+        "cacheControl": "no-store",
+        "contentType": "image/svg+xml"
+      },
+      {
+        "path": "/artwork-5.svg",
+        "bytes": 2615,
+        "sha256": "d627ad38190a099f03494012183ca4c71cfe75f028ecd91da8deb847890462d8",
+        "cacheControl": "no-store",
+        "contentType": "image/svg+xml"
+      },
+      {
+        "path": "/assets/BrandPage-BYK9Bgp-.js",
+        "bytes": 5791,
+        "sha256": "f83ac431d5c104aca5d46c2378fcbe9689ff6785d9bc01a98319460bd086082e",
+        "cacheControl": "public, max-age=31536000, immutable",
+        "contentType": "text/javascript; charset=utf-8"
+      },
+      {
+        "path": "/assets/Charts-tRNSFEfn.js",
+        "bytes": 2850,
+        "sha256": "3970bd6dde0ac465f89fe5aa66b1b38347ac364e63ff970e4e72cf9123db6d1a",
+        "cacheControl": "public, max-age=31536000, immutable",
+        "contentType": "text/javascript; charset=utf-8"
+      },
+      {
+        "path": "/assets/CountUp-BJEoNlMx.js",
+        "bytes": 1154,
+        "sha256": "53481cddd2f6b82157c7ac07afa16c11ba1195d397f1f5ce577c7cdea92be78d",
+        "cacheControl": "public, max-age=31536000, immutable",
+        "contentType": "text/javascript; charset=utf-8"
+      },
+      {
+        "path": "/assets/FaqPage-CSmOc-6o.js",
+        "bytes": 6677,
+        "sha256": "ca5f468e6817ce556e193d885397028007bfb3ed15a41782c69590a7ff0a951b",
+        "cacheControl": "public, max-age=31536000, immutable",
+        "contentType": "text/javascript; charset=utf-8"
+      },
+      {
+        "path": "/assets/PrivacyPage-I_cb4YcE.js",
+        "bytes": 3214,
+        "sha256": "5d836bba93f4bf2ead7c4f6072e0f3fee8cb99f528c8dd40771cad1906713725",
+        "cacheControl": "public, max-age=31536000, immutable",
+        "contentType": "text/javascript; charset=utf-8"
+      },
+      {
+        "path": "/assets/SimulatorPage-mn-CnrOr.js",
+        "bytes": 8252,
+        "sha256": "28bb10982eab1800999128fea3a7509d9300a845258f19ab785ce0c2aa7deea4",
+        "cacheControl": "public, max-age=31536000, immutable",
+        "contentType": "text/javascript; charset=utf-8"
+      },
+      {
+        "path": "/assets/StatsPage-CuYfLXax.js",
+        "bytes": 5593,
+        "sha256": "9e1f9bb1a01c2ebe856e58c8d5e495282bd8aa91bf4eb7e80fc079d65b1e9b83",
+        "cacheControl": "public, max-age=31536000, immutable",
+        "contentType": "text/javascript; charset=utf-8"
+      },
+      {
+        "path": "/assets/VaultDetails-0rZA2f4t.js",
+        "bytes": 8309,
+        "sha256": "ccafd1f43a595e9030d115b940070a37c030f5f3f65c54c40e981ba2ead719f9",
+        "cacheControl": "public, max-age=31536000, immutable",
+        "contentType": "text/javascript; charset=utf-8"
+      },
+      {
+        "path": "/assets/data-B4zOifHa.js",
+        "bytes": 18244,
+        "sha256": "e90d71a604274c93769dced5ea5b35e3bfd58623476b882805858cf928e289ce",
+        "cacheControl": "public, max-age=31536000, immutable",
+        "contentType": "text/javascript; charset=utf-8"
+      },
+      {
+        "path": "/assets/index-BqsFWNAq.css",
+        "bytes": 72635,
+        "sha256": "9d73c74fc7997f0d8ad70e73d25495aff1bf3f6efb5b14ef62d13cc3a9779d9e",
+        "cacheControl": "public, max-age=31536000, immutable",
+        "contentType": "text/css; charset=utf-8"
+      },
+      {
+        "path": "/assets/index-CQfKiUBk.js",
+        "bytes": 322995,
+        "sha256": "9e173a6b56dae552040ea1c5d2acba52c190b158387fe6cc1c2934827ffae43b",
+        "cacheControl": "public, max-age=31536000, immutable",
+        "contentType": "text/javascript; charset=utf-8"
+      },
+      {
+        "path": "/assets/info-X2UxowIm.js",
+        "bytes": 232,
+        "sha256": "da52a36afaff2e7d416677e0c360983632bc83fae370fb57d4f2c9b23fac7319",
+        "cacheControl": "public, max-age=31536000, immutable",
+        "contentType": "text/javascript; charset=utf-8"
+      },
+      {
+        "path": "/brand/riftwell-mark-dark.svg",
+        "bytes": 422,
+        "sha256": "8b46e39fbfe06b9fdaa4bc429514b263a0610a79953762d9fb2b2a8c292551d7",
+        "cacheControl": "no-store",
+        "contentType": "image/svg+xml"
+      },
+      {
+        "path": "/brand/riftwell-mark-light.svg",
+        "bytes": 555,
+        "sha256": "3f3a1e9cc3f576641a0890cc0c62ed68430180466c579a0e0de658723f80e30b",
+        "cacheControl": "no-store",
+        "contentType": "image/svg+xml"
+      },
+      {
+        "path": "/index.html",
+        "bytes": 1123,
+        "sha256": "beeff0f38555d65a5b6da4889c074adc03ee490ab727a7d3f4bbc8ab16839a87",
+        "cacheControl": "no-store",
+        "contentType": "text/html; charset=utf-8"
+      },
+      {
+        "path": "/markets/kittenswap.png",
+        "bytes": 1790,
+        "sha256": "47a3121d8398185c1775fc2d5a102ea58c1fd71aa801c9c16ce6d20488c488bf",
+        "cacheControl": "no-store",
+        "contentType": "image/png"
+      },
+      {
+        "path": "/riftwell.svg",
+        "bytes": 422,
+        "sha256": "8b46e39fbfe06b9fdaa4bc429514b263a0610a79953762d9fb2b2a8c292551d7",
+        "cacheControl": "no-store",
+        "contentType": "image/svg+xml"
+      },
+      {
+        "path": "/theme.js",
+        "bytes": 662,
+        "sha256": "5dd6d158b988ebee05160eca726cf4a0c3de5dcf5ddf3991b3da66602f6cea46",
+        "cacheControl": "no-store",
+        "contentType": "text/javascript; charset=utf-8"
+      },
+      {
+        "path": "/third-party-notices.txt",
+        "bytes": 9908,
+        "sha256": "7ef5d99aae28b0480d77dc473fd1ec6c9d6d7ff00841e59d26dfe3fac6aeabf8",
+        "cacheControl": "no-store",
+        "contentType": "text/plain; charset=utf-8"
+      },
+      {
+        "path": "/",
+        "bytes": 1123,
+        "sha256": "beeff0f38555d65a5b6da4889c074adc03ee490ab727a7d3f4bbc8ab16839a87",
+        "cacheControl": "no-store",
+        "contentType": "text/html; charset=utf-8"
+      },
+      {
+        "path": "/review-fallback",
+        "bytes": 1123,
+        "sha256": "beeff0f38555d65a5b6da4889c074adc03ee490ab727a7d3f4bbc8ab16839a87",
+        "cacheControl": "no-store",
+        "contentType": "text/html; charset=utf-8"
+      }
+    ],
+    "sourceBaseCommit": "78c42774d884994c605cdae79fb678d75698dbbc",
+    "sourceFileHashes": {
+      "src/pages/FaqPage.tsx": "3b62c05aa6a6c8b2c7d12931e65269ce864ac9b3e79a4f863ae15c32ea0347e8"
+    },
+    "limitations": [
+      "No real user wallet signature, owned-position mutation, production recovery or simultaneous replica test.",
+      "Review channel and Deno Preview only; production connected release remains pending."
+    ]
+  },
+  "api": {
+    "checkedAt": "2026-10-03T12:19:56.882089+00:00",
+    "sourceCommit": "78c42774d884994c605cdae79fb678d75698dbbc",
+    "revision": "k67wac4keewb",
+    "api": "https://riftwell-k67wac4keewb.ael-dev3.deno.net",
+    "origin": "https://riftwell-ael--wallet-review-zebgpmu9.web.app",
+    "checks": [
+      {
+        "name": "/health/live",
+        "passed": true,
+        "evidence": {
+          "status": 200,
+          "body": {
+            "status": "live",
+            "runtime": {
+              "instanceId": "323ac3be-b43b-4aa5-be4b-6875655976b1",
+              "startedAt": "2026-10-03T12:19:52.613Z"
+            }
+          },
+          "cacheControl": "no-store",
+          "allowOrigin": null,
+          "instance": "323ac3be-b43b-4aa5-be4b-6875655976b1"
+        }
+      },
+      {
+        "name": "/health/ready",
+        "passed": true,
+        "evidence": {
+          "status": 200,
+          "body": {
+            "ready": true,
+            "database": "ready",
+            "chain": {
+              "ready": true,
+              "available": true,
+              "chainId": 999,
+              "blockNumber": 47552942,
+              "blockHash": "0xf50b8dca6de280c6fff28ae4546b297d731c2763e1d86449ee8324c085c2577b",
+              "observedAt": "2026-10-03T12:19:54.452Z"
+            },
+            "runtime": {
+              "instanceId": "323ac3be-b43b-4aa5-be4b-6875655976b1",
+              "startedAt": "2026-10-03T12:19:52.613Z"
+            }
+          },
+          "cacheControl": "no-store",
+          "allowOrigin": null,
+          "instance": "323ac3be-b43b-4aa5-be4b-6875655976b1"
+        }
+      },
+      {
+        "name": "/api/v1/status",
+        "passed": true,
+        "evidence": {
+          "status": 200,
+          "body": {
+            "mode": "connected",
+            "chainId": 999,
+            "marketId": "kittenswap",
+            "settlementEnabled": false,
+            "capabilities": {
+              "walletSignIn": true,
+              "marketplace": true,
+              "lending": false,
+              "settlement": false
+            }
+          },
+          "cacheControl": "no-store",
+          "allowOrigin": "https://riftwell-ael--wallet-review-zebgpmu9.web.app",
+          "instance": "323ac3be-b43b-4aa5-be4b-6875655976b1"
+        }
+      },
+      {
+        "name": "/api/v1/lending",
+        "passed": true,
+        "evidence": {
+          "status": 200,
+          "body": {
+            "model": "pooled-revenue",
+            "state": "not-deployed",
+            "marketId": "kittenswap",
+            "asset": "USDC",
+            "chainId": 999,
+            "vaultAddress": null,
+            "portfolioAddress": null,
+            "accounting": null,
+            "terms": null,
+            "executionEnabled": false
+          },
+          "cacheControl": "no-store",
+          "allowOrigin": "https://riftwell-ael--wallet-review-zebgpmu9.web.app",
+          "instance": "323ac3be-b43b-4aa5-be4b-6875655976b1"
+        }
+      },
+      {
+        "name": "Exact review origin preflight",
+        "passed": true,
+        "evidence": {
+          "status": 204,
+          "allowOrigin": "https://riftwell-ael--wallet-review-zebgpmu9.web.app",
+          "allowCredentials": null
+        }
+      },
+      {
+        "name": "Reject preview preflight from https://riftwell-ael.web.app",
+        "passed": true,
+        "evidence": {
+          "status": 403,
+          "body": {
+            "error": {
+              "code": "ORIGIN_REJECTED",
+              "message": "The request origin is not allowed.",
+              "requestId": "9823ca58-d75f-4f36-b46b-7a2de8f30a5c"
+            }
+          },
+          "allowOrigin": null
+        }
+      },
+      {
+        "name": "Reject preview preflight from https://unrelated.example",
+        "passed": true,
+        "evidence": {
+          "status": 403,
+          "body": {
+            "error": {
+              "code": "ORIGIN_REJECTED",
+              "message": "The request origin is not allowed.",
+              "requestId": "711716d9-55b4-4d6c-a56c-7c0fb58ec90d"
+            }
+          },
+          "allowOrigin": null
+        }
+      },
+      {
+        "name": "Settlement remains disabled",
+        "passed": true,
+        "evidence": {
+          "status": 503,
+          "body": {
+            "error": {
+              "code": "SMART_CONTRACTS_DISABLED",
+              "message": "Smart-contract settlement is disabled. No funds or tokens have moved.",
+              "requestId": "ea932377-855d-438a-a09d-8aef99e9df36"
+            }
+          }
+        }
+      },
+      {
+        "name": "Production retains main origin",
+        "passed": true,
+        "evidence": {
+          "status": 204,
+          "allowOrigin": "https://riftwell-ael.web.app"
+        }
+      },
+      {
+        "name": "Production rejects review origin",
+        "passed": true,
+        "evidence": {
+          "status": 403,
+          "allowOrigin": null
+        }
+      }
+    ],
+    "limitations": [
+      "No real wallet signature, owned-NFT mutation, production export, recovery or multi-replica proof.",
+      "No contracts or funded operations enabled."
+    ]
+  },
+  "contexts": {
+    "productionOrigin": "https://riftwell-ael.web.app",
+    "previewOrigin": "https://riftwell-ael--wallet-review-zebgpmu9.web.app",
+    "unchangedOtherVariableCount": 10,
+    "separateSessionSecretContexts": [
+      [
+        "Production"
+      ],
+      [
+        "Preview"
+      ]
+    ]
+  },
+  "browserObservations": [
+    "Borrow status loads as lending not launched; borrow and repay controls disabled.",
+    "Marketplace loads with zero active preview records; no illustrative records substituted.",
+    "Wallet chooser offers separate browser providers before requesting accounts or a signature.",
+    "Connected FAQ states reserved buyer address remains public."
+  ],
+  "localValidation": {
+    "frontendUnitTests": 255,
+    "types": "passed",
+    "format": "passed",
+    "diffWhitespace": "passed",
+    "backendUnchanged": true
+  },
+  "sourceBaseCommit": "78c42774d884994c605cdae79fb678d75698dbbc",
+  "frontendSourceHashes": {
+    "src/pages/FaqPage.tsx": "3b62c05aa6a6c8b2c7d12931e65269ce864ac9b3e79a4f863ae15c32ea0347e8"
+  },
+  "pending": [
+    "Real user wallet sign-in and owned-position listing/cancellation at the review origin.",
+    "Production database recovery and simultaneous serving replicas.",
+    "Separate pooled lending and settlement contract release."
+  ]
+}

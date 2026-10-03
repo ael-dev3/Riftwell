@@ -136,6 +136,16 @@ Direct Firebase uploads and local-source Deno uploads do not require repository 
 
 ## Enable connected mode after backend verification
 
+### Isolated connected wallet review
+
+The connected UI is live on the `wallet-review` Firebase channel at `https://riftwell-ael--wallet-review-zebgpmu9.web.app`, with a seven-day expiry ending 10 October 2026. Hosting version `828777362ed1807f` uses Deno Preview revision `k67wac4keewb` at `https://riftwell-k67wac4keewb.ael-dev3.deno.net`. All 27 build-file, fallback and header checks passed. The main Firebase site retains version `7d8ce7b962a3ffdb` and illustrative preview mode. [Sanitized host evidence](qa/connected-host-preview.json).
+
+`APP_ORIGIN` has two disjoint entries: the main Firebase origin in Production and the review channel origin in Preview. The other runtime variables remain unchanged; Production and Preview retain separate database connections and session secrets. Build the review frontend in a separate output directory with `VITE_APP_MODE=connected`, `VITE_SESSION_TRANSPORT=bearer` and the exact preview API. Use a separate Firebase configuration whose `public` directory selects that build and whose CSP `connect-src` permits only `'self'` and that preview API. Deploy only `hosting:channel:deploy wallet-review`, with the explicit project/config and `--no-authorized-domains`; Firebase Auth is not used. Do not replace the main site's `dist/` or deploy its live channel for this review.
+
+The preview backend passed HTTPS, database/canonical-chain readiness, exact-origin CORS and preflight checks. It rejects the main Firebase origin and unrelated origins, while production still accepts only the main origin. Lending accounting and terms remain null and settlement remains disabled. These checks establish origin isolation and an operational preview API. They do not establish a real user wallet signature, owned-position listing, production recovery or simultaneous replicas.
+
+Review sign-in with a supported browser wallet on chain 999. The signature authorizes an off-chain session only. Verify an owned position, create and cancel an off-chain listing, then sign out and refresh to check that authentication does not persist in browser storage. A reserved buyer's address remains visible on a connected listing; it is a purchase restriction, not a private listing. Keep contract-dependent actions disabled throughout. Record the actual review result separately from synthetic wallet tests. The main connected release still requires all host checks below.
+
 Complete and record these host checks before replacing the Firebase preview:
 
 1. Verify TLS, exact Origin/CORS handling, preflight responses and the selected bearer transport from the actual Firebase origin. Reject unrelated origins.
