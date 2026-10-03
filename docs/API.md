@@ -14,7 +14,7 @@ Amounts are unsigned decimal **strings of raw units**, never JSON floating-point
 
 Errors use `{ "error": { "code": "...", "message": "...", "requestId": "..." } }`. Do not expose database errors, stack traces, RPC credentials or session tokens. List responses are `{ "items": [], "nextCursor": null }`; cursors are opaque and input-validated. Default limit is 24, maximum 50.
 
-`GET /status` returns `{ mode: "connected", chainId: 999, marketId: "kittenswap", settlementEnabled: false, capabilities: { walletSignIn: true, marketplace: true, lending: false, settlement: false } }`. Chain health may be included separately without making an unhealthy service appear ready. `/health/live` is process liveness; `/health/ready` checks database and chain readiness.
+`GET /status` returns `{ mode: "connected", chainId: 999, marketId: "kittenswap", settlementEnabled: false, capabilities: { walletSignIn: true, marketplace: true, lending: false, settlement: false } }`. Chain health may be included separately without making an unhealthy service appear ready. `/health/live` is process liveness; `/health/ready` checks database and chain readiness. Both health routes include `runtime: { instanceId, startedAt }`: an opaque UUID and ISO timestamp for that application lifetime, with `Cache-Control: no-store`. Health and API responses also include `X-Riftwell-Instance` for request correlation. An ID change identifies a different instance, not proof of shared-state persistence. This metadata contains no host, environment, credential or wallet identifiers.
 
 `GET /markets` returns `{ markets: [...] }`. The sole market is KittenSwap, using the same identity and light-green accent as `src/markets.ts`.
 

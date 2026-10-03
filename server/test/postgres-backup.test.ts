@@ -14,6 +14,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import postgres from 'postgres';
+import { spawn } from 'node:child_process';
 import { openPostgresStore } from '../database.ts';
 import {
   backupChildEnvironment,
@@ -191,7 +192,7 @@ setInterval(() => {}, 1000);
 const testDatabaseUrl = process.env.TEST_DATABASE_URL;
 const clientBin = process.env.PG_CLIENT_BIN;
 test(
-  'native dump uses a consistent snapshot, private files and cleans credentials on success and failure',
+  'native backup restores exact application tables and owned sequences without unrelated data',
   {
     skip:
       testDatabaseUrl && clientBin
@@ -208,13 +209,17 @@ test(
       'Backup integration may only use a loopback test database',
     );
     const database = `riftwell_backup_test_${randomUUID().replaceAll('-', '')}`;
+    const restoredDatabase = `${database}_restored`;
     const admin = postgres(testDatabaseUrl, { max: 1, onnotice: () => {} });
     const directory = await mkdtemp(join(tmpdir(), 'riftwell-native-backup-'));
     let databaseCreated = false;
+    let restoredDatabaseCreated = false;
     t.after(async () => {
       try {
         if (databaseCreated)
           await admin.unsafe(`DROP DATABASE ${database} WITH (FORCE)`);
+        if (restoredDatabaseCreated)
+          await admin.unsafe(`DROP DATABASE ${restoredDatabase} WITH (FORCE)`);
       } finally {
         await admin.end({ timeout: 5 });
         await rm(directory, { recursive: true, force: true });
@@ -234,6 +239,23 @@ test(
         'test',
         'fixture',
         '{}',
+      );
+      await db.run('CREATE TABLE public.unrelated_backup_fixture(secret TEXT)');
+      await db.run(
+        "INSERT INTO public.unrelated_backup_fixture VALUES ('synthetic-private-sentinel')",
+      );
+      await db.run('CREATE SCHEMA unrelated_backup_fixture');
+      await db.run(
+        'CREATE TABLE unrelated_backup_fixture.listings(secret TEXT)',
+      );
+      await db.run(
+        "INSERT INTO unrelated_backup_fixture.listings VALUES ('synthetic-shadow-sentinel')",
+      );
+      await db.run(
+        'CREATE SEQUENCE unrelated_backup_fixture.unrelated_sequence',
+      );
+      await db.run(
+        "SELECT setval(pg_get_serial_sequence('public.audit_events', 'sequence'), 1000, true)",
       );
     } finally {
       await db.close();
@@ -273,6 +295,88 @@ test(
       ),
       result,
     );
+    await admin.unsafe(`CREATE DATABASE ${restoredDatabase}`);
+    restoredDatabaseCreated = true;
+    const restoreUrl = new URL(testDatabaseUrl);
+    restoreUrl.pathname = `/${restoredDatabase}`;
+    const restoreConnection = parseBackupConnection(restoreUrl.toString());
+    const restorePassFile = join(directory, '.restore.pgpass');
+    const passEscape = (value: string) =>
+      value.replaceAll('\\', '\\\\').replaceAll(':', '\\:');
+    await writeFile(
+      restorePassFile,
+      [
+        restoreConnection.host,
+        String(restoreConnection.port),
+        restoreConnection.database,
+        restoreConnection.user,
+        restoreConnection.password,
+      ]
+        .map(passEscape)
+        .join(':') + '\n',
+      { mode: 0o600, flag: 'wx' },
+    );
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const child = spawn(
+          join(clientBin, 'pg_restore'),
+          [
+            '--exit-on-error',
+            '--no-owner',
+            '--no-acl',
+            '--dbname',
+            restoredDatabase,
+            join(outputDirectory, 'riftwell.pgdump'),
+          ],
+          {
+            env: backupChildEnvironment(restoreConnection, restorePassFile),
+            stdio: 'ignore',
+          },
+        );
+        const deadline = setTimeout(() => child.kill('SIGKILL'), 15000);
+        child.once('error', () => {
+          clearTimeout(deadline);
+          reject(new Error('Isolated restore utility failed'));
+        });
+        child.once('close', (code) => {
+          clearTimeout(deadline);
+          code === 0
+            ? resolve()
+            : reject(new Error('Isolated restore utility failed'));
+        });
+      });
+    } finally {
+      await rm(restorePassFile, { force: true });
+    }
+    const restored = postgres(restoreUrl.toString(), {
+      max: 1,
+      onnotice: () => {},
+    });
+    try {
+      for (const [table, count] of Object.entries(result.tableCounts)) {
+        const [row] = await restored.unsafe<{ count: string }[]>(
+          `SELECT count(*)::text AS count FROM public.${table}`,
+        );
+        assert.equal(row?.count, count, table);
+      }
+      const [event] =
+        await restored`SELECT actor, entity_id FROM public.audit_events`;
+      assert.equal(event?.actor, 'synthetic-owner');
+      assert.equal(event?.entity_id, 'fixture');
+      const [excluded] =
+        await restored`SELECT to_regclass('public.unrelated_backup_fixture') AS public_table, to_regnamespace('unrelated_backup_fixture') AS shadow_schema`;
+      assert.equal(excluded?.public_table, null);
+      assert.equal(excluded?.shadow_schema, null);
+      const [next] =
+        await restored`INSERT INTO public.audit_events(created_at, actor, event, entity_type, entity_id, detail_json) VALUES (2, 'synthetic-owner', 'restored', 'test', 'next', '{}') RETURNING sequence::text AS sequence`;
+      assert.equal(
+        next?.sequence,
+        '1001',
+        'Owned sequence state must survive the table-filtered restore',
+      );
+    } finally {
+      await restored.end({ timeout: 5 });
+    }
     await assert.rejects(
       backupPostgres({
         databaseUrl: connection.toString(),

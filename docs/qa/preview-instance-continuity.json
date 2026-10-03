@@ -1,0 +1,146 @@
+{
+  "status": "passed",
+  "revision": "phf1tsm035aj",
+  "origin": "https://riftwell-phf1tsm035aj.ael-dev3.deno.net",
+  "initialRuntime": {
+    "instanceId": "aa592182-aefe-4fb9-9804-4d186ed1c96e",
+    "startedAt": "2026-10-03T11:10:40.323Z"
+  },
+  "beforeIdleInstance": "aa592182-aefe-4fb9-9804-4d186ed1c96e",
+  "pendingCreatedInstance": "aa592182-aefe-4fb9-9804-4d186ed1c96e",
+  "idleMilliseconds": 120000,
+  "afterRuntime": {
+    "instanceId": "2b2d91f9-baa8-4530-baff-b4f62679d8d4",
+    "startedAt": "2026-10-03T11:12:42.181Z"
+  },
+  "checks": {
+    "sessionContinues": true,
+    "sessionServedOnDifferentInstance": true,
+    "pendingChallengeRemainsSingleUse": true,
+    "pendingConsumedOnDifferentInstance": true,
+    "oldConsumedChallengeRejected": true,
+    "allResponsesAttributed": true
+  },
+  "sameRevisionNewInstanceObserved": true,
+  "sameRevisionContinuityEstablished": true,
+  "sessionsRevoked": 2,
+  "observations": [
+    {
+      "path": "/health/live",
+      "method": "GET",
+      "status": 200,
+      "instanceId": "aa592182-aefe-4fb9-9804-4d186ed1c96e",
+      "requestId": "447db767-4836-495a-962a-b856c6330c02",
+      "cacheControl": "no-store",
+      "at": "2026-10-03T11:10:40.641Z"
+    },
+    {
+      "path": "/api/v1/auth/challenge",
+      "method": "POST",
+      "status": 200,
+      "instanceId": "aa592182-aefe-4fb9-9804-4d186ed1c96e",
+      "requestId": "78e63796-2afe-446e-a3e8-a4ab4149bbe0",
+      "cacheControl": "no-store",
+      "at": "2026-10-03T11:10:40.933Z"
+    },
+    {
+      "path": "/api/v1/auth/verify",
+      "method": "POST",
+      "status": 200,
+      "instanceId": "aa592182-aefe-4fb9-9804-4d186ed1c96e",
+      "requestId": "c3eed0e6-6f09-4232-ae09-b10cbd745fe6",
+      "cacheControl": "no-store",
+      "at": "2026-10-03T11:10:41.209Z"
+    },
+    {
+      "path": "/api/v1/auth/session",
+      "method": "GET",
+      "status": 200,
+      "instanceId": "aa592182-aefe-4fb9-9804-4d186ed1c96e",
+      "requestId": "a9ee244d-78a4-48ce-83a2-d0c8bc799246",
+      "cacheControl": "no-store",
+      "at": "2026-10-03T11:10:41.293Z"
+    },
+    {
+      "path": "/api/v1/auth/challenge",
+      "method": "POST",
+      "status": 200,
+      "instanceId": "aa592182-aefe-4fb9-9804-4d186ed1c96e",
+      "requestId": "ea85beb0-8aba-4dc8-9878-00e90937b9f8",
+      "cacheControl": "no-store",
+      "at": "2026-10-03T11:10:41.448Z"
+    },
+    {
+      "path": "/health/live",
+      "method": "GET",
+      "status": 200,
+      "instanceId": "2b2d91f9-baa8-4530-baff-b4f62679d8d4",
+      "requestId": "8439be6c-7d1f-45cc-842c-ca735e73c7e0",
+      "cacheControl": "no-store",
+      "at": "2026-10-03T11:12:42.452Z"
+    },
+    {
+      "path": "/api/v1/auth/session",
+      "method": "GET",
+      "status": 200,
+      "instanceId": "2b2d91f9-baa8-4530-baff-b4f62679d8d4",
+      "requestId": "db3f85ed-0ee5-47b4-b441-711716fb1fad",
+      "cacheControl": "no-store",
+      "at": "2026-10-03T11:12:42.598Z"
+    },
+    {
+      "path": "/api/v1/auth/verify",
+      "method": "POST",
+      "status": 200,
+      "instanceId": "2b2d91f9-baa8-4530-baff-b4f62679d8d4",
+      "requestId": "5ca7e874-b1da-47b6-89bb-e338a2eecea3",
+      "cacheControl": "no-store",
+      "at": "2026-10-03T11:12:42.819Z"
+    },
+    {
+      "path": "/api/v1/auth/verify",
+      "method": "POST",
+      "status": 401,
+      "instanceId": "2b2d91f9-baa8-4530-baff-b4f62679d8d4",
+      "requestId": "cbc24034-1acf-41fc-9bed-3bce406710cd",
+      "cacheControl": "no-store",
+      "at": "2026-10-03T11:12:42.911Z"
+    },
+    {
+      "path": "/api/v1/auth/verify",
+      "method": "POST",
+      "status": 401,
+      "instanceId": "2b2d91f9-baa8-4530-baff-b4f62679d8d4",
+      "requestId": "1b5fad46-f85b-4b54-a150-30db39951f6b",
+      "cacheControl": "no-store",
+      "at": "2026-10-03T11:12:43.015Z"
+    },
+    {
+      "path": "/api/v1/auth/logout",
+      "method": "POST",
+      "status": 200,
+      "instanceId": "2b2d91f9-baa8-4530-baff-b4f62679d8d4",
+      "requestId": "8ca69d5b-2dc7-4dd2-895f-98a1f98a608e",
+      "cacheControl": "no-store",
+      "at": "2026-10-03T11:12:43.212Z"
+    },
+    {
+      "path": "/api/v1/auth/logout",
+      "method": "POST",
+      "status": 200,
+      "instanceId": "2b2d91f9-baa8-4530-baff-b4f62679d8d4",
+      "requestId": "4c2fd688-afa8-454d-8823-f71f13ad58ef",
+      "cacheControl": "no-store",
+      "at": "2026-10-03T11:12:43.510Z"
+    }
+  ],
+  "checkedAt": "2026-10-03T11:12:43.511Z",
+  "sourceBaseCommit": "4d297603b6b870521338c55ef706bca939e4a4c1",
+  "sourceFiles": {
+    "server/app.ts": "34144e459ef0c2d235a5ce74fd56758cc84e08498b46258b9e764c278c296b00",
+    "server/auth.ts": "559bb585a942696655e6c71de093bdd95723cf147e571d94f4a094b733c33ba0",
+    "server/database.ts": "582fdfecf6ee7aee788388c91aa946d0e8356f097f25f7ab8e82a60b8d4f2ce1",
+    "server/deno.json": "c35d01a88cfe05aa205199c37c4fe98f483eca46bbb0d9bfee7159fd546ea3a9"
+  },
+  "scope": "Isolated preview, one observed new application instance on the same revision after 120 seconds idle. Synthetic session and single-use challenge continuity only; not a multi-replica or production recovery test. Ephemeral wallet secrets were kept in memory; test sessions were revoked. No NFTs, marketplace records, funds, production records or exports."
+}

@@ -1602,6 +1602,86 @@ test('same-origin frontend serving has CSP, immutable hashed assets, index reval
   }
 });
 
+test('health identity distinguishes service lifetimes without changing readiness or leaking configuration', async (t) => {
+  const before = Date.now();
+  const f = await fixture(t);
+  const other = await fixture(t);
+  const live = await f.app.inject({ url: '/health/live' });
+  const runtime = live.json<{
+    runtime: { instanceId: string; startedAt: string };
+  }>().runtime;
+  assert.equal(live.headers['cache-control'], 'no-store');
+  assert.deepEqual(Object.keys(runtime).sort(), ['instanceId', 'startedAt']);
+  assert.match(
+    runtime.instanceId,
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+  );
+  assert.ok(Date.parse(runtime.startedAt) >= before);
+  assert.ok(Date.parse(runtime.startedAt) <= Date.now());
+  assert.notEqual(runtime.startedAt, iso(f.time));
+  assert.notEqual(
+    (await other.app.inject({ url: '/health/live' })).json().runtime.instanceId,
+    runtime.instanceId,
+  );
+  for (const path of ['/health/live', '/health/ready', '/health/ready']) {
+    const response = await f.app.inject({ url: path });
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.headers['cache-control'], 'no-store');
+    assert.equal(response.headers['x-riftwell-instance'], runtime.instanceId);
+    assert.deepEqual(response.json().runtime, runtime);
+    assert.ok(!response.body.includes(f.config.sessionSecret));
+    assert.ok(!response.body.includes('secret-credential'));
+    assert.ok(!response.body.includes(f.owner.address));
+  }
+  f.unavailable(true);
+  f.advance(5001);
+  const unavailable = await f.app.inject({ url: '/health/ready' });
+  assert.equal(unavailable.statusCode, 503);
+  assert.deepEqual(unavailable.json().runtime, runtime);
+});
+
+test('an identified restart preserves saved listings, sessions and single-use challenges', async (t) => {
+  const f = await fixture(t);
+  const initialRuntime = (await f.app.inject({ url: '/health/live' })).json()
+    .runtime;
+  const session = await login(f);
+  const created = await send(f, 'POST', '/listings', listing(f), session);
+  assert.equal(created.statusCode, 200, created.body);
+  const pending = await challenge(f, f.outsider);
+  const signature = await f.outsider.signMessage(pending.message);
+  await f.restart();
+  const restarted = await f.app.inject({ url: '/health/live' });
+  assert.notEqual(
+    restarted.json().runtime.instanceId,
+    initialRuntime.instanceId,
+  );
+  assert.equal(restarted.headers['cache-control'], 'no-store');
+  const account = await send(f, 'GET', '/account', undefined, session);
+  assert.equal(account.statusCode, 200, account.body);
+  assert.equal(
+    account.headers['x-riftwell-instance'],
+    restarted.json().runtime.instanceId,
+  );
+  assert.equal(
+    account.json<TestAccount>().listings[0]?.id,
+    created.json<Listing>().id,
+  );
+  const verified = await send(f, 'POST', '/auth/verify', {
+    challengeId: pending.challengeId,
+    signature,
+  });
+  assert.equal(verified.statusCode, 200, verified.body);
+  assert.equal(
+    verified.headers['x-riftwell-instance'],
+    restarted.json().runtime.instanceId,
+  );
+  const repeated = await send(f, 'POST', '/auth/verify', {
+    challengeId: pending.challengeId,
+    signature,
+  });
+  assert.equal(repeated.statusCode, 401);
+});
+
 test('readiness fails on chain unavailability and never exposes RPC credentials; position output is whitelisted', async (t) => {
   const f = await fixture(t);
   assert.equal(

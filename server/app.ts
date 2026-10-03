@@ -47,6 +47,12 @@ export async function createApp({
   )
     throw new Error('A read-only chain adapter is required');
   const db = await openStore(config);
+  // Opaque application-lifetime identity lets operators distinguish a restart
+  // from another request. Never derive it from host, credentials or wallet data.
+  const runtime = Object.freeze({
+    instanceId: randomUUID(),
+    startedAt: new Date().toISOString(),
+  });
   const app = Fastify({
     bodyLimit: 16384,
     requestTimeout: 30000,
@@ -253,6 +259,7 @@ export async function createApp({
     const protectedPath =
       /^\/(?:api|health)(?:\/|$)/.test(normalized) ||
       /^\/(?:api|health)(?:\/|$)/.test(path);
+    if (protectedPath) reply.header('x-riftwell-instance', runtime.instanceId);
     if (protectedPath || decoded.includes('%'))
       reply.header('cache-control', 'no-store');
     // Fastify can match decoded path segments. Reject aliases before any API
@@ -407,8 +414,13 @@ export async function createApp({
       'Pooled lending is not deployed. No funds or tokens have moved.',
     );
   });
-  app.get('/health/live', async () => ({ status: 'live' }));
-  type Readiness = { ready: boolean; database: string; chain: ChainHealth };
+  app.get('/health/live', async () => ({ status: 'live', runtime }));
+  type Readiness = {
+    ready: boolean;
+    database: string;
+    chain: ChainHealth;
+    runtime: typeof runtime;
+  };
   let readinessCache: { until: number; result: Readiness } | undefined;
   let readinessFlight: Promise<Readiness> | undefined;
   const probeReadiness = async () => {
@@ -455,6 +467,7 @@ export async function createApp({
       ready,
       database: database ? 'ready' : 'unavailable',
       chain: safeHealth,
+      runtime,
     };
   };
   app.get('/health/ready', async (_request, reply) => {
@@ -488,6 +501,7 @@ export async function createApp({
       await limiter.prune();
     };
     await cleanup();
+    app.log.info({ event: 'runtime_ready', ...runtime }, 'Runtime ready');
     interval = setInterval(() => {
       if (cleanupFlight) return;
       cleanupFlight = cleanup()
@@ -504,6 +518,7 @@ export async function createApp({
     clearInterval(interval);
     await cleanupFlight;
     await db.close();
+    app.log.info({ event: 'runtime_closed', ...runtime }, 'Runtime closed');
   });
   try {
     await app.ready();

@@ -1,0 +1,43 @@
+{
+  "checkedAt": "2026-10-03T11:12:24.986612+00:00",
+  "status": "passed",
+  "sourceBaseCommit": "4d297603b6b870521338c55ef706bca939e4a4c1",
+  "sourceFiles": {
+    "server/app.ts": "34144e459ef0c2d235a5ce74fd56758cc84e08498b46258b9e764c278c296b00",
+    "server/postgres-backup.ts": "0c3da994559927993ae9ad59735046a329ffbcfa3b631eeff405320904a92a05",
+    "server/test/app.test.ts": "dc4a7a3d502870f0ae0e402a70eaed30f1bf7e916fc201376ae766c1f4e97f22",
+    "server/test/postgres-backup.test.ts": "213a400555fca614a1245a63cb42e67f13a2992e16c327508ffa2c799e75d1c3"
+  },
+  "serverTests": {
+    "passed": 116,
+    "failed": 0,
+    "skipped": 0,
+    "storage": "Real temporary SQLite and disposable loopback PostgreSQL"
+  },
+  "denoRuntimeSuites": {
+    "passed": 2,
+    "failed": 0,
+    "storage": "Disposable loopback PostgreSQL; native SQLite/FFI denied"
+  },
+  "checks": {
+    "healthIdentityStableWithinApplication": true,
+    "newApplicationIdentityDistinct": true,
+    "timestampUsesRealClock": true,
+    "healthNoStore": true,
+    "failedDependenciesStill503": true,
+    "identifiedRestartRetainsListingsSessionsAndSingleUseChallenges": true,
+    "nativeDumpRestoreAllNineApplicationCounts": true,
+    "representativeAuditRowRetained": true,
+    "advancedOwnedIdentitySequenceRetained": true,
+    "unrelatedPublicTableExcluded": true,
+    "applicationNamedShadowTableExcluded": true,
+    "unrelatedSchemaSequenceExcluded": true,
+    "privatePermissionsAndOverwriteRefusalRetained": true,
+    "cancellationAndCredentialCleanupRetained": true,
+    "strictTypes": true,
+    "formatting": true,
+    "diffCheck": true,
+    "apiAndHealthHeadersIdentifyServingApplication": true
+  },
+  "scope": "Local service and native backup isolation evidence. No production export/recovery, hosted restart/replica claim, provider retention verification, user wallet or funded execution."
+}

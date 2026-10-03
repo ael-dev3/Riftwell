@@ -293,6 +293,8 @@ export async function backupPostgres(
             '--format=custom',
             '--no-acl',
             '--no-password',
+            '--strict-names',
+            ...tables.map((table) => `--table=public.${table}`),
             '--snapshot',
             exported.snapshot,
             '--file',
@@ -329,7 +331,7 @@ export async function backupPostgres(
       dumpVersion,
       ...snapshot,
       limitation:
-        'Manual logical snapshot; restore, retention and point-in-time recovery require separate verification.',
+        'Manual logical snapshot of the nine public application tables and their owned sequences; external schemas, roles and dependencies are excluded. Restore, retention and point-in-time recovery require separate verification.',
     };
     await writeFile(
       join(options.outputDirectory, 'manifest.json'),
