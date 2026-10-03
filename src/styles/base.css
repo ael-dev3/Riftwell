@@ -8,7 +8,7 @@ html {
   min-width: 320px;
   background: var(--bg);
   scrollbar-gutter: stable;
-  scroll-padding-top: calc(var(--header-h) + 56px);
+  scroll-padding-top: calc(var(--header-h) + 46px);
   -webkit-text-size-adjust: 100%;
 }
 
@@ -116,7 +116,7 @@ kbd {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent-ink);
+  outline: 2px solid var(--brand-ink);
   outline-offset: 3px;
   border-radius: 4px;
 }
@@ -181,42 +181,35 @@ textarea:focus-visible {
   font-variant-numeric: tabular-nums;
 }
 
-/* Ambient background. Decorative, fixed and GPU-cheap. */
+/* A restrained portal halo leaves the workspace clear. */
 .backdrop-glow {
   position: fixed;
   z-index: -1;
-  inset: -20vh -10vw auto;
-  height: 120vh;
+  inset: -28vh -12vw auto 42vw;
+  height: 78vh;
   pointer-events: none;
   background:
     radial-gradient(
-      42% 38% at 12% 8%,
-      color-mix(in oklab, var(--accent) 13%, transparent),
-      transparent 72%
+      ellipse at 60% 28%,
+      transparent 22%,
+      color-mix(in oklab, var(--brand-ink) 6%, transparent) 24%,
+      transparent 29%
     ),
     radial-gradient(
-      36% 34% at 92% 4%,
-      color-mix(in oklab, var(--violet) 11%, transparent),
-      transparent 72%
-    ),
-    radial-gradient(
-      30% 30% at 70% 72%,
-      color-mix(in oklab, var(--sky) 6%, transparent),
+      54% 42% at 60% 28%,
+      color-mix(in oklab, var(--brand-ink) 7%, transparent),
       transparent 70%
     );
-  animation: drift 28s var(--ease-in-out) infinite alternate;
+  transform: rotate(-24deg);
 }
 
 .backdrop-glow::after {
   content: '';
   position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(var(--line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--line) 1px, transparent 1px);
-  background-size: 64px 64px;
-  mask-image: radial-gradient(70% 50% at 50% 0%, black, transparent 75%);
-  opacity: 0.55;
+  inset: 18% 28% 48% 36%;
+  border: 1px solid var(--brand-line);
+  border-radius: 50%;
+  opacity: 0.22;
 }
 
 :root[data-theme='light'] .backdrop-glow {

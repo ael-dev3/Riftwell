@@ -144,9 +144,9 @@ async function audit(name: string) {
     const theme = await dialog().evaluate((node) => {
       const kicker = node.querySelector('.dialog-kicker');
       const probe = document.createElement('span');
-      probe.style.color = 'var(--accent-ink)';
+      probe.style.color = 'var(--brand-ink)';
       node.append(probe);
-      const accentInk = getComputedStyle(probe).color;
+      const brandInk = getComputedStyle(probe).color;
       probe.remove();
       return {
         bodyPortal:
@@ -154,14 +154,14 @@ async function audit(name: string) {
           node.closest('.app') === null,
         accent: getComputedStyle(node).getPropertyValue('--accent').trim(),
         kickerColor: kicker ? getComputedStyle(kicker).color : null,
-        accentInk,
+        brandInk,
       };
     });
     check(`Dialog mounts in body: ${name}`, theme.bodyPortal);
     check(
-      `Selected market accent reaches dialog: ${name}`,
+      `Market accent and Riftwell identity reach dialog: ${name}`,
       theme.accent === selectedMarketAccent &&
-        theme.kickerColor === theme.accentInk,
+        theme.kickerColor === theme.brandInk,
     );
   }
   if (!(await page.evaluate(() => 'axe' in window)))
@@ -742,10 +742,8 @@ try {
   await capture('earn-desktop.jpg', { fullPage: true });
 
   // ---------- Borrow: collateral, credit and rewards ----------
-  await page
-    .getByRole('link', { name: /Borrow against your veKITTEN/ })
-    .click();
-  check('Promo banner links Earn to Borrow', (await hash()) === '#borrow');
+  await nav.getByRole('link', { name: 'Borrow' }).click();
+  check('Main navigation links Earn to Borrow', (await hash()) === '#borrow');
   await button('Deposit Demo veKITTEN #041').click();
   await dialog().waitFor();
   await page.setViewportSize({ width: 320, height: 900 });
@@ -2084,17 +2082,11 @@ try {
   );
   await audit('whats new');
   await page.keyboard.press('Escape');
-  const secondUpdate = page.getByRole('button', { name: /Show update 2 of 4/ });
-  await secondUpdate.click();
   check(
-    'The updates ticker switches entries',
-    (
-      await page
-        .locator('.ticker')
-        .textContent()
-        .then((text) => text ?? '')
-    ).includes('How pooled lending works') &&
-      (await secondUpdate.getAttribute('aria-pressed')) === 'true',
+    'Borrowing controls occupy the first viewport without introductory blocks',
+    await page
+      .locator('.workspace-card')
+      .evaluate((node) => node.getBoundingClientRect().top < 280),
   );
   await visit('stats');
   check('Statistics page', await visible(heading('Statistics')));

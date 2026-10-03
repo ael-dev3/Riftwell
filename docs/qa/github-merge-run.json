@@ -1,0 +1,273 @@
+{
+  "repository": "ael-dev3/Riftwell",
+  "evidence_read_completed_at_utc": "2026-10-03T08:50:30.927167+00:00",
+  "purpose": "Read-only evidence for the single workflow caused by merging PR #1.",
+  "run": {
+    "id": 37110321003,
+    "name": "Deploy frontend to GitHub Pages",
+    "path": ".github/workflows/pages.yml",
+    "head_branch": "main",
+    "head_sha": "4569a496b434ccbdd4a35e7f65ec74802853152d",
+    "event": "push",
+    "status": "completed",
+    "conclusion": "failure",
+    "run_attempt": 1,
+    "created_at": "2026-10-03T08:37:18Z",
+    "updated_at": "2026-10-03T08:38:24Z",
+    "run_started_at": "2026-10-03T08:37:18Z",
+    "html_url": "https://github.com/ael-dev3/Riftwell/actions/runs/37110321003",
+    "referenced_workflows": [],
+    "actor": "ael-dev3",
+    "triggering_actor": "ael-dev3"
+  },
+  "jobs": [
+    {
+      "id": 111166786651,
+      "name": "deploy",
+      "status": "completed",
+      "conclusion": "failure",
+      "run_attempt": 1,
+      "started_at": "2026-10-03T08:37:22Z",
+      "completed_at": "2026-10-03T08:38:23Z",
+      "check_run_url": "https://api.github.com/repos/ael-dev3/Riftwell/check-runs/111166786651",
+      "runner_name": "GitHub Actions 1000031261",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "steps": [
+        {
+          "number": 1,
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-03T08:37:22Z",
+          "completed_at": "2026-10-03T08:37:24Z"
+        },
+        {
+          "number": 2,
+          "name": "Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-03T08:37:24Z",
+          "completed_at": "2026-10-03T08:37:25Z"
+        },
+        {
+          "number": 3,
+          "name": "Set up Node",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-03T08:37:25Z",
+          "completed_at": "2026-10-03T08:37:25Z"
+        },
+        {
+          "number": 4,
+          "name": "Install frontend dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-03T08:37:25Z",
+          "completed_at": "2026-10-03T08:37:30Z"
+        },
+        {
+          "number": 5,
+          "name": "Test frontend",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-03T08:37:30Z",
+          "completed_at": "2026-10-03T08:37:32Z"
+        },
+        {
+          "number": 6,
+          "name": "Install server dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-03T08:37:32Z",
+          "completed_at": "2026-10-03T08:37:39Z"
+        },
+        {
+          "number": 7,
+          "name": "Test server",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-03T08:37:39Z",
+          "completed_at": "2026-10-03T08:37:46Z"
+        },
+        {
+          "number": 8,
+          "name": "Check application and tooling types",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-03T08:37:46Z",
+          "completed_at": "2026-10-03T08:37:49Z"
+        },
+        {
+          "number": 9,
+          "name": "Check formatting",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-03T08:37:49Z",
+          "completed_at": "2026-10-03T08:37:53Z"
+        },
+        {
+          "number": 10,
+          "name": "Build and smoke-test connected container",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-03T08:37:53Z",
+          "completed_at": "2026-10-03T08:38:20Z"
+        },
+        {
+          "number": 11,
+          "name": "Build Pages frontend",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-03T08:38:20Z",
+          "completed_at": "2026-10-03T08:38:22Z"
+        },
+        {
+          "number": 12,
+          "name": "Configure Pages",
+          "status": "completed",
+          "conclusion": "failure",
+          "started_at": "2026-10-03T08:38:22Z",
+          "completed_at": "2026-10-03T08:38:22Z"
+        },
+        {
+          "number": 13,
+          "name": "Upload frontend artifact",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-10-03T08:38:22Z",
+          "completed_at": "2026-10-03T08:38:22Z"
+        },
+        {
+          "number": 14,
+          "name": "Deploy Pages",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-10-03T08:38:22Z",
+          "completed_at": "2026-10-03T08:38:22Z"
+        },
+        {
+          "number": 27,
+          "name": "Post Set up Node",
+          "status": "completed",
+          "conclusion": "skipped",
+          "started_at": "2026-10-03T08:38:22Z",
+          "completed_at": "2026-10-03T08:38:22Z"
+        },
+        {
+          "number": 28,
+          "name": "Post Checkout",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-03T08:38:22Z",
+          "completed_at": "2026-10-03T08:38:22Z"
+        },
+        {
+          "number": 29,
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-03T08:38:22Z",
+          "completed_at": "2026-10-03T08:38:22Z"
+        }
+      ],
+      "runner_seconds": 61.0
+    }
+  ],
+  "checks": [
+    {
+      "id": 111166786651,
+      "annotations": [
+        {
+          "path": ".github",
+          "blob_href": "https://github.com/ael-dev3/Riftwell/blob/4569a496b434ccbdd4a35e7f65ec74802853152d/.github",
+          "start_line": 7,
+          "start_column": null,
+          "end_line": 7,
+          "end_column": null,
+          "annotation_level": "failure",
+          "title": "",
+          "message": "HttpError: Not Found - https://docs.github.com/rest/pages/pages#get-a-apiname-pages-site",
+          "raw_details": ""
+        },
+        {
+          "path": "/home/runner/work/_actions/actions/configure-pages/45bfe0192ca1faeb007ade9deae92b16b8254a0d/node_modules/@octokit/request/dist-node/index.js",
+          "blob_href": "https://github.com/ael-dev3/Riftwell/blob/4569a496b434ccbdd4a35e7f65ec74802853152d//home/runner/work/_actions/actions/configure-pages/45bfe0192ca1faeb007ade9deae92b16b8254a0d/node_modules/@octokit/request/dist-node/index.js",
+          "start_line": 124,
+          "start_column": 1,
+          "end_line": 124,
+          "end_column": 1,
+          "annotation_level": "failure",
+          "title": "HttpError",
+          "message": "Get Pages site failed. Please verify that the repository has Pages enabled and configured to build using GitHub Actions, or consider exploring the `enablement` parameter for this action. Error: Not Found - https://docs.github.com/rest/pages/pages#get-a-apiname-pages-site",
+          "raw_details": ""
+        },
+        {
+          "path": ".github",
+          "blob_href": "https://github.com/ael-dev3/Riftwell/blob/4569a496b434ccbdd4a35e7f65ec74802853152d/.github",
+          "start_line": 1,
+          "start_column": null,
+          "end_line": 1,
+          "end_column": null,
+          "annotation_level": "notice",
+          "title": "",
+          "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+          "raw_details": ""
+        }
+      ]
+    }
+  ],
+  "code_verification": [
+    {
+      "name": "Test frontend",
+      "conclusion": "success"
+    },
+    {
+      "name": "Test server",
+      "conclusion": "success"
+    },
+    {
+      "name": "Check application and tooling types",
+      "conclusion": "success"
+    },
+    {
+      "name": "Check formatting",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build and smoke-test connected container",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build Pages frontend",
+      "conclusion": "success"
+    }
+  ],
+  "hosting_result": {
+    "conclusion": "failure",
+    "failed_step": "Configure Pages",
+    "classification": "pages_not_configured",
+    "detail": "The GitHub Pages site lookup returned Not Found. Upload and deployment were skipped. This workflow did not publish a Pages release."
+  },
+  "historical_billing": {
+    "failed_run_ids": [
+      37044531914
+    ],
+    "current_run_started": true,
+    "account_billing_resolution_verified": false,
+    "monthly_usage": "unknown"
+  },
+  "current_utc_day_inventory": {
+    "date": "2026-10-03",
+    "runs": 1,
+    "attempts": 1,
+    "pending_runs": 0,
+    "scope": "Exhaustive unfiltered repository run inventory across every actor, branch, event, workflow and status; all attempts including rerun attempts of older runs. Attempt-one metadata from run records; individual older attempt endpoints when necessary."
+  },
+  "limitations": [
+    "These workflow steps establish the observed GitHub code/container checks only; they do not constitute a successful GitHub Pages deployment or replace Firebase/Deno production verification.",
+    "No billing permissions, repository settings or workflow triggers were changed to gather this evidence."
+  ],
+  "mutation_performed": false
+}

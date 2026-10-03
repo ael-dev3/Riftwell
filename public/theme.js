@@ -9,7 +9,7 @@
       root.style.colorScheme = theme;
       var meta = document.querySelector('meta[name="theme-color"]');
       if (meta)
-        meta.setAttribute('content', theme === 'light' ? '#f2f5f1' : '#080b0a');
+        meta.setAttribute('content', theme === 'light' ? '#f5f4f8' : '#0b0b12');
     }
   } catch (error) {
     // Storage can be unavailable; the default dark theme remains.

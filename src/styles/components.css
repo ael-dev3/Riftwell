@@ -13,7 +13,7 @@
   letter-spacing: -0.005em;
   white-space: nowrap;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: var(--r-sm);
   transition:
     background-color var(--t-fast) ease,
     border-color var(--t-fast) ease,
@@ -34,15 +34,11 @@
 .button.primary {
   color: var(--button-fg);
   background: var(--button-bg);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.28),
-    0 10px 26px -14px var(--accent-glow);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.16);
 }
 
 .button.primary:hover:not(:disabled) {
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.3),
-    0 14px 34px -12px var(--accent-glow);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22);
   filter: brightness(1.04) saturate(1.04);
 }
 
@@ -72,14 +68,14 @@
   gap: 6px;
   padding: 0 12px;
   font-size: 13px;
-  border-radius: 8px;
+  border-radius: var(--r-xs);
 }
 
 .button.large {
   min-height: 48px;
   padding: 0 22px;
   font-size: 15px;
-  border-radius: 12px;
+  border-radius: var(--r-sm);
 }
 
 .button svg,
@@ -97,7 +93,7 @@
   min-height: 0;
   padding: 0;
   color: var(--text-2);
-  border-radius: 10px;
+  border-radius: var(--r-sm);
   transition:
     background-color var(--t-fast) ease,
     color var(--t-fast) ease;
@@ -125,7 +121,7 @@
   color: var(--text-2);
   background: var(--surface-2);
   border: 1px solid var(--line-2);
-  border-radius: 999px;
+  border-radius: var(--r-xs);
   transition:
     color var(--t-fast) ease,
     border-color var(--t-fast) ease,
@@ -156,7 +152,7 @@
   color: var(--text-2);
   background: var(--surface-2);
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--r-xs);
   transition:
     color var(--t-fast) ease,
     background-color var(--t-fast) ease,
@@ -169,9 +165,9 @@
 }
 
 .chip-toggle[aria-pressed='true'] {
-  color: var(--accent-ink);
-  background: var(--accent-soft-2);
-  border-color: var(--accent-line);
+  color: var(--brand-ink);
+  background: var(--brand-soft);
+  border-color: var(--brand-line);
 }
 
 /* ---------- Pills ---------- */
@@ -218,12 +214,12 @@
 .panel {
   display: grid;
   align-content: start;
-  gap: 14px;
-  padding: 18px 20px;
+  gap: 12px;
+  padding: 16px 18px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
-  box-shadow: var(--inset);
+  box-shadow: none;
 }
 
 .panel-title {
@@ -393,7 +389,7 @@ legend.field-label {
   color: var(--text);
   background: var(--surface-2);
   border: 1px solid var(--line-2);
-  border-radius: 10px;
+  border-radius: var(--r-sm);
   transition:
     border-color var(--t-fast) ease,
     box-shadow var(--t-fast) ease,
@@ -1097,7 +1093,7 @@ select.input-control.compact {
   height: 40px;
   object-fit: cover;
   background: var(--surface-3);
-  border-radius: 10px;
+  border-radius: var(--r-sm);
 }
 
 /* ---------- Tabs ---------- */
@@ -1115,7 +1111,7 @@ select.input-control.compact {
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
-  background: var(--surface-2);
+  background: var(--surface);
   /* An inset rule rather than a border keeps the indicator in the scrollport. */
   box-shadow: inset 0 -1px 0 var(--line);
 }
@@ -1125,15 +1121,15 @@ select.input-control.compact {
 }
 
 .tablist.band .tab {
-  flex: 1 1 0;
+  flex: 0 0 auto;
   min-width: max-content;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 50px;
-  padding: 0 14px;
-  font-size: 14px;
+  height: 44px;
+  padding: 0 20px;
+  font-size: 13.5px;
   font-weight: 620;
   white-space: nowrap;
   color: var(--text-2);
@@ -1147,8 +1143,8 @@ select.input-control.compact {
 }
 
 .tablist.band .tab[aria-selected='true'] {
-  color: var(--accent-ink);
-  background: var(--accent-soft);
+  color: var(--brand-ink);
+  background: var(--brand-soft);
 }
 
 .tablist.band .tab:focus-visible {
@@ -1161,8 +1157,7 @@ select.input-control.compact {
   left: 0;
   width: var(--indicator-w, 0);
   height: 2px;
-  background: var(--accent-ink);
-  box-shadow: 0 0 12px var(--accent-glow);
+  background: var(--brand-ink);
   transform: translateX(var(--indicator-x, 0));
   transition:
     transform 380ms var(--ease),
@@ -1177,7 +1172,7 @@ select.input-control.compact {
   overflow-x: auto;
   background: var(--surface-2);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--r-sm);
 }
 
 .tablist.pill .tab {
@@ -1192,11 +1187,11 @@ select.input-control.compact {
   font-weight: 620;
   white-space: nowrap;
   color: var(--text-2);
-  border-radius: 9px;
+  border-radius: var(--r-xs);
 }
 
 .tablist.pill .tab[aria-selected='true'] {
-  color: var(--text);
+  color: var(--brand-ink);
 }
 
 .tablist.pill .tab-indicator {
@@ -1205,9 +1200,9 @@ select.input-control.compact {
   bottom: 3px;
   left: 0;
   width: var(--indicator-w, 0);
-  background: var(--surface-3);
-  border: 1px solid var(--line-2);
-  border-radius: 9px;
+  background: var(--brand-soft);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--r-xs);
   transform: translateX(var(--indicator-x, 0));
   transition:
     transform 380ms var(--ease),
@@ -1227,8 +1222,8 @@ select.input-control.compact {
 }
 
 .tab[aria-selected='true'] .tab-count {
-  color: var(--on-accent);
-  background: var(--accent-ink);
+  color: var(--bg);
+  background: var(--brand-ink);
 }
 
 :root[data-theme='light'] .tab[aria-selected='true'] .tab-count {
@@ -1237,8 +1232,8 @@ select.input-control.compact {
 
 .tabpanel {
   display: grid;
-  gap: 18px;
-  padding: 20px;
+  gap: 16px;
+  padding: 18px;
   animation: rise 420ms var(--ease) both;
 }
 
@@ -1260,7 +1255,7 @@ select.input-control.compact {
   padding: 12px;
   background: var(--surface);
   border: 1px solid var(--line-2);
-  border-radius: 14px;
+  border-radius: var(--r-md);
   box-shadow: var(--shadow-lg);
   animation: pop 220ms var(--ease) both;
 }
@@ -1282,7 +1277,7 @@ select.input-control.compact {
   font: 600 11px/1.3 var(--mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--accent-ink);
+  color: var(--brand-ink);
 }
 
 .popover-text,
@@ -1337,7 +1332,7 @@ select.input-control.compact {
   width: 100%;
   padding: 10px 12px;
   text-align: left;
-  border-radius: 10px;
+  border-radius: var(--r-xs);
   transition: background-color var(--t-fast) ease;
 }
 
@@ -1348,7 +1343,7 @@ select.input-control.compact {
 .menu-item svg {
   flex: none;
   margin-top: 2px;
-  color: var(--accent-ink);
+  color: var(--brand-ink);
 }
 
 .menu-item span {
@@ -1408,7 +1403,7 @@ select.input-control.compact {
   background: linear-gradient(
     90deg,
     transparent,
-    var(--accent-line),
+    var(--brand-line),
     transparent
   );
 }
@@ -1425,7 +1420,7 @@ select.input-control.compact {
   font: 600 11px/1.4 var(--mono);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--accent-ink);
+  color: var(--brand-ink);
 }
 
 .dialog-title {
@@ -1653,14 +1648,14 @@ select.input-control.compact {
   display: grid;
   justify-items: center;
   gap: 8px;
-  padding: 40px 20px;
+  padding: 28px 20px;
   text-align: center;
   border: 1px dashed var(--line-2);
   border-radius: var(--r-lg);
 }
 
 .empty.compact {
-  padding: 26px 18px;
+  padding: 22px 18px;
 }
 
 .empty-icon {
@@ -1669,10 +1664,10 @@ select.input-control.compact {
   width: 44px;
   height: 44px;
   margin-bottom: 4px;
-  color: var(--accent-ink);
-  background: var(--accent-soft);
-  border: 1px solid var(--accent-line);
-  border-radius: 14px;
+  color: var(--brand-ink);
+  background: var(--brand-soft);
+  border: 1px solid var(--brand-line);
+  border-radius: var(--r-sm);
 }
 
 .empty h1,

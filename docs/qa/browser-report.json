@@ -1,10 +1,10 @@
 {
   "status": "passed",
-  "baseURL": "http://127.0.0.1:5191",
+  "baseURL": "http://127.0.0.1:5205",
   "browser": "isolated headless Chrome",
   "suiteVersion": "interface-v2",
   "scope": "Local preview of Borrow, Earn, Marketplace, Simulator, Statistics, FAQ, brand kit and privacy pages with sample positions, sample sales and synthetic pooled balances; no live liquidity, wallet or settlement",
-  "checkedAt": "2026-10-03T08:16:58.566Z",
+  "checkedAt": "2026-10-03T09:06:23.559Z",
   "checks": [
     "Default route is Borrow",
     "Borrow page heading",
@@ -69,7 +69,7 @@
     "No horizontal overflow: privacy 1920",
     "Accessibility: borrow mobile",
     "Dialog mounts in body: mobile menu",
-    "Selected market accent reaches dialog: mobile menu",
+    "Market accent and Riftwell identity reach dialog: mobile menu",
     "Accessibility: mobile menu",
     "Mobile menu navigates and closes",
     "Accessibility: marketplace mobile 320",
@@ -91,7 +91,7 @@
     "Details open as a shareable link",
     "Position lock and reference value shown",
     "Dialog mounts in body: position details",
-    "Selected market accent reaches dialog: position details",
+    "Market accent and Riftwell identity reach dialog: position details",
     "Accessibility: position details",
     "Backward focus stays in dialog",
     "Forward focus stays in dialog",
@@ -102,27 +102,27 @@
     "Earn route",
     "Withdraw is disabled before supplying",
     "Dialog mounts in body: vault supply review",
-    "Selected market accent reaches dialog: vault supply review",
+    "Market accent and Riftwell identity reach dialog: vault supply review",
     "Accessibility: vault supply review",
     "Supply exchanges exact USDC for vault shares",
     "Other borrowers and suppliers retain their baseline: Supply exchanges exact USDC for vault shares",
     "Balances conserve funds including debt and fees: Supply exchanges exact USDC for vault shares",
     "Supply records minted shares",
     "Dialog mounts in body: vault withdrawal review",
-    "Selected market accent reaches dialog: vault withdrawal review",
+    "Market accent and Riftwell identity reach dialog: vault withdrawal review",
     "Accessibility: vault withdrawal review",
     "Withdraw returns liquid USDC and burns shares",
     "Other borrowers and suppliers retain their baseline: Withdraw returns liquid USDC and burns shares",
     "Balances conserve funds including debt and fees: Withdraw returns liquid USDC and burns shares",
     "Earn shows the share position and vault activity",
     "Dialog mounts in body: vault details",
-    "Selected market accent reaches dialog: vault details",
+    "Market accent and Riftwell identity reach dialog: vault details",
     "Accessibility: vault details",
     "Accessibility: earn desktop",
-    "Promo banner links Earn to Borrow",
+    "Main navigation links Earn to Borrow",
     "No horizontal overflow: collateral deposit dialog mobile",
     "Dialog mounts in body: collateral deposit mobile",
-    "Selected market accent reaches dialog: collateral deposit mobile",
+    "Market accent and Riftwell identity reach dialog: collateral deposit mobile",
     "Accessibility: collateral deposit mobile",
     "Collateral deposit opens a credit line without moving USDC",
     "Other borrowers and suppliers retain their baseline: Collateral deposit opens a credit line without moving USDC",
@@ -141,7 +141,7 @@
     "Reject invalid borrow amount 0 without changing balances",
     "Draw fee, net wallet proceeds and gross debt are separate",
     "Dialog mounts in body: pooled borrowing review",
-    "Selected market accent reaches dialog: pooled borrowing review",
+    "Market accent and Riftwell identity reach dialog: pooled borrowing review",
     "Accessibility: pooled borrowing review",
     "Borrow moves gross principal from vault cash into debt",
     "Other borrowers and suppliers retain their baseline: Borrow moves gross principal from vault cash into debt",
@@ -155,7 +155,7 @@
     "Zero epoch preserves every financial balance",
     "Out-of-range epoch revenue is rejected without a partial repayment",
     "Dialog mounts in body: variable reward epoch",
-    "Selected market accent reaches dialog: variable reward epoch",
+    "Market accent and Riftwell identity reach dialog: variable reward epoch",
     "Accessibility: variable reward epoch",
     "Variable net rewards repay debt while separate revenue increases vault value",
     "Other borrowers and suppliers retain their baseline: Variable net rewards repay debt while separate revenue increases vault value",
@@ -163,7 +163,7 @@
     "Reward repayment is not counted twice as lender yield",
     "Manual repayment cannot exceed the outstanding debt",
     "Dialog mounts in body: manual repayment",
-    "Selected market accent reaches dialog: manual repayment",
+    "Market accent and Riftwell identity reach dialog: manual repayment",
     "Accessibility: manual repayment",
     "Manual repayment returns wallet cash to the vault and reduces debt",
     "Other borrowers and suppliers retain their baseline: Manual repayment returns wallet cash to the vault and reduces debt",
@@ -181,7 +181,7 @@
     "Accessibility: borrow activity",
     "Relayer review shows the example reward and no credit",
     "Dialog mounts in body: relayer review",
-    "Selected market accent reaches dialog: relayer review",
+    "Market accent and Riftwell identity reach dialog: relayer review",
     "Accessibility: relayer review",
     "Adding a position to the relayer moves no funds and opens no credit",
     "Other borrowers and suppliers retain their baseline: Adding a position to the relayer moves no funds and opens no credit",
@@ -190,7 +190,7 @@
     "An epoch prefills relayer rewards, which cannot repay debt",
     "Out-of-range relayer rewards are rejected without changes",
     "Dialog mounts in body: relayer epoch",
-    "Selected market accent reaches dialog: relayer epoch",
+    "Market accent and Riftwell identity reach dialog: relayer epoch",
     "Accessibility: relayer epoch",
     "Relayer rewards are paid to the wallet without touching the vault",
     "Other borrowers and suppliers retain their baseline: Relayer rewards are paid to the wallet without touching the vault",
@@ -202,7 +202,7 @@
     "A removed relayer position can be deposited again",
     "Vault history switches between epoch ranges",
     "Dialog mounts in body: vault history ranges",
-    "Selected market accent reaches dialog: vault history ranges",
+    "Market accent and Riftwell identity reach dialog: vault history ranges",
     "Accessibility: vault history ranges",
     "A fresh preview starts with demo KITTEN to lock and no merges",
     "A position is deposited before merging",
@@ -211,7 +211,7 @@
     "The merge review starts with the first wallet position",
     "The merge review shows the combined lock, later unlock and credit",
     "Dialog mounts in body: merge review",
-    "Selected market accent reaches dialog: merge review",
+    "Market accent and Riftwell identity reach dialog: merge review",
     "Accessibility: merge review",
     "Merging records the merge and moves no USDC",
     "Other borrowers and suppliers retain their baseline: Merging records the merge and moves no USDC",
@@ -221,7 +221,7 @@
     "Lock increases above the demo balance are rejected without changes",
     "The lock increase review shows the new lock, credit and balance",
     "Dialog mounts in body: lock increase review",
-    "Selected market accent reaches dialog: lock increase review",
+    "Market accent and Riftwell identity reach dialog: lock increase review",
     "Accessibility: lock increase review",
     "A lock increase moves demo KITTEN, not USDC",
     "Other borrowers and suppliers retain their baseline: A lock increase moves demo KITTEN, not USDC",
@@ -236,7 +236,7 @@
     "Balances conserve funds including debt and fees: A wallet position joins the relayer beside merged collateral",
     "The relayer strategy previews how its rewards are split",
     "Dialog mounts in body: relayer strategy",
-    "Selected market accent reaches dialog: relayer strategy",
+    "Market accent and Riftwell identity reach dialog: relayer strategy",
     "Accessibility: relayer strategy",
     "Saving a relayer strategy changes only its repayment share",
     "The epoch prefills the relayer position’s example rewards",
@@ -253,11 +253,11 @@
     "The main preview is restored after the merge checks",
     "Purchase review defaults to the wallet when the balance covers the ask",
     "Dialog mounts in body: purchase review",
-    "Selected market accent reaches dialog: purchase review",
+    "Market accent and Riftwell identity reach dialog: purchase review",
     "Accessibility: purchase review",
     "Purchase receipt confirms the wallet destination",
     "Dialog mounts in body: purchase receipt",
-    "Selected market accent reaches dialog: purchase receipt",
+    "Market accent and Riftwell identity reach dialog: purchase receipt",
     "Accessibility: purchase receipt",
     "A wallet purchase spends demo USDC and records the seller fee",
     "Other borrowers and suppliers retain their baseline: A wallet purchase spends demo USDC and records the seller fee",
@@ -265,7 +265,7 @@
     "Bought listing leaves the market",
     "Buying into the relayer lists its steps and needs no borrowing",
     "Dialog mounts in body: purchase into relayer",
-    "Selected market accent reaches dialog: purchase into relayer",
+    "Market accent and Riftwell identity reach dialog: purchase into relayer",
     "Accessibility: purchase into relayer",
     "Receipt confirms the relayer destination",
     "Buying into the relayer deposits the position there and pays the seller",
@@ -277,7 +277,7 @@
     "Borrowing beyond the new credit is rejected",
     "Buying into credit shows net borrowing, wallet share and balance after",
     "Dialog mounts in body: purchase into credit line",
-    "Selected market accent reaches dialog: purchase into credit line",
+    "Market accent and Riftwell identity reach dialog: purchase into credit line",
     "Accessibility: purchase into credit line",
     "Receipt confirms the position is collateral",
     "Buying into credit deposits, borrows and pays in one step",
@@ -288,7 +288,7 @@
     "An unaffordable sweep cannot be confirmed",
     "Sweep review totals asks and seller fees",
     "Dialog mounts in body: sweep review",
-    "Selected market accent reaches dialog: sweep review",
+    "Market accent and Riftwell identity reach dialog: sweep review",
     "Accessibility: sweep review",
     "A sweep buys each selected listing into the wallet",
     "Other borrowers and suppliers retain their baseline: A sweep buys each selected listing into the wallet",
@@ -300,7 +300,7 @@
     "Reject invalid ask 1000000.000001",
     "Listing review shows the seller fee charged only at settlement",
     "Dialog mounts in body: listing review",
-    "Selected market accent reaches dialog: listing review",
+    "Market accent and Riftwell identity reach dialog: listing review",
     "Accessibility: listing review",
     "Listing saves a seven-day public ask without moving funds",
     "Your listing appears in the market with a cancel action",
@@ -308,7 +308,7 @@
     "Accessibility: your listings",
     "A listed position is reserved, not depositable",
     "Dialog mounts in body: cancel listing",
-    "Selected market accent reaches dialog: cancel listing",
+    "Market accent and Riftwell identity reach dialog: cancel listing",
     "Accessibility: cancel listing",
     "Cancelling returns the position and keeps history",
     "Ended listings keep the cancelled ask",
@@ -316,7 +316,7 @@
     "Creating from the OTC tab preselects a private listing",
     "A malformed buyer address is rejected",
     "Dialog mounts in body: private listing review",
-    "Selected market accent reaches dialog: private listing review",
+    "Market accent and Riftwell identity reach dialog: private listing review",
     "Accessibility: private listing review",
     "A private listing is reserved for one normalized address",
     "The OTC tab shows the reserved buyer",
@@ -328,12 +328,12 @@
     "A deep link to a sold listing explains and falls back",
     "Account lists owned positions with their status",
     "Dialog mounts in body: preview account",
-    "Selected market accent reaches dialog: preview account",
+    "Market accent and Riftwell identity reach dialog: preview account",
     "Accessibility: preview account",
     "Account vault view shows the existing share position",
     "Balances, receipts, listings and votes persist after reload",
     "Dialog mounts in body: reset confirmation",
-    "Selected market accent reaches dialog: reset confirmation",
+    "Market accent and Riftwell identity reach dialog: reset confirmation",
     "Accessibility: reset confirmation",
     "Declining reset preserves the preview",
     "Confirmed reset clears purchases, listings, votes, collateral, relayer, shares, debt and fees",
@@ -348,7 +348,7 @@
     "Saved theme applies before the app renders",
     "Accessibility: marketplace light",
     "Dialog mounts in body: position details light",
-    "Selected market accent reaches dialog: position details light",
+    "Market accent and Riftwell identity reach dialog: position details light",
     "Accessibility: position details light",
     "Accessibility: borrow light",
     "Accessibility: earn light",
@@ -356,7 +356,7 @@
     "Shortcut g then m opens the marketplace",
     "Slash focuses listing search",
     "Dialog mounts in body: keyboard shortcuts",
-    "Selected market accent reaches dialog: keyboard shortcuts",
+    "Market accent and Riftwell identity reach dialog: keyboard shortcuts",
     "Accessibility: keyboard shortcuts",
     "Shortcut t switches theme",
     "Accessibility: resources menu",
@@ -370,11 +370,11 @@
     "FAQ answers expand",
     "Accessibility: faq",
     "Dialog mounts in body: about this preview",
-    "Selected market accent reaches dialog: about this preview",
+    "Market accent and Riftwell identity reach dialog: about this preview",
     "Accessibility: about this preview",
     "What’s new lists the release notes",
     "Accessibility: whats new",
-    "The updates ticker switches entries",
+    "Borrowing controls occupy the first viewport without introductory blocks",
     "Statistics page",
     "Statistics summarize the vault, rewards and market",
     "Accessibility: statistics",
@@ -419,7 +419,7 @@
     {
       "view": "mobile menu",
       "violations": [],
-      "passes": 34
+      "passes": 25
     },
     {
       "view": "marketplace mobile 320",
@@ -429,37 +429,37 @@
     {
       "view": "marketplace desktop",
       "violations": [],
-      "passes": 36
+      "passes": 35
     },
     {
       "view": "position details",
       "violations": [],
-      "passes": 36
+      "passes": 24
     },
     {
       "view": "vault supply review",
       "violations": [],
-      "passes": 32
+      "passes": 24
     },
     {
       "view": "vault withdrawal review",
       "violations": [],
-      "passes": 34
+      "passes": 24
     },
     {
       "view": "vault details",
       "violations": [],
-      "passes": 32
+      "passes": 24
     },
     {
       "view": "earn desktop",
       "violations": [],
-      "passes": 32
+      "passes": 30
     },
     {
       "view": "collateral deposit mobile",
       "violations": [],
-      "passes": 32
+      "passes": 22
     },
     {
       "view": "vote planner",
@@ -469,17 +469,17 @@
     {
       "view": "pooled borrowing review",
       "violations": [],
-      "passes": 33
+      "passes": 25
     },
     {
       "view": "variable reward epoch",
       "violations": [],
-      "passes": 32
+      "passes": 23
     },
     {
       "view": "manual repayment",
       "violations": [],
-      "passes": 33
+      "passes": 24
     },
     {
       "view": "borrow activity",
@@ -489,32 +489,32 @@
     {
       "view": "relayer review",
       "violations": [],
-      "passes": 31
+      "passes": 22
     },
     {
       "view": "relayer epoch",
       "violations": [],
-      "passes": 32
+      "passes": 23
     },
     {
       "view": "vault history ranges",
       "violations": [],
-      "passes": 33
+      "passes": 25
     },
     {
       "view": "merge review",
       "violations": [],
-      "passes": 31
+      "passes": 24
     },
     {
       "view": "lock increase review",
       "violations": [],
-      "passes": 33
+      "passes": 25
     },
     {
       "view": "relayer strategy",
       "violations": [],
-      "passes": 32
+      "passes": 23
     },
     {
       "view": "merged collateral mobile",
@@ -524,32 +524,32 @@
     {
       "view": "purchase review",
       "violations": [],
-      "passes": 36
+      "passes": 26
     },
     {
       "view": "purchase receipt",
       "violations": [],
-      "passes": 38
+      "passes": 21
     },
     {
       "view": "purchase into relayer",
       "violations": [],
-      "passes": 38
+      "passes": 28
     },
     {
       "view": "purchase into credit line",
       "violations": [],
-      "passes": 39
+      "passes": 30
     },
     {
       "view": "sweep review",
       "violations": [],
-      "passes": 38
+      "passes": 24
     },
     {
       "view": "listing review",
       "violations": [],
-      "passes": 39
+      "passes": 26
     },
     {
       "view": "your listings",
@@ -559,7 +559,7 @@
     {
       "view": "cancel listing",
       "violations": [],
-      "passes": 38
+      "passes": 22
     },
     {
       "view": "otc tab",
@@ -569,7 +569,7 @@
     {
       "view": "private listing review",
       "violations": [],
-      "passes": 36
+      "passes": 26
     },
     {
       "view": "sales history",
@@ -579,22 +579,22 @@
     {
       "view": "preview account",
       "violations": [],
-      "passes": 36
+      "passes": 28
     },
     {
       "view": "reset confirmation",
       "violations": [],
-      "passes": 38
+      "passes": 21
     },
     {
       "view": "marketplace light",
       "violations": [],
-      "passes": 36
+      "passes": 35
     },
     {
       "view": "position details light",
       "violations": [],
-      "passes": 36
+      "passes": 24
     },
     {
       "view": "borrow light",
@@ -604,17 +604,17 @@
     {
       "view": "earn light",
       "violations": [],
-      "passes": 30
+      "passes": 28
     },
     {
       "view": "keyboard shortcuts",
       "violations": [],
-      "passes": 36
+      "passes": 23
     },
     {
       "view": "resources menu",
       "violations": [],
-      "passes": 38
+      "passes": 37
     },
     {
       "view": "simulator",
@@ -629,7 +629,7 @@
     {
       "view": "about this preview",
       "violations": [],
-      "passes": 29
+      "passes": 23
     },
     {
       "view": "whats new",

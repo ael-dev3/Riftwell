@@ -324,20 +324,7 @@ export default function MarketPage({
 
   return (
     <>
-      <PageHead
-        eyebrow={`${market.name} · ${market.chain}`}
-        title={`${market.positionSymbol} marketplace`}
-        lede="Buy positions at a discount to their locked value, straight into your wallet, your credit line or the reward relayer. List your own publicly or privately."
-        actions={
-          <button
-            type="button"
-            className="button primary"
-            onClick={() => onSell()}
-          >
-            <Tag size={16} aria-hidden="true" /> List a position
-          </button>
-        }
-      />
+      <PageHead compact title={`${market.positionSymbol} marketplace`} />
       <section
         className="collection-strip"
         aria-label={`${market.positionSymbol} market overview`}
@@ -387,6 +374,15 @@ export default function MarketPage({
             </dd>
           </div>
         </dl>
+        <div className="collection-actions">
+          <button
+            type="button"
+            className="button primary"
+            onClick={() => onSell()}
+          >
+            <Tag size={16} aria-hidden="true" /> List a position
+          </button>
+        </div>
       </section>
 
       <div className="market-layout">

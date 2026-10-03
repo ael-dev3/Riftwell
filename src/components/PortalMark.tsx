@@ -16,12 +16,12 @@ export default function PortalMark({ size = 37 }: Props) {
     >
       <defs>
         <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="var(--accent)" />
-          <stop offset="0.5" stopColor="#f0f2f1" />
-          <stop offset="1" stopColor="var(--accent)" stopOpacity="0.85" />
+          <stop offset="0" stopColor="var(--violet)" />
+          <stop offset="0.5" stopColor="var(--text)" />
+          <stop offset="1" stopColor="var(--violet)" stopOpacity="0.85" />
         </linearGradient>
       </defs>
-      <rect width="80" height="80" rx="20" fill="#111514" />
+      <rect width="80" height="80" rx="12" fill="var(--surface-2)" />
       <ellipse
         cx="40"
         cy="40"
@@ -38,12 +38,12 @@ export default function PortalMark({ size = 37 }: Props) {
         rx="8"
         ry="19"
         fill="none"
-        stroke="var(--accent)"
+        stroke="var(--violet)"
         strokeOpacity="0.8"
         strokeWidth="2"
         transform="rotate(32 40 40)"
       />
-      <circle cx="62" cy="18" r="3" fill="var(--accent)" />
+      <circle cx="62" cy="18" r="3" fill="var(--violet)" />
     </svg>
   );
 }

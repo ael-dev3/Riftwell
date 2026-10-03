@@ -25,7 +25,7 @@ Publish the explicit preview build first. A connected Firebase build requires a 
 
 Use the [Firebase and Deno guide](FIREBASE_DENO.md) for local checks, direct CLI deployment and required host evidence. Project IDs, endpoints and release evidence must come from the actual provisioned services. Prepared configuration alone does not establish a live deployment.
 
-The [GitHub publication status](VALIDATION.md#publication-status) remains unchanged. Firebase and Deno uploads do not publish local source to GitHub or update the existing Pages release. Repository Actions workflows remain unchanged.
+The integrated source is published on GitHub, and Firebase serves the redesigned preview. The latest Pages workflow passes code validation but cannot deploy because GitHub does not find an enabled Pages site. See [publication and hosted evidence](VALIDATION.md#publication-and-hosted-preview--3-october-2026). Direct Firebase and Deno uploads are separate from source publication and Pages deployment; repository workflow triggers remain unchanged.
 
 ## Connected application: single service host
 

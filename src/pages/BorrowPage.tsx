@@ -2,15 +2,12 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   Clock3,
-  Landmark,
   Layers3,
   LockKeyhole,
   Merge,
-  PiggyBank,
   Plus,
   RefreshCcw,
   SlidersHorizontal,
-  Sparkles,
   Store,
   Tag,
   Vote,
@@ -19,12 +16,7 @@ import {
 import { useState } from 'react';
 import type { Page } from '../app/router';
 import { Notice } from '../components/ui/Bits';
-import {
-  ActivityTable,
-  EmptyState,
-  PageHead,
-  PromoBanner,
-} from '../components/page';
+import { ActivityTable, EmptyState, PageHead } from '../components/page';
 import { Meter, Ring } from '../components/ui/Meter';
 import StatCard from '../components/ui/StatCard';
 import { TabPanel, Tabs } from '../components/ui/Tabs';
@@ -245,20 +237,7 @@ export default function BorrowPage({
 
   return (
     <>
-      <PageHead
-        eyebrow={`${market.name} · ${market.chain}`}
-        title={`Borrow against ${market.positionSymbol}`}
-        lede="Deposit positions to open a USDC credit line. Weekly rewards pay it down, and you can repay early at any time."
-        actions={
-          <button
-            type="button"
-            className="button ghost"
-            onClick={() => onNavigate('simulator')}
-          >
-            <Sparkles size={16} aria-hidden="true" /> Repayment simulator
-          </button>
-        }
-      />
+      <PageHead compact title={`Borrow against ${market.positionSymbol}`} />
       <section className="stat-grid" aria-label="Vault overview">
         <StatCard
           index={0}
@@ -651,20 +630,6 @@ export default function BorrowPage({
           </TabPanel>
         )}
       </section>
-
-      <PromoBanner
-        icon={PiggyBank}
-        href="#earn"
-        onClick={() => onNavigate('earn')}
-      >
-        Supply USDC to the {market.name} vault and earn a variable share of
-        collateral revenue
-      </PromoBanner>
-      <p className="page-note">
-        <Landmark size={14} aria-hidden="true" /> Local simulations with
-        fictional collateral and vault balances. No wallet, custody, live
-        liquidity or guaranteed returns.
-      </p>
     </>
   );
 }

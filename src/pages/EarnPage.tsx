@@ -4,16 +4,9 @@ import {
   Clock3,
   CircleHelp,
   HandCoins,
-  Landmark,
 } from 'lucide-react';
-import type { Page } from '../app/router';
 import { Notice } from '../components/ui/Bits';
-import {
-  ActivityTable,
-  EmptyState,
-  PageHead,
-  PromoBanner,
-} from '../components/page';
+import { ActivityTable, EmptyState, PageHead } from '../components/page';
 import { Sparkline } from '../components/ui/Charts';
 import CountUp from '../components/ui/CountUp';
 import { Meter } from '../components/ui/Meter';
@@ -22,13 +15,12 @@ import { formatMicros, roundAmount } from '../domain';
 import { getLendingMetrics, type LendingState } from '../lending';
 import type { Market } from '../markets';
 import { VAULT_KINDS, type LendingAction } from '../preview/actions';
-import { formatShares, usd } from '../format';
+import { formatShares } from '../format';
 
 type Props = {
   market: Market;
   lending: LendingState;
   onAction: (action: LendingAction) => void;
-  onNavigate: (page: Page) => void;
   onDetails: () => void;
 };
 
@@ -58,7 +50,6 @@ export default function EarnPage({
   market,
   lending,
   onAction,
-  onNavigate,
   onDetails,
 }: Props) {
   const metrics = getLendingMetrics(lending, collateralLimits(lending));
@@ -77,38 +68,7 @@ export default function EarnPage({
 
   return (
     <>
-      <PageHead
-        eyebrow={`${market.name} · ${market.chain}`}
-        title="Earn from collateral revenue"
-        lede="Supply USDC to the shared vault. Borrowers’ collateral rewards repay their loans, and lender revenue grows the value of every share."
-      />
-      <section className="earn-hero" aria-labelledby="earn-hero-title">
-        <div>
-          <p className="eyebrow">RIFTWELL VAULTS</p>
-          <h2 id="earn-hero-title">
-            Supply USDC to the{' '}
-            <span className="accent-text">{market.name}</span> vault.
-          </h2>
-          <ul className="hero-chips" aria-label="Vault summary">
-            <li>{usd(roundAmount(assets))} USDC in the vault</li>
-            <li>1 vault</li>
-            <li>{utilization.toFixed(1)}% utilized</li>
-            <li>
-              {yieldInfo
-                ? `${(yieldInfo.bps / 100).toFixed(2)}% simulated yield`
-                : 'Variable yield'}
-            </li>
-          </ul>
-        </div>
-        <button
-          type="button"
-          className="button primary large"
-          disabled={wallet === 0n}
-          onClick={() => onAction({ kind: 'supply' })}
-        >
-          Supply USDC <ArrowUpRight size={17} aria-hidden="true" />
-        </button>
-      </section>
+      <PageHead compact title="Earn from collateral revenue" />
 
       <section className="vault-card" aria-labelledby="vault-title">
         <header className="vault-head">
@@ -254,11 +214,7 @@ export default function EarnPage({
               <dd>{formatMicros(wallet)}</dd>
             </div>
           </dl>
-          <Notice>
-            Withdraw up to your share value and available liquidity. If the
-            vault is fully utilized, withdrawals wait for repayment or new
-            supply. There is no withdrawal queue in this preview.
-          </Notice>
+          <Notice>Withdrawals depend on available liquidity.</Notice>
         </section>
         <section className="panel" aria-labelledby="revenue-title">
           <div className="block-head">
@@ -266,8 +222,7 @@ export default function EarnPage({
             <span className="text-muted">Scenario you choose</span>
           </div>
           <p className="panel-text">
-            Apply example net lender revenue to the next epoch and watch share
-            value change. The amount is a scenario, not an expected return.
+            Choose example revenue for the next epoch.
           </p>
           <button
             type="button"
@@ -304,14 +259,6 @@ export default function EarnPage({
           }
         />
       </section>
-
-      <PromoBanner
-        icon={Landmark}
-        href="#borrow"
-        onClick={() => onNavigate('borrow')}
-      >
-        Borrow against your {market.positionSymbol} and let rewards repay it
-      </PromoBanner>
     </>
   );
 }

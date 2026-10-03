@@ -2,7 +2,7 @@
 
 [Live preview → riftwell-ael.web.app](https://riftwell-ael.web.app)
 
-Collateral credit lines, a pooled USDC vault and a focused marketplace for veKITTEN positions, starting with KittenSwap on HyperEVM. Borrow, Earn and Marketplace views in dark or light, with a light-green accent and a quiet portal theme.
+Collateral credit lines, a pooled USDC vault and a focused marketplace for veKITTEN positions, starting with KittenSwap on HyperEVM. Compact Borrow, Earn and Marketplace workspaces in dark or light, with violet portal branding and light-green market actions.
 
 ![Riftwell marketplace](docs/qa/market-desktop.jpg)
 

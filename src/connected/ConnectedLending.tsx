@@ -3,18 +3,15 @@ import {
   ChevronDown,
   CircleHelp,
   Clock3,
-  Landmark,
   Layers3,
-  PiggyBank,
   RefreshCcw,
   Vote,
   Wallet,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useMinuteClock } from '../app/clock';
-import type { Page } from '../app/router';
 import Dialog from '../components/Dialog';
-import { EmptyState, PageHead, PromoBanner } from '../components/page';
+import { EmptyState, PageHead } from '../components/page';
 import { Notice } from '../components/ui/Bits';
 import StatCard from '../components/ui/StatCard';
 import { TabPanel, Tabs } from '../components/ui/Tabs';
@@ -31,8 +28,8 @@ function LaunchNotice({ status }: { status: LendingStatus | null }) {
     <div className="notice" role="status">
       <p>
         {status
-          ? 'Lending has not launched yet. Vault balances, borrowing limits and reward terms will appear after the contracts are deployed.'
-          : 'Lending status is unavailable. Refresh the service to check launch availability.'}
+          ? 'Lending has not launched yet.'
+          : 'Lending status unavailable. Refresh to retry.'}
       </p>
     </div>
   );
@@ -46,7 +43,6 @@ type BorrowProps = {
   loading: boolean;
   onAccount: () => void;
   onInspect: (position: Position) => void;
-  onNavigate: (page: Page) => void;
 };
 
 export function ConnectedBorrow({
@@ -57,18 +53,13 @@ export function ConnectedBorrow({
   loading,
   onAccount,
   onInspect,
-  onNavigate,
 }: BorrowProps) {
   const [tab, setTab] = useState<Tab>('positions');
   const now = useMinuteClock();
   const clock = epochAt(now);
   return (
     <>
-      <PageHead
-        eyebrow={`${market.name} · ${market.chain}`}
-        title={`Borrow against ${market.positionSymbol}`}
-        lede="Collateral earns rewards each epoch, and those rewards help repay your USDC credit line."
-      />
+      <PageHead compact title={`Borrow against ${market.positionSymbol}`} />
       <LaunchNotice status={status} />
       <section className="stat-grid null-stats" aria-label="Vault overview">
         <StatCard
@@ -283,13 +274,6 @@ export function ConnectedBorrow({
           </TabPanel>
         )}
       </section>
-      <PromoBanner
-        icon={PiggyBank}
-        href="#earn"
-        onClick={() => onNavigate('earn')}
-      >
-        See how the {market.name} USDC vault will work for lenders
-      </PromoBanner>
     </>
   );
 }
@@ -298,20 +282,14 @@ export function ConnectedEarn({
   market,
   status,
   onDetails,
-  onNavigate,
 }: {
   market: Market;
   status: LendingStatus | null;
   onDetails: () => void;
-  onNavigate: (page: Page) => void;
 }) {
   return (
     <>
-      <PageHead
-        eyebrow={`${market.name} · ${market.chain}`}
-        title="Earn from collateral revenue"
-        lede="Supply USDC, receive vault shares and earn a variable share of collateral revenue once the vault launches."
-      />
+      <PageHead compact title="Earn from collateral revenue" />
       <LaunchNotice status={status} />
       <section className="vault-card" aria-labelledby="vault-title">
         <header className="vault-head">
@@ -367,18 +345,6 @@ export function ConnectedEarn({
           </span>
         </footer>
       </section>
-      <Notice>
-        Vault shares represent your share of cash and outstanding loans.
-        Withdrawal is limited by available cash, and may require waiting for
-        repayments. No fixed yield is promised.
-      </Notice>
-      <PromoBanner
-        icon={Landmark}
-        href="#borrow"
-        onClick={() => onNavigate('borrow')}
-      >
-        Borrowing against {market.positionSymbol} opens with the same launch
-      </PromoBanner>
     </>
   );
 }

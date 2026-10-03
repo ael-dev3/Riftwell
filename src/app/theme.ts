@@ -3,8 +3,8 @@ import { useCallback, useSyncExternalStore } from 'react';
 export type Theme = 'dark' | 'light';
 export const THEME_STORAGE_KEY = 'riftwell.theme';
 const COLORS: Readonly<Record<Theme, string>> = {
-  dark: '#080b0a',
-  light: '#f2f5f1',
+  dark: '#0b0b12',
+  light: '#f5f4f8',
 };
 const listeners = new Set<() => void>();
 

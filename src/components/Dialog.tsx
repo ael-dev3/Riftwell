@@ -35,7 +35,10 @@ export default function Dialog({
         ? document.activeElement
         : null;
     const oldOverflow = document.body.style.overflow;
+    const appRoot = document.getElementById('root');
+    const wasInert = appRoot?.inert ?? false;
     document.body.style.overflow = 'hidden';
+    if (appRoot) appRoot.inert = true;
     const panel = panelRef.current;
     panel?.querySelector<HTMLElement>(focusableSelector)?.focus();
     const handleKeys = (event: KeyboardEvent) => {
@@ -82,6 +85,7 @@ export default function Dialog({
     document.addEventListener('focusin', containFocus);
     return () => {
       document.body.style.overflow = oldOverflow;
+      if (appRoot) appRoot.inert = wasInert;
       document.removeEventListener('keydown', handleKeys);
       document.removeEventListener('focusin', containFocus);
       if (previous?.isConnected) previous.focus();

@@ -41,7 +41,7 @@ import MarketSelector from '../MarketSelector';
 import PortalMark from '../PortalMark';
 import { Meter } from '../ui/Meter';
 import Popover from '../ui/Popover';
-import { ReleaseList, UpdatesTicker, WhatsNew } from './WhatsNew';
+import { ReleaseList, WhatsNew } from './WhatsNew';
 
 export const SOURCE_URL = 'https://github.com/ael-dev3/Riftwell';
 export const DOCS_URL = `${SOURCE_URL}/tree/main/docs`;
@@ -477,7 +477,6 @@ export default function AppShell({
             <MarketSelector market={market} onChange={onMarketChange} />
           </nav>
           <EpochStatus />
-          <UpdatesTicker />
           <button type="button" className="status-pill" onClick={onAbout}>
             <span className="status-dot" aria-hidden="true" />
             {mode === 'preview' ? 'Preview data' : 'Settlement off'}

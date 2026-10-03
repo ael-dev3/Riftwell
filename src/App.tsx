@@ -409,25 +409,12 @@ function PreviewApp() {
     store.lending.relayerRepayBps !== 0 ||
     !isDefaultVotePlan(store.votes);
 
-  const notices = (store.storageIssue || store.migrated) && (
+  const notices = store.storageIssue && (
     <div className="notices">
       {store.storageIssue && (
         <div className="notice storage-notice" role="status">
           <Info size={18} aria-hidden="true" />
-          <p>
-            This browser could not restore or save your preview account. You can
-            explore, but changes may not persist after you refresh.
-          </p>
-        </div>
-      )}
-      {store.migrated && (
-        <div className="notice storage-notice" role="status">
-          <Info size={18} aria-hidden="true" />
-          <p>
-            Your sample purchase history was retained. Earlier marketplace
-            records remain saved in this browser. Older unfunded lending
-            proposals were not converted into balances.
-          </p>
+          <p>Preview changes won’t be saved in this browser.</p>
         </div>
       )}
     </div>
@@ -492,7 +479,6 @@ function PreviewApp() {
           market={market}
           lending={store.lending}
           onAction={(action) => setModal({ type: 'lending', action })}
-          onNavigate={go}
           onDetails={() => setModal({ type: 'vault' })}
         />
       );

@@ -1,0 +1,889 @@
+{
+  "checkedAt": "2026-10-03T09:01:08.593Z",
+  "origin": "http://127.0.0.1:5205",
+  "status": "passed",
+  "scope": "Read-only isolated production preview, dark/light and 1440/768/390/320 widths, normal motion. No wallet, authentication, contract or record mutations.",
+  "layouts": [
+    {
+      "theme": "dark",
+      "width": 1440,
+      "route": "borrow",
+      "viewport": 1440,
+      "documentWidth": 1429,
+      "bodyWidth": 1429,
+      "horizontalOverflow": false,
+      "normalMotion": true,
+      "accent": "#bff4aa",
+      "brand": "#b7a6ff",
+      "h1s": 1,
+      "statRects": [
+        {
+          "x": 79.5,
+          "y": 119,
+          "width": 423.328125,
+          "height": 112.4375
+        },
+        {
+          "x": 502.828125,
+          "y": 119,
+          "width": 423.328125,
+          "height": 112.4375
+        },
+        {
+          "x": 926.15625,
+          "y": 119,
+          "width": 423.34375,
+          "height": 112.4375
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 1440,
+      "route": "earn",
+      "viewport": 1440,
+      "documentWidth": 1429,
+      "bodyWidth": 1429,
+      "horizontalOverflow": false,
+      "normalMotion": true,
+      "accent": "#bff4aa",
+      "brand": "#b7a6ff",
+      "h1s": 1,
+      "statRects": []
+    },
+    {
+      "theme": "dark",
+      "width": 1440,
+      "route": "marketplace",
+      "viewport": 1440,
+      "documentWidth": 1429,
+      "bodyWidth": 1429,
+      "horizontalOverflow": false,
+      "normalMotion": true,
+      "accent": "#bff4aa",
+      "brand": "#b7a6ff",
+      "h1s": 1,
+      "statRects": []
+    },
+    {
+      "theme": "dark",
+      "width": 768,
+      "route": "borrow",
+      "viewport": 768,
+      "documentWidth": 757,
+      "bodyWidth": 757,
+      "horizontalOverflow": false,
+      "normalMotion": true,
+      "accent": "#bff4aa",
+      "brand": "#b7a6ff",
+      "h1s": 1,
+      "statRects": [
+        {
+          "x": 20.1875,
+          "y": 119,
+          "width": 238.875,
+          "height": 127.875
+        },
+        {
+          "x": 259.0625,
+          "y": 119,
+          "width": 238.875,
+          "height": 127.875
+        },
+        {
+          "x": 497.9375,
+          "y": 119,
+          "width": 238.875,
+          "height": 127.875
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 768,
+      "route": "earn",
+      "viewport": 768,
+      "documentWidth": 757,
+      "bodyWidth": 757,
+      "horizontalOverflow": false,
+      "normalMotion": true,
+      "accent": "#bff4aa",
+      "brand": "#b7a6ff",
+      "h1s": 1,
+      "statRects": []
+    },
+    {
+      "theme": "dark",
+      "width": 768,
+      "route": "marketplace",
+      "viewport": 768,
+      "documentWidth": 757,
+      "bodyWidth": 757,
+      "horizontalOverflow": false,
+      "normalMotion": true,
+      "accent": "#bff4aa",
+      "brand": "#b7a6ff",
+      "h1s": 1,
+      "statRects": []
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "route": "borrow",
+      "viewport": 390,
+      "documentWidth": 379,
+      "bodyWidth": 379,
+      "horizontalOverflow": false,
+      "normalMotion": true,
+      "accent": "#bff4aa",
+      "brand": "#b7a6ff",
+      "h1s": 1,
+      "statRects": [
+        {
+          "x": 17,
+          "y": 113,
+          "width": 115,
+          "height": 157.796875
+        },
+        {
+          "x": 132,
+          "y": 113,
+          "width": 115,
+          "height": 157.796875
+        },
+        {
+          "x": 247,
+          "y": 113,
+          "width": 115,
+          "height": 157.796875
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "route": "earn",
+      "viewport": 390,
+      "documentWidth": 379,
+      "bodyWidth": 379,
+      "horizontalOverflow": false,
+      "normalMotion": true,
+      "accent": "#bff4aa",
+      "brand": "#b7a6ff",
+      "h1s": 1,
+      "statRects": []
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "route": "marketplace",
+      "viewport": 390,
+      "documentWidth": 379,
+      "bodyWidth": 379,
+      "horizontalOverflow": false,
+      "normalMotion": true,
+      "accent": "#bff4aa",
+      "brand": "#b7a6ff",
+      "h1s": 1,
+      "statRects": []
+    },
+    {
+      "theme": "dark",
+      "width": 320,
+      "route": "borrow",
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "horizontalOverflow": false,
+      "normalMotion": true,
+      "accent": "#bff4aa",
+      "brand": "#b7a6ff",
+      "h1s": 1,
+      "statRects": [
+        {
+          "x": 17,
+          "y": 113,
+          "width": 95.328125,
+          "height": 183.859375
+        },
+        {
+          "x": 112.328125,
+          "y": 113,
+          "width": 95.328125,
+          "height": 183.859375
+        },
+        {
+          "x": 207.65625,
+          "y": 113,
+          "width": 95.34375,
+          "height": 183.859375
+        }
+      ]
+    },
+    {
+      "theme": "dark",
+      "width": 320,
+      "route": "earn",
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "horizontalOverflow": false,
+      "normalMotion": true,
+      "accent": "#bff4aa",
+      "brand": "#b7a6ff",
+      "h1s": 1,
+      "statRects": []
+    },
+    {
+      "theme": "dark",
+      "width": 320,
+      "route": "marketplace",
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "horizontalOverflow": false,
+      "normalMotion": true,
+      "accent": "#bff4aa",
+      "brand": "#b7a6ff",
+      "h1s": 1,
+      "statRects": []
+    },
+    {
+      "theme": "light",
+      "width": 1440,
+      "route": "borrow",
+      "viewport": 1440,
+      "documentWidth": 1429,
+      "bodyWidth": 1429,
+      "horizontalOverflow": false,
+      "normalMotion": true,
+      "accent": "#bff4aa",
+      "brand": "#6443b4",
+      "h1s": 1,
+      "statRects": [
+        {
+          "x": 79.5,
+          "y": 119,
+          "width": 423.328125,
+          "height": 112.4375
+        },
+        {
+          "x": 502.828125,
+          "y": 119,
+          "width": 423.328125,
+          "height": 112.4375
+        },
+        {
+          "x": 926.15625,
+          "y": 119,
+          "width": 423.34375,
+          "height": 112.4375
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 1440,
+      "route": "earn",
+      "viewport": 1440,
+      "documentWidth": 1429,
+      "bodyWidth": 1429,
+      "horizontalOverflow": false,
+      "normalMotion": true,
+      "accent": "#bff4aa",
+      "brand": "#6443b4",
+      "h1s": 1,
+      "statRects": []
+    },
+    {
+      "theme": "light",
+      "width": 1440,
+      "route": "marketplace",
+      "viewport": 1440,
+      "documentWidth": 1429,
+      "bodyWidth": 1429,
+      "horizontalOverflow": false,
+      "normalMotion": true,
+      "accent": "#bff4aa",
+      "brand": "#6443b4",
+      "h1s": 1,
+      "statRects": []
+    },
+    {
+      "theme": "light",
+      "width": 768,
+      "route": "borrow",
+      "viewport": 768,
+      "documentWidth": 757,
+      "bodyWidth": 757,
+      "horizontalOverflow": false,
+      "normalMotion": true,
+      "accent": "#bff4aa",
+      "brand": "#6443b4",
+      "h1s": 1,
+      "statRects": [
+        {
+          "x": 20.1875,
+          "y": 119,
+          "width": 238.875,
+          "height": 127.875
+        },
+        {
+          "x": 259.0625,
+          "y": 119,
+          "width": 238.875,
+          "height": 127.875
+        },
+        {
+          "x": 497.9375,
+          "y": 119,
+          "width": 238.875,
+          "height": 127.875
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 768,
+      "route": "earn",
+      "viewport": 768,
+      "documentWidth": 757,
+      "bodyWidth": 757,
+      "horizontalOverflow": false,
+      "normalMotion": true,
+      "accent": "#bff4aa",
+      "brand": "#6443b4",
+      "h1s": 1,
+      "statRects": []
+    },
+    {
+      "theme": "light",
+      "width": 768,
+      "route": "marketplace",
+      "viewport": 768,
+      "documentWidth": 757,
+      "bodyWidth": 757,
+      "horizontalOverflow": false,
+      "normalMotion": true,
+      "accent": "#bff4aa",
+      "brand": "#6443b4",
+      "h1s": 1,
+      "statRects": []
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "route": "borrow",
+      "viewport": 390,
+      "documentWidth": 379,
+      "bodyWidth": 379,
+      "horizontalOverflow": false,
+      "normalMotion": true,
+      "accent": "#bff4aa",
+      "brand": "#6443b4",
+      "h1s": 1,
+      "statRects": [
+        {
+          "x": 17,
+          "y": 113,
+          "width": 115,
+          "height": 157.796875
+        },
+        {
+          "x": 132,
+          "y": 113,
+          "width": 115,
+          "height": 157.796875
+        },
+        {
+          "x": 247,
+          "y": 113,
+          "width": 115,
+          "height": 157.796875
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "route": "earn",
+      "viewport": 390,
+      "documentWidth": 379,
+      "bodyWidth": 379,
+      "horizontalOverflow": false,
+      "normalMotion": true,
+      "accent": "#bff4aa",
+      "brand": "#6443b4",
+      "h1s": 1,
+      "statRects": []
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "route": "marketplace",
+      "viewport": 390,
+      "documentWidth": 379,
+      "bodyWidth": 379,
+      "horizontalOverflow": false,
+      "normalMotion": true,
+      "accent": "#bff4aa",
+      "brand": "#6443b4",
+      "h1s": 1,
+      "statRects": []
+    },
+    {
+      "theme": "light",
+      "width": 320,
+      "route": "borrow",
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "horizontalOverflow": false,
+      "normalMotion": true,
+      "accent": "#bff4aa",
+      "brand": "#6443b4",
+      "h1s": 1,
+      "statRects": [
+        {
+          "x": 17,
+          "y": 113,
+          "width": 95.328125,
+          "height": 189.546875
+        },
+        {
+          "x": 112.328125,
+          "y": 113,
+          "width": 95.328125,
+          "height": 189.546875
+        },
+        {
+          "x": 207.65625,
+          "y": 113,
+          "width": 95.34375,
+          "height": 189.546875
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "width": 320,
+      "route": "earn",
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "horizontalOverflow": false,
+      "normalMotion": true,
+      "accent": "#bff4aa",
+      "brand": "#6443b4",
+      "h1s": 1,
+      "statRects": []
+    },
+    {
+      "theme": "light",
+      "width": 320,
+      "route": "marketplace",
+      "viewport": 320,
+      "documentWidth": 320,
+      "bodyWidth": 320,
+      "horizontalOverflow": false,
+      "normalMotion": true,
+      "accent": "#bff4aa",
+      "brand": "#6443b4",
+      "h1s": 1,
+      "statRects": []
+    }
+  ],
+  "popovers": [
+    {
+      "theme": "dark",
+      "width": 1440,
+      "index": 0,
+      "box": {
+        "x": 217.828125,
+        "y": 165,
+        "width": 268,
+        "height": 275.046875
+      },
+      "visible": true
+    },
+    {
+      "theme": "dark",
+      "width": 1440,
+      "index": 1,
+      "box": {
+        "x": 641.15625,
+        "y": 165,
+        "width": 268,
+        "height": 215.796875
+      },
+      "visible": true
+    },
+    {
+      "theme": "dark",
+      "width": 1440,
+      "index": 2,
+      "box": {
+        "x": 1065.5,
+        "y": 165,
+        "width": 268,
+        "height": 199.296875
+      },
+      "visible": true
+    },
+    {
+      "theme": "dark",
+      "width": 768,
+      "index": 0,
+      "box": {
+        "x": 20.1875,
+        "y": 254.875,
+        "width": 716.625,
+        "height": 237.546875
+      },
+      "visible": true
+    },
+    {
+      "theme": "dark",
+      "width": 768,
+      "index": 1,
+      "box": {
+        "x": 20.1875,
+        "y": 254.875,
+        "width": 716.625,
+        "height": 197.046875
+      },
+      "visible": true
+    },
+    {
+      "theme": "dark",
+      "width": 768,
+      "index": 2,
+      "box": {
+        "x": 20.1875,
+        "y": 254.875,
+        "width": 716.625,
+        "height": 180.546875
+      },
+      "visible": true
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "index": 0,
+      "box": {
+        "x": 17,
+        "y": 278.796875,
+        "width": 345,
+        "height": 256.296875
+      },
+      "visible": true
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "index": 1,
+      "box": {
+        "x": 17,
+        "y": 278.796875,
+        "width": 345,
+        "height": 215.796875
+      },
+      "visible": true
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "index": 2,
+      "box": {
+        "x": 17,
+        "y": 278.796875,
+        "width": 345,
+        "height": 199.296875
+      },
+      "visible": true
+    },
+    {
+      "theme": "dark",
+      "width": 320,
+      "index": 0,
+      "box": {
+        "x": 17,
+        "y": 304.859375,
+        "width": 286,
+        "height": 256.296875
+      },
+      "visible": true
+    },
+    {
+      "theme": "dark",
+      "width": 320,
+      "index": 1,
+      "box": {
+        "x": 17,
+        "y": 304.859375,
+        "width": 286,
+        "height": 215.796875
+      },
+      "visible": true
+    },
+    {
+      "theme": "dark",
+      "width": 320,
+      "index": 2,
+      "box": {
+        "x": 17,
+        "y": 304.859375,
+        "width": 286,
+        "height": 199.296875
+      },
+      "visible": true
+    },
+    {
+      "theme": "light",
+      "width": 1440,
+      "index": 0,
+      "box": {
+        "x": 217.828125,
+        "y": 165,
+        "width": 268,
+        "height": 275.046875
+      },
+      "visible": true
+    },
+    {
+      "theme": "light",
+      "width": 1440,
+      "index": 1,
+      "box": {
+        "x": 641.15625,
+        "y": 165,
+        "width": 268,
+        "height": 215.796875
+      },
+      "visible": true
+    },
+    {
+      "theme": "light",
+      "width": 1440,
+      "index": 2,
+      "box": {
+        "x": 1065.5,
+        "y": 165,
+        "width": 268,
+        "height": 199.296875
+      },
+      "visible": true
+    },
+    {
+      "theme": "light",
+      "width": 768,
+      "index": 0,
+      "box": {
+        "x": 20.1875,
+        "y": 254.875,
+        "width": 716.625,
+        "height": 237.546875
+      },
+      "visible": true
+    },
+    {
+      "theme": "light",
+      "width": 768,
+      "index": 1,
+      "box": {
+        "x": 20.1875,
+        "y": 254.875,
+        "width": 716.625,
+        "height": 197.046875
+      },
+      "visible": true
+    },
+    {
+      "theme": "light",
+      "width": 768,
+      "index": 2,
+      "box": {
+        "x": 20.1875,
+        "y": 254.875,
+        "width": 716.625,
+        "height": 180.546875
+      },
+      "visible": true
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "index": 0,
+      "box": {
+        "x": 17,
+        "y": 278.796875,
+        "width": 345,
+        "height": 256.296875
+      },
+      "visible": true
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "index": 1,
+      "box": {
+        "x": 17,
+        "y": 278.796875,
+        "width": 345,
+        "height": 215.796875
+      },
+      "visible": true
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "index": 2,
+      "box": {
+        "x": 17,
+        "y": 278.796875,
+        "width": 345,
+        "height": 199.296875
+      },
+      "visible": true
+    },
+    {
+      "theme": "light",
+      "width": 320,
+      "index": 0,
+      "box": {
+        "x": 17,
+        "y": 304.859375,
+        "width": 286,
+        "height": 256.296875
+      },
+      "visible": true
+    },
+    {
+      "theme": "light",
+      "width": 320,
+      "index": 1,
+      "box": {
+        "x": 17,
+        "y": 304.859375,
+        "width": 286,
+        "height": 215.796875
+      },
+      "visible": true
+    },
+    {
+      "theme": "light",
+      "width": 320,
+      "index": 2,
+      "box": {
+        "x": 17,
+        "y": 304.859375,
+        "width": 286,
+        "height": 199.296875
+      },
+      "visible": true
+    }
+  ],
+  "listingActions": [
+    {
+      "theme": "dark",
+      "width": 1440,
+      "box": {
+        "x": 1182.09375,
+        "y": 137.8125,
+        "width": 151.40625,
+        "height": 40
+      },
+      "visible": true,
+      "opened": true
+    },
+    {
+      "theme": "dark",
+      "width": 768,
+      "box": {
+        "x": 36.1875,
+        "y": 252.28125,
+        "width": 151.40625,
+        "height": 40
+      },
+      "visible": true,
+      "opened": true
+    },
+    {
+      "theme": "dark",
+      "width": 390,
+      "box": {
+        "x": 33,
+        "y": 304.78125,
+        "width": 313,
+        "height": 40
+      },
+      "visible": true,
+      "opened": true
+    },
+    {
+      "theme": "dark",
+      "width": 320,
+      "box": {
+        "x": 33,
+        "y": 324.28125,
+        "width": 254,
+        "height": 40
+      },
+      "visible": true,
+      "opened": true
+    },
+    {
+      "theme": "light",
+      "width": 1440,
+      "box": {
+        "x": 1182.09375,
+        "y": 137.8125,
+        "width": 151.40625,
+        "height": 40
+      },
+      "visible": true,
+      "opened": true
+    },
+    {
+      "theme": "light",
+      "width": 768,
+      "box": {
+        "x": 36.1875,
+        "y": 252.28125,
+        "width": 151.40625,
+        "height": 40
+      },
+      "visible": true,
+      "opened": true
+    },
+    {
+      "theme": "light",
+      "width": 390,
+      "box": {
+        "x": 33,
+        "y": 304.78125,
+        "width": 313,
+        "height": 40
+      },
+      "visible": true,
+      "opened": true
+    },
+    {
+      "theme": "light",
+      "width": 320,
+      "box": {
+        "x": 33,
+        "y": 324.28125,
+        "width": 254,
+        "height": 40
+      },
+      "visible": true,
+      "opened": true
+    }
+  ],
+  "errors": [],
+  "warnings": [],
+  "failedRequests": [],
+  "issues": [],
+  "screenshotsRetained": "Private deployment evidence directory"
+}

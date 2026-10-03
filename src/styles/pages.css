@@ -2,7 +2,10 @@
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  gap: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
 }
 
 .stat-grid.four {
@@ -22,17 +25,11 @@
   z-index: 1;
   display: grid;
   gap: 2px;
-  padding: 16px 18px 18px;
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--tone) 5%, transparent),
-      transparent 60%
-    ),
-    var(--surface);
+  padding: 12px 16px;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
-  box-shadow: var(--inset);
+  box-shadow: none;
   animation: rise 560ms var(--ease) both;
   animation-delay: calc(var(--i, 0) * 70ms);
   transition: border-color var(--t) ease;
@@ -40,6 +37,18 @@
 
 .stat-card:hover {
   border-color: var(--line-2);
+}
+
+.stat-grid .stat-card {
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
+}
+
+.stat-grid .stat-card:last-child {
+  border-right: 0;
 }
 
 /* Keep an open details popover above the cards and workspace below it. */
@@ -50,13 +59,12 @@
 .stat-card::before {
   content: '';
   position: absolute;
-  top: -1px;
-  right: 18px;
-  left: 18px;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--tone), transparent);
-  border-radius: 2px;
-  opacity: 0.85;
+  top: 14px;
+  bottom: 14px;
+  left: 0;
+  width: 2px;
+  background: var(--tone);
+  opacity: 0.6;
 }
 
 .stat-card.tone-violet {
@@ -93,12 +101,12 @@
   height: 7px;
   background: var(--tone);
   border-radius: 50%;
-  box-shadow: 0 0 10px color-mix(in oklab, var(--tone) 60%, transparent);
+  box-shadow: none;
 }
 
 .stat-value {
-  margin-top: 10px;
-  font-size: clamp(24px, 2.4vw, 30px);
+  margin-top: 6px;
+  font-size: clamp(22px, 2.1vw, 27px);
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.03em;
@@ -126,24 +134,18 @@
   overflow: clip;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--r-xl);
-  box-shadow: var(--inset);
+  border-radius: var(--r-md);
+  box-shadow: none;
 }
 
 .credit-card {
   position: relative;
   display: grid;
-  gap: 18px;
-  padding: 18px 20px;
-  background:
-    radial-gradient(
-      90% 120% at 100% 0%,
-      color-mix(in oklab, var(--accent) 7%, transparent),
-      transparent 60%
-    ),
-    var(--surface-2);
+  gap: 16px;
+  padding: 16px 18px;
+  background: var(--surface-2);
   border: 1px solid var(--line-2);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-sm);
 }
 
 .credit-head {
@@ -168,7 +170,7 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 26px;
+  gap: 22px;
 }
 
 .credit-metrics {
@@ -228,9 +230,9 @@
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) auto;
   align-items: center;
-  gap: 16px;
-  padding: 12px 14px;
-  background: var(--surface-2);
+  gap: 14px;
+  padding: 10px 12px;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-md);
   transition:
@@ -241,6 +243,7 @@
 
 .position-row:hover {
   border-color: var(--line-2);
+  background: var(--surface-2);
 }
 
 .position-main {
@@ -512,7 +515,7 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 14px;
-  padding: 18px 20px;
+  padding: 16px 18px;
 }
 
 .vault-name h2 {
@@ -573,7 +576,7 @@
 }
 
 .vault-metrics > div {
-  padding: 16px 20px;
+  padding: 14px 18px;
   border-right: 1px solid var(--line);
 }
 
@@ -643,37 +646,30 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 16px 24px;
-  padding: 16px 18px;
-  background:
-    radial-gradient(
-      60% 160% at 0% 50%,
-      color-mix(in oklab, var(--accent) 8%, transparent),
-      transparent 60%
-    ),
-    var(--surface);
+  gap: 12px 20px;
+  padding: 14px 16px;
+  background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--r-xl);
+  border-radius: var(--r-md);
   animation: rise 520ms var(--ease) both;
 }
 
 .collection-id {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
 }
 
 .collection-id img {
-  width: 48px;
-  height: 48px;
-  padding: 4px;
+  width: 38px;
+  height: 38px;
+  padding: 3px;
   background: #101814;
-  border-radius: 14px;
-  box-shadow: 0 10px 24px -14px var(--accent-glow);
+  border-radius: var(--r-sm);
 }
 
 .collection-id h2 {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -685,15 +681,20 @@
 
 .collection-stats {
   display: grid;
-  grid-template-columns: repeat(4, minmax(118px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(4, minmax(106px, 1fr));
+  gap: 0;
 }
 
 .collection-stats > div {
-  padding: 10px 14px;
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
+  padding: 4px 14px;
+  border-left: 1px solid var(--line);
+}
+
+.collection-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
 }
 
 .collection-stats dt {
@@ -705,7 +706,7 @@
 
 .collection-stats dd {
   margin-top: 4px;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
@@ -1453,7 +1454,8 @@
   }
 
   .collection-stats {
-    grid-template-columns: repeat(2, minmax(118px, 1fr));
+    grid-template-columns: repeat(2, minmax(106px, 1fr));
+    gap: 8px 0;
   }
 
   .vault-metrics {
@@ -1471,11 +1473,43 @@
 
 @media (max-width: 900px) {
   .stat-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    position: relative;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .stat-grid:has([aria-expanded='true']) {
+    z-index: 20;
+  }
+
+  .stat-grid .stat-card,
+  .stat-grid .stat-popover {
+    position: static;
+  }
+
+  /* Narrow cards share one anchored details panel below the strip. */
+  .stat-grid .stat-card {
+    animation: none;
+  }
+
+  .stat-grid .stat-card::before {
+    display: none;
+  }
+
+  .stat-grid .stat-top {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .stat-grid .stat-popover > .popover {
+    right: 0;
+    left: 0;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
   }
 
   .stat-grid > :last-child {
-    grid-column: 1 / -1;
+    grid-column: auto;
   }
 
   .stat-grid.four {
@@ -1484,6 +1518,14 @@
 
   .stat-grid.four > :last-child {
     grid-column: auto;
+  }
+
+  .stat-grid.four .stat-card:nth-child(2) {
+    border-right: 0;
+  }
+
+  .stat-grid.four .stat-card:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--line);
   }
 
   .stats-grid {
@@ -1682,9 +1724,49 @@
 }
 
 @media (max-width: 560px) {
-  .stat-grid,
+  .stat-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .stat-grid.four {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stat-grid .stat-card {
+    padding: 10px;
+  }
+
+  .stat-grid .stat-top {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .stat-grid .stat-label {
+    gap: 4px;
+    font-size: 10px;
+    letter-spacing: 0.035em;
+  }
+
+  .stat-grid .stat-dot {
+    flex: none;
+    width: 5px;
+    height: 5px;
+  }
+
+  .stat-grid .stat-value {
+    font-size: clamp(17px, 4.9vw, 22px);
+    overflow-wrap: anywhere;
+  }
+
+  .stat-grid .stat-unit {
+    display: block;
+    margin: 3px 0 0;
+    font-size: 10px;
+  }
+
+  .stat-grid .stat-sub {
+    font-size: 11px;
+    line-height: 1.4;
   }
 
   .dialog-header,
@@ -1707,13 +1789,13 @@
   }
 
   .tablist.band .tab {
-    height: 46px;
-    padding: 0 8px;
+    height: 44px;
+    padding: 0 12px;
     font-size: 13px;
   }
 
   .credit-card {
-    padding: 16px;
+    padding: 14px;
   }
 
   .credit-head {
@@ -1755,7 +1837,21 @@
   }
 
   .collection-stats {
+    width: 100%;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .collection-stats > div {
+    padding: 4px 0;
+    border-left: 0;
+  }
+
+  .collection-actions {
+    width: 100%;
+  }
+
+  .collection-actions .button {
+    flex: 1;
   }
 
   .vote-table tr {
@@ -1841,11 +1937,11 @@
 }
 
 .brand-mark-card.dark .brand-mark-preview {
-  background: #080b0a;
+  background: #0b0b12;
 }
 
 .brand-mark-card.light .brand-mark-preview {
-  background: #f2f5f1;
+  background: #f5f4f8;
 }
 
 .brand-mark-meta {
@@ -1886,21 +1982,21 @@
 }
 
 .wordmark-specimen span {
-  color: var(--accent);
+  color: #b7a6ff;
 }
 
 .wordmark-specimen.dark {
-  color: #edf4ef;
-  background: #080b0a;
+  color: #f0edf7;
+  background: #0b0b12;
 }
 
 .wordmark-specimen.light {
-  color: #0f1a14;
-  background: #f2f5f1;
+  color: #211c31;
+  background: #f5f4f8;
 }
 
 .wordmark-specimen.light span {
-  color: #2b6b2e;
+  color: #6443b4;
 }
 
 .swatches {

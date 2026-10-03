@@ -579,7 +579,6 @@ function ConnectedShell() {
             if (session) void refreshAccount();
           }}
           onInspect={(position) => setModal({ type: 'collateral', position })}
-          onNavigate={go}
         />
       );
       break;
@@ -589,7 +588,6 @@ function ConnectedShell() {
           market={market}
           status={lending}
           onDetails={() => setModal({ type: 'vault' })}
-          onNavigate={go}
         />
       );
       break;

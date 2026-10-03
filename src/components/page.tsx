@@ -12,24 +12,38 @@ export function PageHead({
   lede,
   actions,
   titleId,
+  compact = false,
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: ReactNode;
-  lede: ReactNode;
+  lede?: ReactNode;
   actions?: ReactNode;
   titleId?: string;
+  compact?: boolean;
 }) {
+  if (compact) {
+    return (
+      <>
+        <h1 className="sr-only" id={titleId}>
+          {title}
+        </h1>
+        {actions && <div className="workspace-actions">{actions}</div>}
+      </>
+    );
+  }
   return (
     <div className="page-head">
       <div>
-        <p className="eyebrow">
-          <span className="eyebrow-dot" aria-hidden="true" />
-          {eyebrow}
-        </p>
+        {eyebrow && (
+          <p className="eyebrow">
+            <span className="eyebrow-dot" aria-hidden="true" />
+            {eyebrow}
+          </p>
+        )}
         <h1 className="page-title" id={titleId}>
           {title}
         </h1>
-        <p className="page-lede">{lede}</p>
+        {lede && <p className="page-lede">{lede}</p>}
       </div>
       {actions && <div className="page-actions">{actions}</div>}
     </div>

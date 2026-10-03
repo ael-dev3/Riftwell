@@ -76,21 +76,7 @@ export function ConnectedMarket({
 
   return (
     <>
-      <PageHead
-        eyebrow={`${market.name} · ${market.chain}`}
-        title={`${market.positionSymbol} marketplace`}
-        lede="Ownership-verified listings for veKITTEN positions. Purchases await contract settlement."
-        actions={
-          <button
-            type="button"
-            className="button primary"
-            disabled={!canCreate}
-            onClick={onCreate}
-          >
-            <Tag size={16} aria-hidden="true" /> Create listing
-          </button>
-        }
-      />
+      <PageHead compact title={`${market.positionSymbol} marketplace`} />
       <section
         className="collection-strip"
         aria-label={`${market.positionSymbol} market overview`}
@@ -131,6 +117,16 @@ export function ConnectedMarket({
             </dd>
           </div>
         </dl>
+        <div className="collection-actions">
+          <button
+            type="button"
+            className="button primary"
+            disabled={!canCreate}
+            onClick={onCreate}
+          >
+            <Tag size={16} aria-hidden="true" /> Create listing
+          </button>
+        </div>
       </section>
       <section className="listings-card" aria-label="Listings">
         <div className="tabpanel listings-panel">

@@ -24,12 +24,12 @@ const MARKS = [
 
 const COLORS = [
   { name: 'Market accent', hex: '#BFF4AA', role: 'KittenSwap market color' },
-  { name: 'Ink', hex: '#080B0A', role: 'Dark background' },
-  { name: 'Surface', hex: '#0F1413', role: 'Dark cards and panels' },
-  { name: 'Paper', hex: '#F2F5F1', role: 'Light background' },
-  { name: 'Text', hex: '#EDF4EF', role: 'Text on dark' },
+  { name: 'Ink', hex: '#0B0B12', role: 'Dark background' },
+  { name: 'Surface', hex: '#12121C', role: 'Dark workspaces' },
+  { name: 'Paper', hex: '#F5F4F8', role: 'Light background' },
+  { name: 'Text', hex: '#F0EDF7', role: 'Text on dark' },
   { name: 'Forest', hex: '#1B5221', role: 'Accent text on light' },
-  { name: 'Violet', hex: '#B8A6FF', role: 'Borrowing and relayer' },
+  { name: 'Violet', hex: '#B7A6FF', role: 'Riftwell portal and navigation' },
   { name: 'Sky', hex: '#8CC6FF', role: 'Liquidity and rewards' },
 ] as const;
 
@@ -122,9 +122,9 @@ export default function BrandPage({ market }: { market: Market }) {
           </p>
         </div>
         <p className="panel-text">
-          Write the wordmark in lowercase with a period in the current market
-          accent, {market.accentColor.toUpperCase()} for {market.name}. In
-          sentences, write the name as Riftwell.
+          Write the wordmark in lowercase with a violet period. The selected
+          market color, {market.accentColor.toUpperCase()} for {market.name},
+          belongs to market actions and data. In sentences, write Riftwell.
         </p>
       </section>
       <section className="panel" aria-labelledby="colors-title">
@@ -173,7 +173,8 @@ export default function BrandPage({ market }: { market: Market }) {
             Use the mark on its own rounded tile; do not stretch or rotate it.
           </li>
           <li>
-            Recolor only the accent, and only to a supported market’s color.
+            Keep the portal violet; use the selected market color for market
+            controls.
           </li>
           <li>Do not imply that Riftwell endorses a project or product.</li>
         </ul>
