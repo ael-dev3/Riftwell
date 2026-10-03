@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { isDeepStrictEqual } from 'node:util';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
 import {
   chromium,
   type Browser,
@@ -252,7 +253,7 @@ async function signin(page: Page) {
       .waitFor();
   } catch (error) {
     await page.screenshot({
-      path: new URL('connected-failure.png', output).pathname,
+      path: fileURLToPath(new URL('connected-failure.png', output)),
     });
     throw new Error(`Sign-in failed: ${await dialog(page).innerText()}`, {
       cause: error,
@@ -339,6 +340,15 @@ try {
         .get('content-security-policy')
         ?.includes("script-src 'self'"),
   );
+  check(
+    'The service policy allows no inline styles or scripts',
+    (live.headers.get('content-security-policy') ?? '').includes(
+      "style-src 'self';",
+    ) &&
+      !(live.headers.get('content-security-policy') ?? '').includes(
+        "'unsafe-inline'",
+      ),
+  );
   browser = await chromium.launch({ channel: 'chrome', headless: true });
   for (const lifecycle of [
     'request-only',
@@ -372,7 +382,9 @@ try {
     );
     if (lifecycle === 'non-callable')
       await page.screenshot({
-        path: new URL('connected-unsupported-wallet.png', output).pathname,
+        path: fileURLToPath(
+          new URL('connected-unsupported-wallet.png', output),
+        ),
         animations: 'disabled',
       });
     await close(page);
@@ -408,19 +420,27 @@ try {
         .getByRole('button', { name: 'List yours', exact: true })
         .isVisible()),
   );
-  const marketSelect = page.getByLabel('Select market', { exact: true });
-  const options = await marketSelect.locator('option').evaluateAll((items) =>
-    items.map((item) => ({
-      value: (item as HTMLOptionElement).value,
-      label: (item.textContent ?? '').trim(),
-    })),
+  check(
+    'KittenSwap, the sole market, is a label rather than a one-item menu',
+    (await page
+      .locator('.context-bar .market-selector')
+      .textContent()
+      .then((text) => text?.trim())) === 'KittenSwap' &&
+      (await page.getByLabel('Select market', { exact: true }).count()) === 0,
   );
   check(
-    'KittenSwap remains the sole selected market',
-    (await marketSelect.inputValue()) === 'kittenswap' &&
-      options.length === 1 &&
-      options[0].value === 'kittenswap' &&
-      options[0].label === 'KittenSwap',
+    'The connected build carries the same policy in a meta tag',
+    await page.evaluate(() => {
+      const policy =
+        document
+          .querySelector('meta[http-equiv="Content-Security-Policy"]')
+          ?.getAttribute('content') ?? '';
+      return (
+        policy.includes("style-src 'self';") &&
+        policy.includes("connect-src 'self'") &&
+        !policy.includes("'unsafe-inline'")
+      );
+    }),
   );
   check(
     'Supplied market logo and root accent are applied',
@@ -570,7 +590,9 @@ try {
       (await page.locator('.asset-card').count()) === 0,
   );
   await page.screenshot({
-    path: new URL('connected-marketplace-compact-desktop.png', output).pathname,
+    path: fileURLToPath(
+      new URL('connected-marketplace-compact-desktop.png', output),
+    ),
     fullPage: false,
     animations: 'disabled',
   });
@@ -1154,10 +1176,14 @@ try {
   check(
     'Borrowing credit, debt and available cash remain unknown before launch',
     (await page
-      .getByText('Lending has not launched yet.', { exact: false })
+      .locator('.credit-card .pill', { hasText: 'Not launched' })
       .isVisible()) &&
-      (await page.locator('main .stat-grid .stat-value').count()) === 3 &&
-      (await dashes(page.locator('main .stat-grid .stat-value'))) &&
+      // The launch state is marked once, where people act, not in a banner.
+      (await page
+        .locator('main .notice')
+        .filter({ hasText: /lending/i })
+        .count()) === 0 &&
+      (await page.locator('main .stat-card').count()) === 0 &&
       (await page.locator('main .credit-metrics dd').count()) === 4 &&
       (await dashes(page.locator('main .credit-metrics dd'))) &&
       (await page
@@ -1178,8 +1204,9 @@ try {
     'The reward relayer waits for the lending launch',
     (await page.getByRole('heading', { name: 'Reward relayer' }).isVisible()) &&
       (await page.locator('main').innerText()).includes(
-        'The relayer launches with the lending contracts',
-      ),
+        'Opens with the lending contracts',
+      ) &&
+      (await page.locator('main .empty.inline').count()) === 1,
   );
   await audit(page, 'connected borrow positions');
   await page
@@ -1253,7 +1280,7 @@ try {
     (await page
       .getByRole('region', { name: 'What’s new' })
       .locator('li')
-      .count()) === 4,
+      .count()) === 5,
   );
   await page.keyboard.press('Escape');
   await page.goto(`${base}/#stats`, { waitUntil: 'networkidle' });
@@ -1492,13 +1519,13 @@ try {
   await page.setViewportSize({ width: 320, height: 900 });
   await audit(page, 'connected mobile marketplace');
   await page.screenshot({
-    path: new URL('connected-mobile-320.png', output).pathname,
+    path: fileURLToPath(new URL('connected-mobile-320.png', output)),
     fullPage: true,
     animations: 'disabled',
   });
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.screenshot({
-    path: new URL('connected-desktop.png', output).pathname,
+    path: fileURLToPath(new URL('connected-desktop.png', output)),
     fullPage: true,
     animations: 'disabled',
   });

@@ -2,6 +2,19 @@
 
 The frontend, service and contract prototypes have separate dependency trees. Frontend production dependencies are React, React DOM and Lucide; the server uses Fastify, ethers, Postgres.js and optional native SQLite. Contract/compiler tooling is not shipped with the application. Captured application audits are in `production-dependency-audit.json` and `server-production-dependency-audit.json`; those historical captures precede the PostgreSQL dependency.
 
+## Production audit — 3 October 2026
+
+The review in [AUDIT.md](AUDIT.md) changed the frontend, its browser suites and the content security policy of the build, the service and `firebase.json`. These results describe the code after it. The hosted Firebase, Deno and responsive evidence in the sections below describes earlier builds, including the stat-detail popovers that this review removed.
+
+- 250 frontend tests pass, now including rolling sample dates, forgiving amount input, whole-token parsing, connected listing prices and token-ID search.
+- 99 of 114 server tests pass locally on Windows through a `node:sqlite` stand-in for the native SQLite module. The 14 PostgreSQL integration tests were skipped without a disposable database, and one POSIX-only backup cancellation test cannot run on Windows because its fixture is a shebang script. A service test now asserts that the policy allows no inline styles or scripts.
+- Strict application, server and QA type checks and both production builds pass. Initial JavaScript is 103.6 kB compressed in preview mode (104.4 kB before) and 97.6 kB in connected mode; CSS is 14.2 kB.
+- 407 preview browser checks pass, and 50 views pass automated WCAG A/AA checks with no violations. No console error was logged, so no page violated the stricter policy, and no external service was contacted. New checks cover the static policy, the market label, Borrow opening on its credit line, two tabs editing one preview, sweeps after filtering, scroll position on page changes, forgiving amount input, the phone context bar and marketplace at 320 and 390 pixels, release notes and dates that follow the calendar.
+- 123 connected browser checks pass against real temporary SQLite, simulated read-only ownership and ephemeral wallets, and 22 views pass automated WCAG checks, under both the service header and the build's meta policy. Repeated runs exposed two intermittent failures. In the reserved Dutch listing step the request carried no buyer; the cause, a deferred focus move in the listing form, is fixed, and ten further runs of that step kept the buyer. A token search also matched a random seller address containing the same digits; numeric searches now match token IDs only.
+- The two-origin bearer suite was not run, because it needs a disposable PostgreSQL database. A bearer build's policy was inspected instead: it allows exactly its configured API origin in `connect-src`.
+- Dependency audits run on 3 October 2026 report no known advisories for the frontend or the service's production dependencies.
+- Motion was checked in Chrome by sampling the view-transition animations: a deposit closes its dialog in 180 ms and its backdrop in 220 ms while the moved position glides for 440 ms, and page changes animate the page beneath a still header. Safari, Firefox, low-end devices, screen readers, real wallets and the hosted sites were not exercised.
+
 ## Integrated redesign — 3 October 2026
 
 Claude’s interface redesign is integrated with the existing Firebase/Deno backend and strict TypeScript 7.0.2 tooling. Borrow, Earn and Marketplace share the updated shell, themes and resources. Connected marketplace records retain authoritative fresh reviews, fixed/Dutch asks, private buyers, creator pagination, editing, sweeps and outage cancellation. Contract-dependent actions remain disabled; server and Solidity source are unchanged from the prior checkpoint.

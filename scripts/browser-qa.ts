@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { isDeepStrictEqual } from 'node:util';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { chromium, type Page, type Locator } from 'playwright';
@@ -39,6 +39,20 @@ const votesStorageKey = 'riftwell.vote-plan.v1';
 const themeStorageKey = 'riftwell.theme';
 const legacyStorageKey = 'riftwell.positions-preview.v2';
 const epochMs = 604_800_000;
+const dayMs = 86_400_000;
+const sampleShift =
+  Math.max(
+    0,
+    Math.floor((Date.now() - Date.parse('2026-10-02T00:00:00Z')) / dayMs),
+  ) * dayMs;
+/** An authored sample date as the preview shows it today. */
+const sampleDay = (authored: string) =>
+  new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(Date.parse(`${authored}T00:00:00Z`) + sampleShift));
 const seedLedger: LendingState = {
   version: 1,
   walletMicros: '25000000000',
@@ -134,8 +148,11 @@ async function settle() {
 }
 
 async function clearToasts() {
+  // Dismissed toasts turn inert and leave the accessibility tree at once,
+  // then finish a short exit animation before they unmount.
   const dismiss = page.getByRole('button', { name: 'Dismiss notification' });
   while ((await dismiss.count()) > 0) await dismiss.first().click();
+  await page.waitForFunction(() => !document.querySelector('.toast'));
 }
 
 async function audit(name: string) {
@@ -164,8 +181,11 @@ async function audit(name: string) {
         theme.kickerColor === theme.brandInk,
     );
   }
+  // Evaluated directly: the production CSP blocks injected script elements.
   if (!(await page.evaluate(() => 'axe' in window)))
-    await page.addScriptTag({ path: require.resolve('axe-core/axe.min.js') });
+    await page.evaluate(
+      await readFile(require.resolve('axe-core/axe.min.js'), 'utf8'),
+    );
   const result = await page.evaluate(async () =>
     window.axe.run(document, {
       runOnly: {
@@ -346,25 +366,36 @@ try {
     'Skip link moves focus to the main content',
     await page.evaluate(() => document.activeElement?.id === 'main'),
   );
-  const marketSelect = page.getByLabel('Select market', { exact: true });
+  const security = await page.evaluate(() => ({
+    csp:
+      document
+        .querySelector('meta[http-equiv="Content-Security-Policy"]')
+        ?.getAttribute('content') ?? '',
+    referrer: document
+      .querySelector('meta[name="referrer"]')
+      ?.getAttribute('content'),
+  }));
   check(
-    'KittenSwap is the selected market',
-    (await marketSelect.inputValue()) === 'kittenswap',
+    'The static build carries a content security policy without inline styles',
+    security.csp.includes("default-src 'self'") &&
+      security.csp.includes("script-src 'self'") &&
+      security.csp.includes("style-src 'self';") &&
+      security.csp.includes("connect-src 'self'") &&
+      security.csp.includes("object-src 'none'") &&
+      !security.csp.includes("'unsafe-inline'") &&
+      security.referrer === 'same-origin',
   );
-  const marketOptions = await marketSelect
-    .locator('option')
-    .evaluateAll((options) =>
-      options.map((option) => {
-        if (!(option instanceof HTMLOptionElement))
-          throw new Error('Expected market option');
-        return { value: option.value, label: option.textContent.trim() };
-      }),
-    );
   check(
-    'KittenSwap is the only available market',
-    marketOptions.length === 1 &&
-      marketOptions[0]?.value === 'kittenswap' &&
-      marketOptions[0]?.label === 'KittenSwap',
+    'KittenSwap, the only market, is a label rather than a one-item menu',
+    (await page
+      .locator('.context-bar .market-selector')
+      .textContent()
+      .then((text) => text?.trim())) === 'KittenSwap' &&
+      (await page.getByLabel('Select market', { exact: true }).count()) === 0,
+  );
+  check(
+    'The context bar does not repeat the page name',
+    (await page.locator('.context-bar .crumb').count()) === 0,
   );
   const marketLogo = await page
     .locator('.market-selector .market-logo')
@@ -414,38 +445,30 @@ try {
     'Borrowing waits for collateral',
     await button('Borrow USDC').isDisabled(),
   );
-  const assetDetails = page.getByRole('button', {
-    name: /vault assets details$/i,
-  });
-  await assetDetails.click();
-  const assetRegion = page.getByRole('region', { name: 'Vault assets' });
   check(
-    'Stat details disclose exact example balances',
-    (await visible(assetRegion)) &&
-      (await assetDetails.getAttribute('aria-expanded')) === 'true' &&
-      (await assetRegion.textContent().then((text) => text ?? '')).includes(
-        '200,000 USDC',
-      ) &&
-      (await assetRegion.textContent().then((text) => text ?? '')).includes(
-        '80,000 USDC',
-      ),
+    'Borrow opens on the credit line, with vault liquidity in one line',
+    (
+      await page
+        .locator('.credit-vault')
+        .textContent()
+        .then((text) => text ?? '')
+    ).includes('200,000 USDC idle in the USDC vault · 28.6% utilized') &&
+      (await page.locator('main .stat-card').count()) === 0 &&
+      (await page
+        .locator('main .credit-card')
+        .evaluate((node) => node.getBoundingClientRect().top < 260)),
   );
   check(
-    'Stat details paint above the workspace below',
-    await assetRegion.evaluate((node) => {
-      const box = node.getBoundingClientRect();
-      const hit = document.elementFromPoint(
-        box.left + box.width / 2,
-        box.bottom - 12,
-      );
-      return node.contains(hit);
-    }),
+    'Utilization only warns when the vault runs low on cash',
+    (await page.locator('.credit-head .pill').count()) === 0,
   );
-  await audit('borrow stat details');
-  await page.keyboard.press('Escape');
   check(
-    'Escape closes stat details and returns focus',
-    (await assetRegion.isHidden()) && (await focused(assetDetails)),
+    'Empty sections take a single row',
+    (await page.locator('main .empty.inline').count()) === 2 &&
+      (await page
+        .locator('main .empty.inline')
+        .first()
+        .evaluate((node) => node.getBoundingClientRect().height < 90)),
   );
   await audit('borrow desktop');
   await capture('borrow-desktop.jpg', { fullPage: true });
@@ -466,6 +489,50 @@ try {
       await page.setViewportSize({ width, height: 1000 });
       await fits(`${route} ${width}`);
     }
+  }
+  // Phones open the marketplace on its listings: the listing action shares the
+  // collection row, lock terms scroll in one row and every tab label fits.
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    await visit('marketplace');
+    await settle();
+    const phone = await page.evaluate(() => {
+      const tabs = document.querySelector('.listings-card [role="tablist"]');
+      const chips = document.querySelector('.listings-toolbar .chip-row');
+      const tops = (nodes: Iterable<Element>) =>
+        new Set(
+          [...nodes].map((node) =>
+            Math.round(node.getBoundingClientRect().top),
+          ),
+        ).size;
+      const box = (selector: string) =>
+        document.querySelector(selector)?.getBoundingClientRect();
+      const id = box('.collection-id');
+      const action = box('.collection-actions');
+      const stats = box('.collection-stats');
+      return {
+        tabsFit: tabs !== null && tabs.scrollWidth <= tabs.clientWidth,
+        chipRows: chips ? tops(chips.children) : 0,
+        // The action sits beside the collection name, above the figures.
+        actionBesideName:
+          id !== undefined &&
+          action !== undefined &&
+          stats !== undefined &&
+          action.top < id.bottom &&
+          action.bottom <= stats.top,
+        firstListing:
+          document
+            .querySelector('.listings-table tbody tr')
+            ?.getBoundingClientRect().top ?? Infinity,
+      };
+    });
+    check(
+      `Phone marketplace opens on its listings at ${width}px`,
+      phone.tabsFit &&
+        phone.chipRows === 1 &&
+        phone.actionBesideName &&
+        phone.firstListing < 720,
+    );
   }
   await page.setViewportSize({ width: 390, height: 844 });
   await visit('borrow');
@@ -581,14 +648,34 @@ try {
       .startsWith('3 selected') &&
       (await rows().locator('input[type="checkbox"]:checked').count()) === 3,
   );
-  await button('Clear').click();
-  await button('Copy link to Demo veKITTEN #062').click();
-  await page.getByText('Link to Demo veKITTEN #062 copied.').waitFor();
+  await page.getByRole('button', { name: 'Max lock', exact: true }).click();
   check(
-    'Each listing row copies its deep link',
+    'Filtering drops selections that are out of view, so they cannot be swept',
+    (await page.getByRole('region', { name: 'Selected listings' }).count()) ===
+      0,
+  );
+  await page.getByRole('button', { name: 'All locks', exact: true }).click();
+  check(
+    'Clearing the filter does not bring back hidden selections',
+    (await rows().locator('input[type="checkbox"]:checked').count()) === 0,
+  );
+  check(
+    'Rows already named Demo carry no Demo pill or copy button',
+    (await rows().locator('.pill.muted').count()) === 0 &&
+      (await rows()
+        .getByRole('button', { name: /^Copy link/ })
+        .count()) === 0,
+  );
+  await button('View Demo veKITTEN #062').click();
+  await dialog().waitFor();
+  await button('Copy link', dialog()).click();
+  await page.getByText('Listing link copied.').waitFor();
+  check(
+    'A listing’s details copy its deep link',
     (await page.evaluate(() => navigator.clipboard.readText())) ===
       `${base}/#marketplace/062`,
   );
+  await close();
   const metrics = page.getByRole('group', { name: 'Metric' });
   const ranges = page.getByRole('group', { name: 'Range' });
   await metrics.getByRole('button', { name: 'Volume' }).click();
@@ -628,7 +715,7 @@ try {
         await dialog()
           .textContent()
           .then((text) => text ?? '')
-      ).includes('2 Apr 2028'),
+      ).includes(sampleDay('2028-04-02')),
   );
   await audit('position details');
   await page.keyboard.press('Shift+Tab');
@@ -670,6 +757,7 @@ try {
   await close();
 
   // ---------- Earn: supply and withdraw ----------
+  await page.evaluate(() => window.scrollTo(0, 600));
   await nav.getByRole('link', { name: 'Earn' }).click();
   check(
     'Earn route',
@@ -677,11 +765,32 @@ try {
       (await visible(heading('Earn from collateral revenue'))),
   );
   check(
+    'A new page opens at the top',
+    await page
+      .waitForFunction(() => window.scrollY === 0, null, { timeout: 3000 })
+      .then(
+        () => true,
+        () => false,
+      ),
+  );
+  const vaultCard = page.locator('main .vault-card');
+  check(
+    'Earn is one vault card carrying the position and every action',
+    (await vaultCard.count()) === 1 &&
+      (await button('Simulate an epoch', vaultCard).count()) === 1 &&
+      (await button('Supply USDC', vaultCard).count()) === 1 &&
+      (await button('Withdraw', vaultCard).count()) === 1 &&
+      (await page.getByRole('heading', { name: 'Your position' }).count()) ===
+        0 &&
+      (await vaultCard.locator('.badge-inline').count()) === 0,
+  );
+  check(
     'Withdraw is disabled before supplying',
     await button('Withdraw').isDisabled(),
   );
-  await button('Supply USDC').first().click();
-  await dialog().getByLabel('Supply amount', { exact: true }).fill('1000');
+  await button('Supply USDC').click();
+  // Surrounding spaces are forgiven in amount fields.
+  await dialog().getByLabel('Supply amount', { exact: true }).fill(' 1000 ');
   await audit('vault supply review');
   state = await ledger();
   let before = state;
@@ -1190,7 +1299,7 @@ try {
   check(
     'The merge review shows the combined lock, later unlock and credit',
     mergeReview.includes('180,000 KITTEN') &&
-      mergeReview.includes('1 Oct 2028') &&
+      mergeReview.includes(sampleDay('2028-10-01')) &&
       mergeReview.includes('180 USDC') &&
       mergeReview.includes('7,200 USDC'),
   );
@@ -1387,9 +1496,77 @@ try {
       mergeActivity.includes('(25 USDC to debt)'),
   );
   await page.getByRole('tab', { name: 'Positions' }).click();
+  // Two tabs on one preview: a change in either appears in the other, and
+  // neither overwrites the other's work with a stale copy.
+  const second = await context.newPage();
+  second.on('pageerror', (error) => errors.push(error.message));
+  second.on('console', (message) => {
+    if (message.type() === 'error') errors.push(message.text());
+  });
+  await second.goto(`${base}/#borrow`, { waitUntil: 'networkidle' });
+  await second.locator('.page-body').waitFor();
+  await second
+    .getByRole('button', {
+      name: 'Remove Demo veKITTEN #041 from the relayer',
+      exact: true,
+    })
+    .click();
+  await second
+    .getByRole('dialog')
+    .getByRole('button', {
+      name: 'Remove from relayer in preview',
+      exact: true,
+    })
+    .click();
+  await second.getByRole('dialog').waitFor({ state: 'hidden' });
+  check(
+    'A change made in another tab appears here without reloading',
+    await visible(button('Deposit Demo veKITTEN #041')),
+  );
+  previous = await ledger();
+  await button('Deposit Demo veKITTEN #041').click();
+  await apply('Deposit in preview');
+  merging = await changedLedger(
+    'A deposit here keeps the other tab’s change',
+    previous,
+    'deposit-collateral',
+    {},
+    '305050000000',
+  );
+  check(
+    'Both tabs’ changes are saved and shown in both tabs',
+    merging.relayerIds.length === 0 &&
+      merging.collateralIds.includes('rift-041') &&
+      merging.activity.some((entry) => entry.kind === 'relayer-withdraw') &&
+      (await second
+        .getByRole('button', { name: 'Remove Demo veKITTEN #041', exact: true })
+        .waitFor({ timeout: 5000 })
+        .then(
+          () => true,
+          () => false,
+        )),
+  );
+  await second.close();
   for (const width of [320, 390]) {
     await page.setViewportSize({ width, height: 900 });
     await fits(`merged collateral at ${width}px`);
+    check(
+      `The context bar keeps the market, countdown and status in view at ${width}px`,
+      // Media queries apply on the next frame after a resize, so wait for them.
+      await page
+        .waitForFunction(
+          () => {
+            const node = document.querySelector('.context-inner');
+            return node !== null && node.scrollWidth <= node.clientWidth;
+          },
+          null,
+          { timeout: 3000 },
+        )
+        .then(
+          () => true,
+          () => false,
+        ),
+    );
   }
   await audit('merged collateral mobile');
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -2078,10 +2255,26 @@ try {
   const updates = page.getByRole('region', { name: 'What’s new' });
   check(
     'What’s new lists the release notes',
-    (await updates.locator('li').count()) === 4,
+    (await updates.locator('li').count()) === 5,
+  );
+  check(
+    'Release notes paint above the page below',
+    await updates.evaluate((node) => {
+      const box = node.getBoundingClientRect();
+      const hit = document.elementFromPoint(
+        box.left + box.width / 2,
+        box.bottom - 12,
+      );
+      return node.contains(hit);
+    }),
   );
   await audit('whats new');
   await page.keyboard.press('Escape');
+  check(
+    'Escape closes the release notes and returns focus',
+    (await updates.isHidden()) &&
+      (await focused(page.getByRole('button', { name: 'What’s new' }))),
+  );
   check(
     'Borrowing controls occupy the first viewport without introductory blocks',
     await page
