@@ -1,17 +1,17 @@
 # Riftwell
 
-[Live preview → ael-dev3.github.io/Riftwell](https://ael-dev3.github.io/Riftwell/)
+[Live preview → riftwell-ael.web.app](https://riftwell-ael.web.app)
 
-Collateral credit lines, pooled USDC lending and a focused marketplace, starting with KittenSwap on HyperEVM. Dark surfaces, a light-green accent and a quiet portal theme.
+Collateral credit lines, a pooled USDC vault and a focused marketplace for veKITTEN positions, starting with KittenSwap on HyperEVM. Borrow, Earn and Marketplace views in dark or light, with a light-green accent and a quiet portal theme.
 
-![Riftwell preview](docs/qa/preview.png)
+![Riftwell marketplace](docs/qa/market-desktop.jpg)
 
 ## Application
 
 Two build modes share the interface:
 
-- **Preview:** GitHub Pages uses labelled sample positions, local purchase receipts and a pooled lending simulation. Try depositing collateral, borrowing, repaying, supplying USDC and withdrawing vault shares.
-- **Connected:** the Node service supports wallet sign-in, confirmed veKITTEN ownership reads and persistent marketplace listings. The lending view reports its undeployed status without inventing liquidity, credit or yield.
+- **Preview:** Firebase Hosting serves a labelled local simulation. Borrow against demo positions, merge and grow locks, explore reward routing and vote plans, supply vault USDC, and browse, buy or list sample NFTs. Your example portfolio stays in your browser.
+- **Connected:** the service supports wallet sign-in, confirmed veKITTEN ownership reads and persistent off-chain marketplace listings. It runs as a Node/SQLite application or a Deno/PostgreSQL API behind Firebase Hosting. Borrow and Earn show their undeployed status without inventing liquidity, credit or yield.
 
 Marketplace listings are off-chain expressions of interest. Funded purchases and lending are unavailable until compatible contracts are separately released. No application route requests token approvals, transfers NFTs or sends transactions. Earlier unfunded lending requests/offers are retained only for history and cancellation.
 
@@ -19,7 +19,7 @@ Lending uses a shared vault: borrowers draw against collateral reward income; su
 
 ## Run locally
 
-Use Node.js 24 and npm. Frontend and server dependencies have separate lockfiles.
+Use Node.js 24 and npm. The application and tooling use TypeScript 7.0.2 with strict checks. Frontend, server and experimental prototypes have separate lockfiles. Node runs the server and tools using native type stripping; CI checks types separately.
 
 ```sh
 npm ci --ignore-scripts
@@ -42,12 +42,19 @@ npm --prefix server test
 npm run format:check
 ```
 
-Read [deployment and operations](docs/OPERATIONS.md), the [API contract](docs/API.md), [hosting modes](docs/HOSTING.md) and [validation scope](docs/VALIDATION.md). The Docker deployment supplies HTTPS configuration, persistent storage and health checks. A production host, domain and suitable RPC endpoint must still be configured and verified.
+To check the separate prototype toolchain as well:
+
+```sh
+npm ci --prefix prototypes --ignore-scripts
+npm run typecheck:all
+```
+
+Read [deployment and operations](docs/OPERATIONS.md), the [API contract](docs/API.md), [hosting modes](docs/HOSTING.md) and [validation scope](docs/VALIDATION.md). Docker supplies a same-origin HTTPS deployment with persistent SQLite. [Firebase and Deno setup](docs/FIREBASE_DENO.md) uses the default Firebase domain, PostgreSQL and wallet sessions held only in browser memory; a page refresh requires signing in again. The Firebase preview and Deno API are live and verified. The connected frontend release and recovery check remain pending.
 
 ## Source
 
 - `src/` — React interface, preview logic and connected API/wallet client.
-- `server/` — authentication, SQLite persistence, order APIs and read-only chain adapter.
+- `server/` — authentication, SQLite/PostgreSQL persistence, migrations, order APIs and read-only chain adapter.
 - `deploy/` — single-instance Docker Compose and HTTPS reverse proxy.
 - `public/` — original artwork and supplied KittenSwap logo.
 - `prototypes/` — experimental Solidity and local integration tooling.

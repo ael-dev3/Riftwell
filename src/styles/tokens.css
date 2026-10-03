@@ -1,0 +1,118 @@
+/* Design tokens. Dark is the default; [data-theme='light'] mirrors every role. */
+:root {
+  color-scheme: dark;
+  interpolate-size: allow-keywords;
+
+  /* Market accent, replaced at runtime by the selected market. */
+  --accent: #bff4aa;
+
+  --bg: #080b0a;
+  --bg-2: #0b100e;
+  --surface: #0f1413;
+  --surface-2: #141a18;
+  --surface-3: #1b2321;
+  --surface-hover: #161e1c;
+  --overlay: rgb(3 6 5 / 0.7);
+  --glass: rgb(10 14 13 / 0.74);
+
+  --line: rgb(220 240 228 / 0.075);
+  --line-2: rgb(220 240 228 / 0.13);
+  --line-3: rgb(220 240 228 / 0.22);
+
+  --text: #edf4ef;
+  --text-2: #a7b6ae;
+  --text-3: #85948c;
+
+  --accent-ink: var(--accent);
+  --accent-strong: color-mix(in oklab, var(--accent) 78%, white);
+  --accent-soft: color-mix(in oklab, var(--accent) 10%, transparent);
+  --accent-soft-2: color-mix(in oklab, var(--accent) 18%, transparent);
+  --accent-line: color-mix(in oklab, var(--accent) 34%, transparent);
+  --accent-glow: color-mix(in oklab, var(--accent) 30%, transparent);
+  --on-accent: #0b1a0c;
+  --button-bg: var(--accent);
+  --button-fg: var(--on-accent);
+
+  --violet: #b8a6ff;
+  --sky: #8cc6ff;
+  --amber: #f2c46e;
+  --danger: #ff8c8c;
+  --positive: #8be3a7;
+  --usdc: #2775ca;
+  --chain: #63e6c8;
+
+  --font:
+    'Inter Variable', 'InterVariable', Inter, 'Segoe UI Variable Text',
+    'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue',
+    Arial, sans-serif;
+  --font-display:
+    'Inter Variable', 'InterVariable', Inter, 'Segoe UI Variable Display',
+    'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue',
+    Arial, sans-serif;
+  --mono:
+    ui-monospace, 'SF Mono', 'Cascadia Mono', 'JetBrains Mono', Menlo, Consolas,
+    'Liberation Mono', monospace;
+
+  --r-xs: 6px;
+  --r-sm: 9px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+
+  --inset: inset 0 1px 0 rgb(255 255 255 / 0.035);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35);
+  --shadow-md: 0 14px 34px -18px rgb(0 0 0 / 0.75);
+  --shadow-lg:
+    0 32px 80px -28px rgb(0 0 0 / 0.8), 0 0 0 1px rgb(255 255 255 / 0.02);
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --t-fast: 140ms;
+  --t: 240ms;
+  --t-slow: 560ms;
+
+  --container: 1240px;
+  --gutter: clamp(16px, 3vw, 28px);
+  --header-h: 64px;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f2f5f1;
+  --bg-2: #ecf0ea;
+  --surface: #ffffff;
+  --surface-2: #f6f8f5;
+  --surface-3: #ebefe9;
+  --surface-hover: #f1f4ef;
+  --overlay: rgb(14 26 20 / 0.34);
+  --glass: rgb(250 252 249 / 0.8);
+
+  --line: rgb(18 40 28 / 0.09);
+  --line-2: rgb(18 40 28 / 0.15);
+  --line-3: rgb(18 40 28 / 0.26);
+
+  --text: #0f1a14;
+  --text-2: #43524a;
+  --text-3: #57665e;
+
+  --accent-ink: color-mix(in oklab, var(--accent) 18%, #1b5221);
+  --accent-strong: color-mix(in oklab, var(--accent) 40%, #164a1c);
+  --accent-soft: color-mix(in oklab, var(--accent) 24%, transparent);
+  --accent-soft-2: color-mix(in oklab, var(--accent) 42%, transparent);
+  --accent-line: color-mix(in oklab, var(--accent) 50%, #2d6a31);
+  --accent-glow: color-mix(in oklab, var(--accent) 55%, transparent);
+  --button-bg: #14301a;
+  --button-fg: var(--accent);
+
+  --violet: #5b3fcf;
+  --sky: #24609f;
+  --amber: #8a5600;
+  --danger: #b9312f;
+  --positive: #1b7342;
+  --chain: #0f8c74;
+
+  --inset: inset 0 1px 0 rgb(255 255 255 / 0.8);
+  --shadow-sm: 0 1px 2px rgb(16 32 24 / 0.08);
+  --shadow-md: 0 14px 30px -20px rgb(16 32 24 / 0.32);
+  --shadow-lg: 0 30px 70px -30px rgb(16 32 24 / 0.38);
+}

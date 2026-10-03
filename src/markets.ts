@@ -11,7 +11,7 @@ export type Market = {
   logoPath: string;
 };
 
-export const MARKETS: readonly Market[] = [
+export const MARKETS: readonly [Market] = [
   {
     id: 'kittenswap',
     name: 'KittenSwap',

@@ -3,15 +3,23 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=24.0.0 <25"
+  },
   "scripts": {
-    "compile": "node scripts/compile.mjs",
-    "test": "node --test --test-concurrency=1 test/*.test.mjs web/model.test.mjs"
+    "compile": "node scripts/compile.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "build:web": "tsc -p tsconfig.web.json",
+    "test": "node --test --test-concurrency=1 test/*.test.ts web/model.test.ts",
+    "bindings": "node scripts/generate-bindings.ts"
   },
   "devDependencies": {
     "@foundry-rs/anvil": "1.7.1",
     "@openzeppelin/contracts": "5.2.0",
+    "@types/node": "24.19.1",
     "ethers": "6.17.0",
     "ganache": "7.9.2",
-    "solc": "0.8.37"
+    "solc": "0.8.37",
+    "typescript": "7.0.2"
   }
 }

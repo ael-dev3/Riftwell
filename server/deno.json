@@ -1,0 +1,11 @@
+{
+  "nodeModulesDir": "manual",
+  "tasks": {
+    "start": "deno run --allow-env --allow-net --allow-read --allow-sys index.ts",
+    "migrate": "deno run --allow-env --allow-net --allow-read --allow-sys migrate.ts"
+  },
+  "deploy": {
+    "org": "ael-dev3",
+    "app": "riftwell"
+  }
+}

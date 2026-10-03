@@ -1,3 +1,8 @@
+function fixtureAt<T>(items: readonly T[], index: number): T {
+  const value = items[index];
+  if (value === undefined) throw new Error(`Missing fixture element ${index}`);
+  return value;
+}
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   ApiClient,
@@ -50,6 +55,14 @@ const positionRecord: Position = {
   observedAt: createdAt,
 };
 const listingRecord: Listing = {
+  kind: 'fixed',
+  startPriceMicros: '1000001',
+  endPriceMicros: '1000001',
+  startsAt: createdAt,
+  auctionEndsAt: null,
+  recipient: null,
+  revision: 1,
+  updatedAt: createdAt,
   id: '2c7c2284-d3a3-4785-8c5a-a49aa4f5d6d0',
   marketId: 'kittenswap',
   tokenId: '42',
@@ -142,7 +155,7 @@ describe('application API transport', () => {
       items: [],
       nextCursor: 'next',
     });
-    const [url, request] = fetcher.mock.calls[0];
+    const [url, request] = fixtureAt(fetcher.mock.calls, 0);
     const parsed = new URL(String(url));
     expect(parsed.origin).toBe('https://application.example');
     expect(parsed.pathname).toBe('/api/v1/listings');
@@ -153,6 +166,28 @@ describe('application API transport', () => {
     expect(new Headers(request?.headers).get('Accept')).toBe(
       'application/json',
     );
+  });
+
+  it('loads creator listings from the authenticated route with bounded encoded pagination', async () => {
+    const response = { items: [listingRecord], nextCursor: 'opaque-next' };
+    const { client, fetcher } = mockApi(response);
+    const controller = new AbortController();
+    expect(
+      await client.ownListings(
+        'kittenswap',
+        fixtureAddress,
+        'a&owner=other',
+        controller.signal,
+      ),
+    ).toEqual(response);
+    const [url, request] = fixtureAt(fetcher.mock.calls, 0);
+    const parsed = new URL(String(url), 'https://application.example');
+    expect(parsed.pathname).toBe('/api/v1/account/listings');
+    expect(parsed.searchParams.get('market')).toBe('kittenswap');
+    expect(parsed.searchParams.get('limit')).toBe('24');
+    expect(parsed.searchParams.get('cursor')).toBe('a&owner=other');
+    expect(parsed.searchParams.has('owner')).toBe(false);
+    expect(request?.credentials).toBe('include');
   });
 
   it('preserves server error codes, details, messages and request IDs', async () => {
@@ -185,6 +220,85 @@ describe('application API transport', () => {
       expect(error).toMatchObject({ status: 502, code: 'HTTP_ERROR' });
       expect((error as Error).message).not.toContain('upstream secret');
     }
+  });
+
+  it('accepts coherent Dutch terms and rejects impossible floor, decay and reservation data', async () => {
+    const dutch = {
+      ...listingRecord,
+      kind: 'dutch',
+      startPriceMicros: '900000000',
+      priceMicros: '200000000',
+      endPriceMicros: '100000000',
+      auctionEndsAt: '2026-10-02T13:00:00.000Z',
+    };
+    await expect(
+      mockApi(dutch).client.listing(listingRecord.id),
+    ).resolves.toEqual(dutch);
+    for (const value of [
+      { ...dutch, endPriceMicros: '300000000' },
+      { ...dutch, auctionEndsAt: createdAt },
+      { ...dutch, recipient: listingRecord.owner },
+      { ...dutch, recipient: '0x' + '0'.repeat(40) },
+    ])
+      await expect(
+        mockApi(value).client.listing(listingRecord.id),
+      ).rejects.toMatchObject({ code: 'INVALID_RESPONSE' });
+  });
+
+  it('requests fresh listing details and submits revision-bound edits with CSRF', async () => {
+    const { client, fetcher } = mockApi(listingRecord);
+    await client.listing('listing/1');
+    const body = {
+      priceMicros: '2000001',
+      expiresAt: '2026-10-03T12:00:00.000Z',
+      expectedRevision: 1,
+      idempotencyKey: '88304e45-4b1a-4131-a59b-e5b2d8a33074',
+    };
+    await client.updateListing('listing/1', body, 'csrf-token');
+    expect(fixtureAt(fetcher.mock.calls, 0)[0]).toBe(
+      '/api/v1/listings/listing%2F1',
+    );
+    expect(fixtureAt(fetcher.mock.calls, 1)[1]).toMatchObject({
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+    expect(
+      new Headers(fixtureAt(fetcher.mock.calls, 1)[1]?.headers).get(
+        'X-CSRF-Token',
+      ),
+    ).toBe('csrf-token');
+  });
+
+  it.each([0, -1, 1.5, Number.MAX_SAFE_INTEGER + 1])(
+    'rejects invalid listing revision %s',
+    async (revision) => {
+      await expect(
+        mockApi({ ...listingRecord, revision }).client.listing(
+          listingRecord.id,
+        ),
+      ).rejects.toMatchObject({ code: 'INVALID_RESPONSE' });
+    },
+  );
+
+  it('binds listing filters to the paginated query without numeric conversion', async () => {
+    const { client, fetcher } = mockApi({ items: [], nextCursor: null });
+    await client.listings('kittenswap', 'opaque', undefined, {
+      seller: positionRecord.owner,
+      tokenId: '42',
+      minPriceMicros: '1000001',
+      maxPriceMicros: '1000000000000',
+    });
+    const url = new URL(
+      String(fixtureAt(fetcher.mock.calls, 0)[0]),
+      'http://localhost',
+    );
+    expect(Object.fromEntries(url.searchParams)).toMatchObject({
+      cursor: 'opaque',
+      seller: positionRecord.owner,
+      tokenId: '42',
+      minPriceMicros: '1000001',
+      maxPriceMicros: '1000000000000',
+    });
   });
 
   it('sends the raw money strings and CSRF token on every authenticated mutation', async () => {
@@ -223,9 +337,13 @@ describe('application API transport', () => {
       expect(new Headers(init?.headers).get('X-CSRF-Token')).toBe('csrf-token');
       expect(['POST', 'DELETE']).toContain(init?.method);
     }
-    expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body))).toEqual(listing);
     expect(
-      new Headers(fetcher.mock.calls[0][1]?.headers).get('Content-Type'),
+      JSON.parse(String(fixtureAt(fetcher.mock.calls, 0)[1]?.body)),
+    ).toEqual(listing);
+    expect(
+      new Headers(fixtureAt(fetcher.mock.calls, 0)[1]?.headers).get(
+        'Content-Type',
+      ),
     ).toBe('application/json');
     await expect(client.cancelListing('listing-1', '')).rejects.toMatchObject({
       code: 'CSRF_REQUIRED',
@@ -239,18 +357,24 @@ describe('application API transport', () => {
     fetcher.mockResolvedValueOnce(Response.json(sessionRecord));
     await client.challenge('0x' + 'a'.repeat(40));
     await client.verify('challenge-1', '0xdeadbeef');
-    expect(fetcher.mock.calls[0][0]).toBe('/api/v1/auth/challenge');
-    expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body))).toEqual({
+    expect(fixtureAt(fetcher.mock.calls, 0)[0]).toBe('/api/v1/auth/challenge');
+    expect(
+      JSON.parse(String(fixtureAt(fetcher.mock.calls, 0)[1]?.body)),
+    ).toEqual({
       address: '0x' + 'a'.repeat(40),
       chainId: 999,
     });
-    expect(fetcher.mock.calls[1][0]).toBe('/api/v1/auth/verify');
-    expect(JSON.parse(String(fetcher.mock.calls[1][1]?.body))).toEqual({
+    expect(fixtureAt(fetcher.mock.calls, 1)[0]).toBe('/api/v1/auth/verify');
+    expect(
+      JSON.parse(String(fixtureAt(fetcher.mock.calls, 1)[1]?.body)),
+    ).toEqual({
       challengeId: 'challenge-1',
       signature: '0xdeadbeef',
     });
     expect(
-      new Headers(fetcher.mock.calls[0][1]?.headers).has('X-CSRF-Token'),
+      new Headers(fixtureAt(fetcher.mock.calls, 0)[1]?.headers).has(
+        'X-CSRF-Token',
+      ),
     ).toBe(false);
   });
 
@@ -273,7 +397,7 @@ describe('application API transport', () => {
     });
     await vi.advanceTimersByTimeAsync(50);
     await timeout;
-    expect(fetcher.mock.calls[0][1]?.signal?.aborted).toBe(true);
+    expect(fixtureAt(fetcher.mock.calls, 0)[1]?.signal?.aborted).toBe(true);
     const controller = new AbortController();
     const cancelled = expect(
       client.status(controller.signal),
@@ -301,6 +425,27 @@ describe('application API transport', () => {
 });
 
 describe('successful API response validation', () => {
+  it('rejects another creator, inactive records and malformed creator listing pages', async () => {
+    for (const response of [
+      {
+        items: [
+          {
+            ...listingRecord,
+            owner: '0x' + 'd'.repeat(40),
+            position: { ...positionRecord, owner: '0x' + 'd'.repeat(40) },
+          },
+        ],
+        nextCursor: null,
+      },
+      { items: [{ ...listingRecord, status: 'cancelled' }], nextCursor: null },
+      { items: Array(51).fill(listingRecord), nextCursor: null },
+      { items: [listingRecord], nextCursor: 'a'.repeat(513) },
+    ])
+      await expect(
+        mockApi(response).client.ownListings('kittenswap', fixtureAddress),
+      ).rejects.toMatchObject({ code: 'INVALID_RESPONSE' });
+  });
+
   it('accepts historical account activity when current positions are unavailable', async () => {
     const unavailable = {
       ...accountRecord,
@@ -344,7 +489,12 @@ describe('successful API response validation', () => {
       lockedUntil: '1970-01-01T00:00:00Z',
     };
     expect(await mockApi(unlocked).client.position(tokenId)).toEqual(unlocked);
-    const maximum = { ...listingRecord, priceMicros: '1000000000000' };
+    const maximum = {
+      ...listingRecord,
+      priceMicros: '1000000000000',
+      startPriceMicros: '1000000000000',
+      endPriceMicros: '1000000000000',
+    };
     expect(
       await mockApi(maximum).client.createListing(
         {

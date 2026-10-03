@@ -1,18 +1,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
-import ConnectedApp from './connected/ConnectedApp';
+// Resolved at build time to the preview or connected application, so each
+// bundle contains only the mode it serves.
+import Root from '@app-root';
 import ErrorBoundary from './ErrorBoundary';
-import './styles.css';
+import './styles/index.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ErrorBoundary>
-      {import.meta.env.VITE_APP_MODE === 'connected' ? (
-        <ConnectedApp />
-      ) : (
-        <App />
-      )}
+      <Root />
     </ErrorBoundary>
   </React.StrictMode>,
 );

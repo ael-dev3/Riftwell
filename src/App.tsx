@@ -1,196 +1,184 @@
-import { ArrowRight, ArrowUpRight, CircleUserRound, Info } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import { ASSETS, COLLATERAL_LIMITS } from './data';
-import { DEFAULT_MARKET, type Market } from './markets';
-import MarketSelector from './components/MarketSelector';
-import PortalMark from './components/PortalMark';
-import {
-  emptyPortfolio,
-  parsePortfolio,
-  STORAGE_KEY,
-  LEGACY_STORAGE_KEY,
-  type Asset,
-  type Portfolio,
-  type Receipt,
-} from './domain';
-import AccountDialog, { type AccountTab } from './components/AccountDialog';
+import { ArrowRight, CircleUserRound, Info } from 'lucide-react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { useMinuteClock } from './app/clock';
+import { preloadable, preloadWhenIdle } from './app/preloadable';
+import { useHashRoute, type Page } from './app/router';
+import { useShortcuts } from './app/shortcuts';
+import { applyTheme, readTheme } from './app/theme';
+import { ToastProvider, useToast } from './app/toast';
+import AppShell, { ShortcutsDialog } from './components/shell/AppShell';
 import Dialog from './components/Dialog';
-import Lending, {
-  activityLabel,
-  type LendingAction,
-  type LendingTab,
-} from './components/Lending';
-import LendingActionDialog, {
-  type LendingActionInput,
-} from './components/LendingDialogs';
+import PageFallback from './components/PageFallback';
+import { Notice } from './components/ui/Bits';
+import type { AccountTab } from './components/AccountDialog';
+import type { LendingActionInput } from './components/LendingDialogs';
+import { collateralLimits } from './data';
+import {
+  marketplaceFee,
+  priceMicros,
+  type Asset,
+  type PurchaseDestination,
+  type PurchaseReceipt,
+} from './domain';
 import {
   advanceEpoch,
   borrow,
-  createLendingState,
   depositCollateral,
+  depositToRelayer,
+  getLendingMetrics,
+  increaseLock,
   LendingError,
-  parseLendingState,
+  mergePositions,
+  purchase,
+  purchaseIntoCollateral,
+  purchaseIntoRelayer,
   removeCollateral,
   repay,
+  setRelayerRepayShare,
   supply,
   withdraw,
-  type LendingState,
+  withdrawFromRelayer,
 } from './lending';
-import Marketplace from './components/Marketplace';
 import {
-  AssetDetails,
-  PurchaseDialog,
-  SuccessDialog,
-} from './components/TradeDialogs';
+  cancelListing,
+  createListing,
+  ListingError,
+  type PreviewListing,
+} from './listings';
+import { marketSales, marketSeries, summarize } from './market';
+import { DEFAULT_MARKET, type Market } from './markets';
+import { activityLabel, type LendingAction } from './preview/actions';
+import { useHoldings, usePreviewStore } from './preview/store';
+import { isDefaultVotePlan, type VotePlan } from './vote';
+import BorrowPage from './pages/BorrowPage';
+import EarnPage from './pages/EarnPage';
+import MarketPage from './pages/MarketPage';
+import NotFoundPage from './pages/NotFoundPage';
+import type { StatsModel } from './pages/StatsPage';
 
-type Section = 'lending' | 'marketplace';
+const SimulatorPage = preloadable(() => import('./pages/SimulatorPage'));
+const FaqPage = preloadable(() => import('./pages/FaqPage'));
+const StatsPage = preloadable(() => import('./pages/StatsPage'));
+const BrandPage = preloadable(() => import('./pages/BrandPage'));
+const PrivacyPage = preloadable(() => import('./pages/PrivacyPage'));
+const AccountDialog = preloadable(() => import('./components/AccountDialog'));
+const LendingActionDialog = preloadable(
+  () => import('./components/LendingDialogs'),
+);
+const VaultDetails = preloadable(() => import('./components/VaultDetails'));
+const trade = () => import('./components/TradeDialogs');
+const AssetDetails = preloadable(() =>
+  trade().then((m) => ({ default: m.AssetDetails })),
+);
+const BuyDialog = preloadable(() =>
+  trade().then((m) => ({ default: m.BuyDialog })),
+);
+const SweepDialog = preloadable(() =>
+  trade().then((m) => ({ default: m.SweepDialog })),
+);
+const SellDialog = preloadable(() =>
+  trade().then((m) => ({ default: m.SellDialog })),
+);
+const CancelListingDialog = preloadable(() =>
+  trade().then((m) => ({ default: m.CancelListingDialog })),
+);
+const SuccessDialog = preloadable(() =>
+  trade().then((m) => ({ default: m.SuccessDialog })),
+);
+const DEFERRED = [
+  SimulatorPage,
+  FaqPage,
+  StatsPage,
+  BrandPage,
+  PrivacyPage,
+  AccountDialog,
+  LendingActionDialog,
+  VaultDetails,
+  AssetDetails,
+  BuyDialog,
+  SweepDialog,
+  SellDialog,
+  CancelListingDialog,
+  SuccessDialog,
+];
+
 type Modal =
-  | { type: 'details' | 'purchase'; asset: Asset }
-  | { type: 'lending-action'; action: LendingAction }
+  | { type: 'buy'; asset: Asset }
+  | { type: 'sweep'; assets: Asset[] }
+  | { type: 'sell'; assetId?: string; private?: boolean }
+  | { type: 'cancel-listing'; listing: PreviewListing }
+  | { type: 'lending'; action: LendingAction }
+  | { type: 'vault' }
   | { type: 'account'; tab?: AccountTab }
-  | { type: 'reset' | 'about' }
-  | { type: 'success'; receipt: Receipt; asset: Asset }
+  | { type: 'reset' | 'about' | 'shortcuts' }
+  | { type: 'success'; receipts: PurchaseReceipt[]; assets: Asset[] }
   | null;
 
-const LENDING_STORAGE_KEY = 'riftwell.pooled-lending-preview.v1';
-function initialPortfolio(): {
-  portfolio: Portfolio;
-  lending: LendingState;
-  readIssue: boolean;
-  migrated: boolean;
-} {
-  try {
-    const current = localStorage.getItem(STORAGE_KEY);
-    const legacy =
-      current === null ? localStorage.getItem(LEGACY_STORAGE_KEY) : null;
-    return {
-      portfolio: parsePortfolio(
-        current ?? legacy,
-        ASSETS.map((asset) => asset.id),
-      ),
-      lending: parseLendingState(
-        localStorage.getItem(LENDING_STORAGE_KEY),
-        COLLATERAL_LIMITS,
-      ),
-      readIssue: false,
-      migrated: legacy !== null,
-    };
-  } catch {
-    return {
-      portfolio: emptyPortfolio(),
-      lending: createLendingState(),
-      readIssue: true,
-      migrated: false,
-    };
-  }
-}
-
-export default function App() {
+function PreviewApp() {
+  const { route, navigate } = useHashRoute('borrow');
   const [market, setMarket] = useState<Market>(DEFAULT_MARKET);
-  const [section, setSection] = useState<Section>(() =>
-    window.location.hash === '#lending' ? 'lending' : 'marketplace',
+  const store = usePreviewStore();
+  const now = useMinuteClock();
+  const holdings = useHoldings(
+    store.portfolio,
+    store.lending,
+    store.listings,
+    now,
   );
-  const [lendingTab, setLendingTab] = useState<LendingTab>('borrow');
-  const [initial] = useState(initialPortfolio);
-  const [portfolio, setPortfolio] = useState<Portfolio>(initial.portfolio);
-  const [lending, setLending] = useState<LendingState>(initial.lending);
-  const lendingRef = useRef(lending);
-  lendingRef.current = lending;
   const [modal, setModal] = useState<Modal>(null);
-  const [storageIssue, setStorageIssue] = useState(initial.readIssue);
-  const [announcement, setAnnouncement] = useState('');
-  const workspaceRef = useRef<HTMLElement>(null);
-  const accountButtonRef = useRef<HTMLButtonElement>(null);
+  const toast = useToast();
+  const searchRef = useRef<HTMLInputElement>(null);
+  const accountRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     document.documentElement.style.setProperty('--accent', market.accentColor);
   }, [market]);
+  useEffect(() => preloadWhenIdle(DEFERRED), []);
+  useEffect(() => setModal(null), [route.page]);
 
-  useEffect(() => {
-    if (!['#marketplace', '#lending'].includes(window.location.hash))
-      window.history.replaceState(null, '', '#marketplace');
-    const syncRoute = () => {
-      if (
-        window.location.hash !== '#marketplace' &&
-        window.location.hash !== '#lending'
-      )
-        return;
-      setSection(
-        window.location.hash === '#lending' ? 'lending' : 'marketplace',
-      );
-      closeModal();
-    };
-    window.addEventListener('hashchange', syncRoute);
-    window.addEventListener('popstate', syncRoute);
-    return () => {
-      window.removeEventListener('hashchange', syncRoute);
-      window.removeEventListener('popstate', syncRoute);
-    };
-  }, []);
+  const go = useCallback(
+    (page: Page) => navigate({ page, item: null }),
+    [navigate],
+  );
 
+  // Deep links: #marketplace/<position id> opens that listing's details.
+  const detailItem = route.page === 'marketplace' ? route.item : null;
+  const detailListing = detailItem
+    ? holdings.listed.find((entry) => entry.asset.positionId === detailItem)
+    : undefined;
+  const detailAsset = detailItem
+    ? (detailListing?.asset ??
+      holdings.market.find((asset) => asset.positionId === detailItem))
+    : undefined;
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(portfolio));
-      localStorage.setItem(LENDING_STORAGE_KEY, JSON.stringify(lending));
-      setStorageIssue(initial.readIssue);
-    } catch {
-      setStorageIssue(true);
+    if (detailItem && !detailAsset) {
+      toast('That listing is no longer available.', 'info');
+      navigate({ page: 'marketplace', item: null }, 'replace');
     }
-  }, [portfolio, lending, initial.readIssue]);
+  }, [detailItem, detailAsset, navigate, toast]);
+  const closeDetails = () =>
+    navigate({ page: 'marketplace', item: null }, 'replace');
 
-  const purchasedIds = new Set(
-    portfolio.receipts
-      .filter((receipt) => receipt.kind === 'purchase')
-      .map((receipt) => receipt.assetId),
-  );
-  const availableAssets = ASSETS.filter(
-    (asset) => asset.marketId === market.id && !purchasedIds.has(asset.id),
-  );
-  const accountCount =
-    portfolio.receipts.length +
-    lending.collateralIds.length +
-    (BigInt(lending.shareBalanceRaw) > 0n ? 1 : 0);
-
-  function selectSection(next: Section, scroll = false) {
-    setSection(next);
-    if (window.location.hash !== `#${next}`)
-      window.history.pushState(null, '', `#${next}`);
-    if (scroll)
-      requestAnimationFrame(() => {
-        workspaceRef.current?.focus({ preventScroll: true });
-        workspaceRef.current?.scrollIntoView({
-          behavior: window.matchMedia('(prefers-reduced-motion: reduce)')
-            .matches
-            ? 'instant'
-            : 'smooth',
-          block: 'start',
-        });
-      });
-  }
+  useShortcuts({
+    onNavigate: go,
+    onSearch: () => {
+      if (route.page !== 'marketplace') go('marketplace');
+      const focus = (attempt = 0) => {
+        if (searchRef.current) searchRef.current.focus();
+        // The page may still be rendering inside a view transition.
+        else if (attempt < 60) requestAnimationFrame(() => focus(attempt + 1));
+      };
+      requestAnimationFrame(() => focus());
+    },
+    onTheme: () => applyTheme(readTheme() === 'dark' ? 'light' : 'dark'),
+    onHelp: () => setModal({ type: 'shortcuts' }),
+  });
 
   function closeModal() {
     setModal(null);
     requestAnimationFrame(() => {
-      if (document.activeElement === document.body)
-        accountButtonRef.current?.focus();
+      if (document.activeElement === document.body) accountRef.current?.focus();
     });
-  }
-
-  function saveReceipt(receipt: Receipt) {
-    setPortfolio((current) => {
-      const duplicate = current.receipts.some(
-        (item) =>
-          item.kind === receipt.kind &&
-          item.assetId === receipt.assetId &&
-          item.kind === 'purchase',
-      );
-      return duplicate
-        ? current
-        : { ...current, receipts: [...current.receipts, receipt] };
-    });
-    const asset = ASSETS.find((item) => item.id === receipt.assetId);
-    if (asset) setModal({ type: 'success', receipt, asset });
-    setAnnouncement('Your preview receipt has been saved.');
   }
 
   function applyLendingAction(
@@ -198,17 +186,43 @@ export default function App() {
     input: LendingActionInput,
   ): string | null {
     try {
-      const current = lendingRef.current;
+      const current = store.lendingRef.current;
+      const limits = collateralLimits(current);
       let next = current;
       switch (action.kind) {
         case 'deposit-collateral':
-          next = depositCollateral(current, action.asset.id, COLLATERAL_LIMITS);
+          if (!holdings.wallet.some((asset) => asset.id === action.asset.id))
+            return 'This position is no longer in your demo wallet.';
+          next = depositCollateral(current, action.asset.id, limits);
           break;
         case 'remove-collateral':
-          next = removeCollateral(current, action.asset.id, COLLATERAL_LIMITS);
+          next = removeCollateral(current, action.asset.id, limits);
+          break;
+        case 'relayer-deposit':
+          if (!holdings.wallet.some((asset) => asset.id === action.asset.id))
+            return 'This position is no longer in your demo wallet.';
+          next = depositToRelayer(current, action.asset.id, limits);
+          break;
+        case 'merge': {
+          const sourceId = input.mergeSourceId ?? '';
+          if (!holdings.wallet.some((asset) => asset.id === sourceId))
+            return 'Choose a position that is still in your demo wallet.';
+          next = mergePositions(current, sourceId, action.asset.id, limits);
+          break;
+        }
+        case 'increase-lock':
+          next = increaseLock(
+            current,
+            action.asset.id,
+            input.lockUnits ?? '0',
+            limits,
+          );
+          break;
+        case 'relayer-withdraw':
+          next = withdrawFromRelayer(current, action.asset.id);
           break;
         case 'borrow':
-          next = borrow(current, input.amountMicros ?? '0', COLLATERAL_LIMITS);
+          next = borrow(current, input.amountMicros ?? '0', limits);
           break;
         case 'repay':
           next = repay(current, input.amountMicros ?? '0');
@@ -224,14 +238,17 @@ export default function App() {
             current,
             input.collateralRewardMicros ?? '0',
             input.poolYieldMicros ?? '0',
+            input.relayerRewardMicros ?? '0',
           );
+          break;
+        case 'relayer-strategy':
+          next = setRelayerRepayShare(current, Number(input.repayBps ?? '0'));
           break;
         case 'how':
           return null;
       }
-      lendingRef.current = next;
-      setLending(next);
-      setAnnouncement(`${activityLabel[action.kind]} in your local preview.`);
+      store.setLending(next);
+      toast(`${activityLabel[action.kind]} in your local preview.`);
       closeModal();
       return null;
     } catch (error) {
@@ -241,304 +258,448 @@ export default function App() {
     }
   }
 
+  function receiptFor(
+    asset: Asset,
+    destination: PurchaseDestination,
+  ): PurchaseReceipt {
+    return {
+      id: crypto.randomUUID(),
+      assetId: asset.id,
+      createdAt: new Date().toISOString(),
+      kind: 'purchase',
+      price: asset.price,
+      sellerFee: marketplaceFee(asset.price),
+      destination,
+    };
+  }
+
+  function buy(
+    asset: Asset,
+    {
+      destination,
+      borrowMicros,
+    }: { destination: PurchaseDestination; borrowMicros: string },
+  ): string | null {
+    if (!holdings.market.some((item) => item.id === asset.id))
+      return 'This listing is no longer available.';
+    try {
+      const price = priceMicros(asset.price).toString();
+      const current = store.lendingRef.current;
+      const limits = collateralLimits(current);
+      const next =
+        destination === 'collateral'
+          ? purchaseIntoCollateral(
+              current,
+              asset.id,
+              price,
+              borrowMicros,
+              limits,
+            )
+          : destination === 'relayer'
+            ? purchaseIntoRelayer(current, asset.id, price, limits)
+            : purchase(current, asset.id, price);
+      const receipt = receiptFor(asset, destination);
+      store.setLending(next);
+      store.setPortfolio((portfolio) => ({
+        ...portfolio,
+        receipts: [...portfolio.receipts, receipt],
+      }));
+      setModal({ type: 'success', receipts: [receipt], assets: [asset] });
+      toast(
+        destination === 'collateral'
+          ? `${asset.name} bought and deposited in your preview.`
+          : destination === 'relayer'
+            ? `${asset.name} bought into the relayer in your preview.`
+            : `${asset.name} bought in your preview.`,
+      );
+      return null;
+    } catch (error) {
+      return error instanceof LendingError
+        ? error.message
+        : 'This preview purchase could not be completed. Try again.';
+    }
+  }
+
+  function sweep(assets: readonly Asset[]): string | null {
+    if (
+      assets.some(
+        (asset) => !holdings.market.some((item) => item.id === asset.id),
+      )
+    )
+      return 'One of these listings is no longer available.';
+    try {
+      let next = store.lendingRef.current;
+      for (const asset of assets)
+        next = purchase(next, asset.id, priceMicros(asset.price).toString());
+      const receipts = assets.map((asset) => receiptFor(asset, 'wallet'));
+      store.setLending(next);
+      store.setPortfolio((portfolio) => ({
+        ...portfolio,
+        receipts: [...portfolio.receipts, ...receipts],
+      }));
+      setModal({ type: 'success', receipts, assets: [...assets] });
+      toast(`${assets.length} positions bought in your preview.`);
+      return null;
+    } catch (error) {
+      return error instanceof LendingError
+        ? error.message
+        : 'These preview purchases could not be completed. Try again.';
+    }
+  }
+
+  function list(draft: {
+    assetId: string;
+    price: string;
+    expiryDays: number;
+    buyer?: string;
+  }): string | null {
+    try {
+      store.setListings(
+        createListing(
+          store.listings,
+          draft,
+          holdings.wallet.map((asset) => asset.id),
+        ),
+      );
+      toast(
+        draft.buyer
+          ? 'Private listing saved in your preview.'
+          : 'Listing saved in your preview.',
+      );
+      closeModal();
+      return null;
+    } catch (error) {
+      return error instanceof ListingError
+        ? error.message
+        : 'This listing could not be saved.';
+    }
+  }
+
+  function cancel(listing: PreviewListing) {
+    try {
+      store.setListings(cancelListing(store.listings, listing.id));
+      toast('Listing cancelled. The position is back in your wallet.', 'info');
+    } catch (error) {
+      toast(
+        error instanceof ListingError
+          ? error.message
+          : 'This listing could not be cancelled.',
+        'warning',
+      );
+    }
+    if (detailItem) closeDetails();
+    closeModal();
+  }
+
+  function saveVotes(plan: VotePlan) {
+    store.setVotes(plan);
+    toast('Vote plan saved in this browser.');
+  }
+
+  const accountCount =
+    store.portfolio.receipts.length +
+    store.lending.collateralIds.length +
+    store.lending.relayerIds.length +
+    (BigInt(store.lending.shareBalanceRaw) > 0n ? 1 : 0) +
+    holdings.listed.length;
+  const canReset =
+    store.portfolio.receipts.length > 0 ||
+    store.lending.activity.length > 0 ||
+    store.listings.listings.length > 0 ||
+    store.lending.relayerRepayBps !== 0 ||
+    !isDefaultVotePlan(store.votes);
+
+  const notices = (store.storageIssue || store.migrated) && (
+    <div className="notices">
+      {store.storageIssue && (
+        <div className="notice storage-notice" role="status">
+          <Info size={18} aria-hidden="true" />
+          <p>
+            This browser could not restore or save your preview account. You can
+            explore, but changes may not persist after you refresh.
+          </p>
+        </div>
+      )}
+      {store.migrated && (
+        <div className="notice storage-notice" role="status">
+          <Info size={18} aria-hidden="true" />
+          <p>
+            Your sample purchase history was retained. Earlier marketplace
+            records remain saved in this browser. Older unfunded lending
+            proposals were not converted into balances.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+
+  function statsModel(): StatsModel {
+    const lending = store.lending;
+    const metrics = getLendingMetrics(lending, collateralLimits(lending));
+    const epochs = lending.activity.filter((entry) => entry.kind === 'epoch');
+    const sales = marketSales(store.portfolio.receipts);
+    const totals = summarize(sales);
+    return {
+      mode: 'preview',
+      vault: {
+        assetsMicros: BigInt(metrics.totalAssetsMicros),
+        outstandingMicros: BigInt(lending.poolOutstandingMicros),
+        cashMicros: BigInt(lending.poolCashMicros),
+        utilizationBps: metrics.utilizationBps,
+      },
+      rewards: {
+        micros: epochs.reduce(
+          (sum, entry) =>
+            sum +
+            BigInt(entry.rewardRepaidMicros) +
+            BigInt(entry.rewardSurplusMicros) +
+            BigInt(entry.relayerRewardMicros) +
+            BigInt(entry.poolYieldMicros),
+          0n,
+        ),
+        epochs: epochs.length,
+      },
+      sales: { count: totals.count, volumeMicros: totals.volumeMicros },
+      volumeSeries: marketSeries(sales, 'all', 'volume', now),
+      positions: [...holdings.market, ...holdings.owned].map((asset) => ({
+        balance: asset.underlyingBalance,
+        unlockMs: Date.parse(asset.unlockDate),
+      })),
+      listed: holdings.market.length + holdings.listed.length,
+    };
+  }
+
+  let page;
+  switch (route.page) {
+    case 'borrow':
+      page = (
+        <BorrowPage
+          market={market}
+          lending={store.lending}
+          holdings={holdings}
+          votes={store.votes}
+          now={now}
+          onAction={(action) => setModal({ type: 'lending', action })}
+          onVotes={saveVotes}
+          onNavigate={go}
+          onSell={(asset) => setModal({ type: 'sell', assetId: asset.id })}
+        />
+      );
+      break;
+    case 'earn':
+      page = (
+        <EarnPage
+          market={market}
+          lending={store.lending}
+          onAction={(action) => setModal({ type: 'lending', action })}
+          onNavigate={go}
+          onDetails={() => setModal({ type: 'vault' })}
+        />
+      );
+      break;
+    case 'marketplace':
+      page = (
+        <MarketPage
+          market={market}
+          holdings={holdings}
+          receipts={store.portfolio.receipts}
+          listings={store.listings}
+          walletMicros={store.lending.walletMicros}
+          now={now}
+          searchRef={searchRef}
+          onDetails={(asset) =>
+            navigate({ page: 'marketplace', item: asset.positionId }, 'replace')
+          }
+          onBuy={(asset) => setModal({ type: 'buy', asset })}
+          onSweep={(assets) => setModal({ type: 'sweep', assets })}
+          onSell={(asset, options) =>
+            setModal({
+              type: 'sell',
+              ...(asset ? { assetId: asset.id } : {}),
+              ...(options?.private === undefined
+                ? {}
+                : { private: options.private }),
+            })
+          }
+          onCancel={(listing) => setModal({ type: 'cancel-listing', listing })}
+        />
+      );
+      break;
+    case 'simulator':
+      page = <SimulatorPage market={market} />;
+      break;
+    case 'faq':
+      page = <FaqPage market={market} mode="preview" />;
+      break;
+    case 'stats':
+      page = <StatsPage market={market} model={statsModel()} now={now} />;
+      break;
+    case 'brand':
+      page = <BrandPage market={market} />;
+      break;
+    case 'privacy':
+      page = <PrivacyPage mode="preview" />;
+      break;
+    case 'not-found':
+      page = <NotFoundPage path={route.item} onNavigate={go} />;
+      break;
+  }
+
+  const cancelTarget =
+    modal?.type === 'cancel-listing'
+      ? holdings.listed.find((entry) => entry.listing.id === modal.listing.id)
+      : undefined;
+
   return (
-    <div className="app-shell" data-market={market.id}>
-      <a
-        className="skip-link"
-        href="#workspace"
-        onClick={(event) => {
-          event.preventDefault();
-          selectSection(section, true);
-        }}
-      >
-        Skip to explore
-      </a>
-      <header className="site-header">
-        <a
-          className="brand"
-          href="#"
-          aria-label="Riftwell home"
-          onClick={(event) => {
-            event.preventDefault();
-            selectSection('marketplace');
-            window.scrollTo({
-              top: 0,
-              behavior: window.matchMedia('(prefers-reduced-motion: reduce)')
-                .matches
-                ? 'instant'
-                : 'smooth',
-            });
-          }}
+    <AppShell
+      route={route}
+      onNavigate={go}
+      market={market}
+      onMarketChange={(selected) => {
+        setMarket(selected);
+        closeModal();
+      }}
+      mode="preview"
+      onAbout={() => setModal({ type: 'about' })}
+      onShortcuts={() => setModal({ type: 'shortcuts' })}
+      notices={notices}
+      account={
+        <button
+          ref={accountRef}
+          type="button"
+          className="button secondary account-button"
+          aria-label={
+            accountCount > 0
+              ? `Preview account, ${accountCount} ${accountCount === 1 ? 'item' : 'items'}`
+              : 'Preview account'
+          }
+          onClick={() => setModal({ type: 'account' })}
         >
-          <span className="brand-mark">
-            <PortalMark />
-          </span>
-          <span className="brand-name">
-            riftwell<span className="brand-period">.</span>
-          </span>
-        </a>
-        <nav className="desktop-nav" aria-label="Main navigation">
-          <button
-            className={`nav-item${section === 'lending' ? ' active' : ''}`}
-            aria-current={section === 'lending' ? 'page' : undefined}
-            onClick={() => selectSection('lending')}
-          >
-            Lending
-          </button>
-          <button
-            className={`nav-item${section === 'marketplace' ? ' active' : ''}`}
-            aria-current={section === 'marketplace' ? 'page' : undefined}
-            onClick={() => selectSection('marketplace')}
-          >
-            Marketplace
-          </button>
-        </nav>
-        <div className="header-actions">
-          <MarketSelector
+          <CircleUserRound size={17} aria-hidden="true" />
+          <span className="account-label">Preview account</span>
+          {accountCount > 0 && (
+            <span className="account-count">{accountCount}</span>
+          )}
+        </button>
+      }
+    >
+      <Suspense fallback={<PageFallback />}>
+        <div className="page-body" key={route.page}>
+          {page}
+        </div>
+      </Suspense>
+      <Suspense fallback={null}>
+        {detailAsset && !modal && (
+          <AssetDetails
+            asset={detailAsset}
+            now={now}
+            onClose={closeDetails}
+            {...(detailListing
+              ? {
+                  listing: detailListing.listing,
+                  onCancelListing: () =>
+                    setModal({
+                      type: 'cancel-listing',
+                      listing: detailListing.listing,
+                    }),
+                }
+              : {
+                  onBuy: () => {
+                    closeDetails();
+                    setModal({ type: 'buy', asset: detailAsset });
+                  },
+                })}
+          />
+        )}
+        {modal?.type === 'buy' && (
+          <BuyDialog
+            asset={modal.asset}
+            lending={store.lending}
+            onClose={closeModal}
+            onBuy={(input) => buy(modal.asset, input)}
+          />
+        )}
+        {modal?.type === 'sweep' && (
+          <SweepDialog
+            assets={modal.assets}
+            lending={store.lending}
+            onClose={closeModal}
+            onBuy={() => sweep(modal.assets)}
+          />
+        )}
+        {modal?.type === 'sell' && (
+          <SellDialog
+            positions={holdings.wallet}
+            {...(modal.assetId === undefined
+              ? {}
+              : { initialId: modal.assetId })}
+            initialVisibility={modal.private ? 'private' : 'public'}
+            onClose={closeModal}
+            onList={list}
+          />
+        )}
+        {modal?.type === 'cancel-listing' && cancelTarget && (
+          <CancelListingDialog
+            asset={cancelTarget.asset}
+            listing={cancelTarget.listing}
+            onClose={closeModal}
+            onConfirm={() => cancel(cancelTarget.listing)}
+          />
+        )}
+        {modal?.type === 'success' && (
+          <SuccessDialog
+            receipts={modal.receipts}
+            assets={modal.assets}
+            onClose={closeModal}
+            onBorrow={() => go('borrow')}
+          />
+        )}
+        {modal?.type === 'lending' && (
+          <LendingActionDialog
+            key={modal.action.kind}
+            action={modal.action}
+            state={store.lending}
+            wallet={holdings.wallet}
+            onClose={closeModal}
+            onApply={(input) => applyLendingAction(modal.action, input)}
+          />
+        )}
+        {modal?.type === 'vault' && (
+          <VaultDetails
             market={market}
-            onChange={(selected) => {
-              setMarket(selected);
+            lending={store.lending}
+            onClose={closeModal}
+          />
+        )}
+        {modal?.type === 'account' && (
+          <AccountDialog
+            receipts={store.portfolio.receipts}
+            lending={store.lending}
+            holdings={holdings}
+            canReset={canReset}
+            {...(modal.tab === undefined ? {} : { initialTab: modal.tab })}
+            onClose={closeModal}
+            onReset={() => setModal({ type: 'reset' })}
+            onAction={(action) => setModal({ type: 'lending', action })}
+            onExplore={(next) => {
               closeModal();
+              go(next);
             }}
           />
-          <span className="preview-badge">
-            <span />
-            Preview
-          </span>
-          <button
-            ref={accountButtonRef}
-            className="button secondary account-button"
-            onClick={() => setModal({ type: 'account' })}
-          >
-            <CircleUserRound size={17} aria-hidden="true" />
-            <span>Preview account</span>
-            {accountCount > 0 && (
-              <span className="account-count">{accountCount}</span>
-            )}
-          </button>
-        </div>
-      </header>
-      <main className="page-main">
-        <section className="hero" aria-labelledby="hero-title">
-          <div className="hero-copy">
-            <p className="eyebrow">
-              <span className="eyebrow-dot" />
-              {market.name} · {market.chain}
-            </p>
-            <h1 className="hero-title" id="hero-title">
-              A new orbit
-              <br />
-              for your <span className="accent-text">assets.</span>
-            </h1>
-            <p className="hero-description">
-              Trade {market.positionSymbol} positions. Borrow against collateral
-              or supply USDC to a pooled lending vault. Explore the{' '}
-              {market.name}
-              market in one simple space.
-            </p>
-            <div className="hero-actions">
-              <button
-                className="button primary"
-                onClick={() => selectSection('marketplace', true)}
-              >
-                Explore positions <ArrowUpRight size={18} aria-hidden="true" />
-              </button>
-              <button
-                className="button ghost"
-                onClick={() => selectSection('lending', true)}
-              >
-                Try lending <ArrowRight size={16} aria-hidden="true" />
-              </button>
-            </div>
-            <p className="hero-note">
-              <span />
-              An interactive preview. No wallet required.
-            </p>
-          </div>
-          <div className="hero-visual" aria-hidden="true">
-            <div className="portal-scene">
-              <div className="portal-aura" />
-              <div className="portal-orbit orbit-one" />
-              <div className="portal-orbit orbit-two" />
-              <div className="portal-orbit orbit-three" />
-              <div className="portal-core" />
-              <div className="portal-plinth" />
-              <div className="portal-caption">
-                <span className="portal-caption-dot" />
-                {market.name.toUpperCase()} / {market.chain.toUpperCase()}
-              </div>
-              <div className="portal-coordinate top">
-                {market.positionSymbol} / RW
-              </div>
-              <div className="portal-coordinate bottom">
-                {market.tokenSymbol} POSITIONS
-              </div>
-            </div>
-          </div>
-        </section>
-        {storageIssue && (
-          <div className="notice storage-notice" role="status">
-            <Info size={18} aria-hidden="true" />
-            <p>
-              This browser could not restore or save your preview account. You
-              can explore, but changes may not persist after you refresh.
-            </p>
-          </div>
         )}
-        {initial.migrated && (
-          <div className="notice storage-notice" role="status">
-            <Info size={18} aria-hidden="true" />
-            <p>
-              Your sample purchases were retained. Lending now uses a fresh
-              pooled-vault preview; older unfunded proposals were not converted
-              into balances.
-            </p>
-          </div>
-        )}
-        <section
-          ref={workspaceRef}
-          className="workspace"
-          id="workspace"
-          aria-label={
-            section === 'marketplace'
-              ? 'NFT marketplace preview'
-              : 'NFT lending preview'
-          }
-          tabIndex={-1}
-        >
-          {announcement && section === 'lending' && (
-            <p className="pooled-feedback" role="status">
-              {announcement}
-            </p>
-          )}
-          {section === 'marketplace' ? (
-            <Marketplace
-              market={market}
-              assets={availableAssets}
-              onDetails={(asset) => setModal({ type: 'details', asset })}
-              onPurchase={(asset) => setModal({ type: 'purchase', asset })}
-            />
-          ) : (
-            <Lending
-              market={market}
-              tab={lendingTab}
-              onTab={setLendingTab}
-              state={lending}
-              onAction={(action) =>
-                setModal({ type: 'lending-action', action })
-              }
-            />
-          )}
-        </section>
-      </main>
-      <footer className="site-footer">
-        <a
-          className="brand footer-brand"
-          href="#marketplace"
-          onClick={(event) => {
-            event.preventDefault();
-            selectSection('marketplace');
-            window.scrollTo({
-              top: 0,
-              behavior: window.matchMedia('(prefers-reduced-motion: reduce)')
-                .matches
-                ? 'instant'
-                : 'smooth',
-            });
-          }}
-        >
-          <span className="brand-mark">
-            <PortalMark size={24} />
-          </span>
-          <span className="brand-name">riftwell.</span>
-        </a>
-        <p>
-          {market.positionSymbol} positions. USDC settlement. An interactive
-          preview.
-        </p>
-        <div className="footer-links">
-          <button
-            className="inline-link"
-            onClick={() => setModal({ type: 'about' })}
-          >
-            About this preview
-          </button>
-          <a
-            href="https://github.com/ael-dev3/Riftwell"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Source code <ArrowUpRight size={13} aria-hidden="true" />
-            <span className="sr-only">(opens in a new tab)</span>
-          </a>
-        </div>
-      </footer>
-      <div className="sr-only" aria-live="polite" aria-atomic="true">
-        {announcement}
-      </div>
-      {modal?.type === 'details' && (
-        <AssetDetails
-          key="details"
-          asset={modal.asset}
-          onClose={closeModal}
-          onPurchase={() => setModal({ type: 'purchase', asset: modal.asset })}
-        />
-      )}
-      {modal?.type === 'purchase' && (
-        <PurchaseDialog
-          key="purchase"
-          asset={modal.asset}
-          onClose={closeModal}
-          onSave={saveReceipt}
-        />
-      )}
-      {modal?.type === 'lending-action' && (
-        <LendingActionDialog
-          key={modal.action.kind}
-          action={modal.action}
-          state={lending}
-          onClose={closeModal}
-          onApply={(input) => applyLendingAction(modal.action, input)}
-        />
-      )}
-      {modal?.type === 'success' && (
-        <SuccessDialog
-          key="success"
-          receipt={modal.receipt}
-          asset={modal.asset}
-          onClose={closeModal}
-          onAccount={() =>
-            setModal({ type: 'account', tab: modal.receipt.kind })
-          }
-        />
-      )}
-      {modal?.type === 'account' && (
-        <AccountDialog
-          key="account"
-          receipts={portfolio.receipts}
-          lending={lending}
-          initialTab={modal.tab}
-          onClose={closeModal}
-          onReset={() => setModal({ type: 'reset' })}
-          onAction={(action) => setModal({ type: 'lending-action', action })}
-          onExplore={(next, nextTab) => {
-            if (nextTab) setLendingTab(nextTab);
-            closeModal();
-            selectSection(next, true);
-          }}
-        />
-      )}
+      </Suspense>
+      {modal?.type === 'shortcuts' && <ShortcutsDialog onClose={closeModal} />}
       {modal?.type === 'reset' && (
         <Dialog
-          key="reset"
           title="Reset preview account?"
           kicker="RESET PREVIEW"
           onClose={closeModal}
         >
-          <div className="dialog-body confirmation-copy">
+          <div className="dialog-body">
             <p>
-              This will clear saved purchases, collateral, debt, vault shares
-              and activity, then restore the starting demo balances.
+              This will clear saved purchases, listings, collateral, merges,
+              debt, vault shares, vote plans and activity, then restore the
+              starting demo balances.
             </p>
             <p className="text-muted">
               No real assets or funds are affected. You can explore every
@@ -555,17 +716,9 @@ export default function App() {
             <button
               className="button primary"
               onClick={() => {
-                try {
-                  localStorage.removeItem(LEGACY_STORAGE_KEY);
-                } catch {
-                  setStorageIssue(true);
-                }
-                setPortfolio(emptyPortfolio());
-                const freshLending = createLendingState();
-                lendingRef.current = freshLending;
-                setLending(freshLending);
+                store.reset();
                 setModal({ type: 'account' });
-                setAnnouncement('Your preview account has been reset.');
+                toast('Your preview account has been reset.', 'info');
               }}
             >
               Reset preview
@@ -575,18 +728,17 @@ export default function App() {
       )}
       {modal?.type === 'about' && (
         <Dialog
-          key="about"
           title="Room to explore."
           kicker="ABOUT THIS PREVIEW"
           onClose={closeModal}
         >
           <div className="dialog-body">
             <p>
-              Riftwell combines a marketplace for {market.positionSymbol}{' '}
-              positions with collateral-backed borrowing and pooled USDC
-              lending. The selected market is {market.name}.
+              Riftwell combines credit lines against {market.positionSymbol}{' '}
+              positions, a pooled USDC vault and a marketplace. The selected
+              market is {market.name}.
             </p>
-            <dl className="details-list">
+            <dl className="facts">
               <div>
                 <dt>Positions &amp; prices</dt>
                 <dd>
@@ -603,6 +755,13 @@ export default function App() {
                 </dd>
               </div>
               <div>
+                <dt>Epoch countdown</dt>
+                <dd>
+                  Clock arithmetic for {market.name}’s weekly periods. No chain
+                  data is read.
+                </dd>
+              </div>
+              <div>
                 <dt>Your preview account</dt>
                 <dd>
                   Saved to this browser’s local storage. Use Reset preview to
@@ -610,13 +769,10 @@ export default function App() {
                 </dd>
               </div>
             </dl>
-            <div className="notice">
-              <Info size={17} aria-hidden="true" />
-              <p>
-                No live liquidity, on-chain ownership or lock checks, or
-                guaranteed returns.
-              </p>
-            </div>
+            <Notice>
+              No live liquidity, on-chain ownership or lock checks, or
+              guaranteed returns.
+            </Notice>
           </div>
           <div className="dialog-footer">
             <button className="button primary" onClick={closeModal}>
@@ -625,6 +781,14 @@ export default function App() {
           </div>
         </Dialog>
       )}
-    </div>
+    </AppShell>
+  );
+}
+
+export default function App() {
+  return (
+    <ToastProvider>
+      <PreviewApp />
+    </ToastProvider>
   );
 }

@@ -16,15 +16,15 @@ custody and reward accounting are prerequisites to those goals.
 
 ## Addresses and current interface evidence
 
-| Component | HyperEVM mainnet address |
-| --- | --- |
-| Chain | 999 |
-| veKITTEN | `0x29d3A21fF35a519E00cF6d272f2aD897b109BD84` |
-| Voter | `0xb7F7053F7e6c210e6777D5BA758E4b3ECa6C88A0` |
-| KITTEN | `0x618275F8EFE54c2afa87bfB9F210A52F0fF89364` |
-| RebaseReward | `0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36` |
-| Native USDC | `0xb88339cb7199b77e23db6e890353e22632ba630f` |
-| Sample primary pool | `0x12df9913e9e08453440e3c4b1ae73819160b513e` |
+| Component                 | HyperEVM mainnet address                     |
+| ------------------------- | -------------------------------------------- |
+| Chain                     | 999                                          |
+| veKITTEN                  | `0x29d3A21fF35a519E00cF6d272f2aD897b109BD84` |
+| Voter                     | `0xb7F7053F7e6c210e6777D5BA758E4b3ECa6C88A0` |
+| KITTEN                    | `0x618275F8EFE54c2afa87bfB9F210A52F0fF89364` |
+| RebaseReward              | `0xDd002E8DF80ccB7A8964BFef6e15ee36D414fC36` |
+| Native USDC               | `0xb88339cb7199b77e23db6e890353e22632ba630f` |
+| Sample primary pool       | `0x12df9913e9e08453440e3c4b1ae73819160b513e` |
 | Sample pool voting reward | `0x75b843855aa873b5bc8f9be04f4ae972b90ee503` |
 
 Official Kitten documentation identifies the escrow and Voter deployment. The
@@ -33,25 +33,28 @@ ABIs. Independently written public declarations are in
 `contracts/interfaces/IKittenVoting.sol`; no competitor implementation was used
 to write them.
 
-Bundle evidence is saved outside this project at
-`../../output/kitten-alternative-research-2026-10-02/economics/kitten-current-app.js`.
-Its SHA-256 is
+Retained [ABI extraction evidence](evidence/reward-settlement/app-abi-evidence.json)
+records the [official application bundle](https://app.kittenswap.finance/assets/index-DTVlrAoN.js)
+observed on 2 October 2026. Its recorded SHA-256 is
 `52c6fba413ff9c0163fab80d49783a2d145072711b449ec6758a254ba9e2312a`.
+The [Voter ABI evidence](evidence/rebase/app-voter-abi.json) separately records
+its extraction from that official bundle. These are historical observations,
+not a claim that the currently served bundle or deployed interfaces are unchanged.
 The escrow ABI is bound to `_p`, the Voter ABI to `uC`, and the pool voting reward
 ABI to `Due`. `Rzt` is a separate rebase reward ABI; do not confuse rebases with
 liquid voting revenue.
 
 At observed head block **47,468,911** (13:20:55 UTC), public RPC reads returned:
 
-| Read | Result |
-| --- | --- |
-| Voter implementation slot | `0x957685ab613965edb7e4964e7698f192370e1284` |
-| Escrow implementation slot | `0xd2b6bf91bbbb8d86a72788a37c3886a4f821a873` |
+| Read                              | Result                                       |
+| --------------------------------- | -------------------------------------------- |
+| Voter implementation slot         | `0x957685ab613965edb7e4964e7698f192370e1284` |
+| Escrow implementation slot        | `0xd2b6bf91bbbb8d86a72788a37c3886a4f821a873` |
 | Sample reward implementation slot | `0xb390c8c641a1fb3f786b9cabacef14e594ef82f1` |
-| `Voter.veKitten()` | Current escrow address above |
-| `escrow.voter()` | Current Voter address above |
-| `escrow.MAXTIME()` | `63,072,000` seconds, or 730 days |
-| `Voter.getCurrentPeriod()` | `2961` |
+| `Voter.veKitten()`                | Current escrow address above                 |
+| `escrow.voter()`                  | Current Voter address above                  |
+| `escrow.MAXTIME()`                | `63,072,000` seconds, or 730 days            |
+| `Voter.getCurrentPeriod()`        | `2961`                                       |
 
 The inspected Voter and sample reward implementation pages reported unverified
 source. Official app ABIs and runtime behavior provide stronger evidence than
@@ -109,13 +112,13 @@ Read-only `eth_call` simulations requested block `47,468,911`, NFT `18373`, the
 sample reward above and USDC. The current owner read returned
 `0xa1f62daf42d8bcd3669dec72271b3f658b9c3891`.
 
-| Call | From NFT owner | From unrelated address | From Voter |
-| --- | --- | --- | --- |
-| Reward `getRewardForTokenId(18373)` | Succeeded | `NotApprovedOrOwner()` | `NotApprovedOrOwner()` |
-| Reward `getRewardForPeriod(2960,18373,USDC)` | Succeeded | `NotApprovedOrOwner()` | `NotApprovedOrOwner()` |
-| Reward `getRewardForOwner(18373)` | `NotVoter()` | `NotVoter()` | Succeeded |
-| Voter `claimVotingRewardBatch([reward],18373)` | Succeeded | `NotApprovedOrOwner()` | Not tested |
-| Voter `vote(18373,[primaryPool],[1])` | Succeeded | `NotApprovedOrOwner()` | Not tested |
+| Call                                           | From NFT owner | From unrelated address | From Voter             |
+| ---------------------------------------------- | -------------- | ---------------------- | ---------------------- |
+| Reward `getRewardForTokenId(18373)`            | Succeeded      | `NotApprovedOrOwner()` | `NotApprovedOrOwner()` |
+| Reward `getRewardForPeriod(2960,18373,USDC)`   | Succeeded      | `NotApprovedOrOwner()` | `NotApprovedOrOwner()` |
+| Reward `getRewardForOwner(18373)`              | `NotVoter()`   | `NotVoter()`           | Succeeded              |
+| Voter `claimVotingRewardBatch([reward],18373)` | Succeeded      | `NotApprovedOrOwner()` | Not tested             |
+| Voter `vote(18373,[primaryPool],[1])`          | Succeeded      | `NotApprovedOrOwner()` | Not tested             |
 
 The custom-error selectors were matched against the official ABI:
 `NotApprovedOrOwner()` is `0xe433766c` and `NotVoter()` is `0xc18384c1`.
@@ -168,23 +171,23 @@ The tested NFT was **18371**, owned at that block by
 USDC entitlement for closed period **2960** was **864622 raw units**. This
 entitlement remained exactly 864622 after transfer into the deployed loan vault.
 
-| Observed local behavior | Result |
-| --- | --- |
-| Real NFT accepted into isolated loan custody | Vault became owner of NFT 18371 |
-| Typed borrower vote through NFT-owning vault | Voter marked next period 2962 voted |
-| Unrelated lender voting through vault | Reverted |
-| NFT transfer after voting for next period | Reverted while current period was 2961 |
-| Direct reward claims from previous owner and unrelated lender | Both reverted after NFT transfer |
-| Claim of active period through vault | Reverted |
-| Actual closed-period USDC claim | Vault balance rose from 0 to 864622 raw units |
-| Claimed period entitlement | Became zero |
-| Reward debt repayment | 432311 raw units credited to lender; lender balance unchanged until withdrawal |
-| Lender credit withdrawal | Exactly 432311 raw units paid to lender |
-| Excess reward custody | 432311 raw units remained in vault after repayment |
-| Borrower surplus withdrawal after debt closure | Exactly 432311 raw units paid to borrower; vault USDC became zero |
-| Closed loan revote | Reverted |
-| Collateral withdrawal before epoch change | Reverted |
-| Local time advanced to period 2962 | Exact NFT returned to borrower |
+| Observed local behavior                                       | Result                                                                         |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Real NFT accepted into isolated loan custody                  | Vault became owner of NFT 18371                                                |
+| Typed borrower vote through NFT-owning vault                  | Voter marked next period 2962 voted                                            |
+| Unrelated lender voting through vault                         | Reverted                                                                       |
+| NFT transfer after voting for next period                     | Reverted while current period was 2961                                         |
+| Direct reward claims from previous owner and unrelated lender | Both reverted after NFT transfer                                               |
+| Claim of active period through vault                          | Reverted                                                                       |
+| Actual closed-period USDC claim                               | Vault balance rose from 0 to 864622 raw units                                  |
+| Claimed period entitlement                                    | Became zero                                                                    |
+| Reward debt repayment                                         | 432311 raw units credited to lender; lender balance unchanged until withdrawal |
+| Lender credit withdrawal                                      | Exactly 432311 raw units paid to lender                                        |
+| Excess reward custody                                         | 432311 raw units remained in vault after repayment                             |
+| Borrower surplus withdrawal after debt closure                | Exactly 432311 raw units paid to borrower; vault USDC became zero              |
+| Closed loan revote                                            | Reverted                                                                       |
+| Collateral withdrawal before epoch change                     | Reverted                                                                       |
+| Local time advanced to period 2962                            | Exact NFT returned to borrower                                                 |
 
 Primary evidence is in
 [`evidence/kitten-fork/2026-10-02-anvil-token18371.json`](evidence/kitten-fork/2026-10-02-anvil-token18371.json)
@@ -214,7 +217,7 @@ locally; no ERC-20 balance, protocol storage, reward entitlement or NFT ownershi
 is overridden. Process cleanup is awaited; a read-only process check after the
 successful run found no leftover Anvil or fork-test process.
 
-Run the recorded gate after `npm ci`, from the project directory:
+Run the recorded gate after `npm ci`, from the `prototypes` directory with Node.js 24:
 
 ```sh
 RIFTWELL_KITTEN_FORK=1 \
@@ -224,7 +227,7 @@ RIFTWELL_KITTEN_FORK_BLOCK=47471441 \
 RIFTWELL_KITTEN_TOKEN_ID=18371 \
 RIFTWELL_KITTEN_CLOSED_PERIOD=2960 \
 RIFTWELL_KITTEN_EVIDENCE_FILE=docs/evidence/kitten-fork/recheck.json \
-node --test test/kitten-fork.test.mjs
+node --test test/kitten-fork.test.ts
 ```
 
 The RPC must retain genuine state at the selected block. For a fresh deployment

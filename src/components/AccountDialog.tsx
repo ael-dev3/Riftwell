@@ -1,42 +1,60 @@
 import { ArrowRight, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
-import { ASSETS, COLLATERAL, COLLATERAL_LIMITS } from '../data';
+import type { Page } from '../app/router';
+import { collateralLimits, STARTING_POSITION_IDS } from '../data';
 import {
-  formatDate,
   formatAmount,
+  formatBalance,
+  formatDate,
   formatMicros,
-  microsToDecimal,
+  type Asset,
   type PurchaseReceipt,
 } from '../domain';
+import { formatShares } from '../format';
 import { getLendingMetrics, type LendingState } from '../lending';
+import { DEFAULT_MARKET } from '../markets';
+import type { LendingAction } from '../preview/actions';
+import type { Holdings } from '../preview/store';
 import Dialog from './Dialog';
-import { activityLabel, type LendingAction, type LendingTab } from './Lending';
+import { TabPanel, Tabs } from './ui/Tabs';
 
-export type AccountTab = 'purchase' | 'borrow' | 'lend';
+export type AccountTab = 'positions' | 'borrow' | 'lend';
 type Props = {
-  receipts: PurchaseReceipt[];
+  receipts: readonly PurchaseReceipt[];
   lending: LendingState;
+  holdings: Holdings;
+  /** Whether anything differs from the starting preview. */
+  canReset: boolean;
   onClose: () => void;
   onReset: () => void;
   onAction: (action: LendingAction) => void;
-  onExplore: (
-    section: 'marketplace' | 'lending',
-    lendingTab?: LendingTab,
-  ) => void;
-  initialTab?: AccountTab;
+  onExplore: (page: Page) => void;
+  initialTab?: AccountTab | undefined;
 };
+
+function status(asset: Asset, holdings: Holdings) {
+  if (holdings.collateral.some((item) => item.id === asset.id))
+    return { label: 'Collateral', tone: 'accent' };
+  if (holdings.relayer.some((item) => item.id === asset.id))
+    return { label: 'Relayer', tone: 'violet' };
+  if (holdings.listed.some((item) => item.asset.id === asset.id))
+    return { label: 'Listed', tone: 'warning' };
+  return { label: 'In wallet', tone: 'muted' };
+}
 
 export default function AccountDialog({
   receipts,
   lending,
+  holdings,
+  canReset,
   onClose,
   onReset,
   onAction,
   onExplore,
-  initialTab = 'purchase',
+  initialTab = 'positions',
 }: Props) {
   const [tab, setTab] = useState<AccountTab>(initialTab);
-  const metrics = getLendingMetrics(lending, COLLATERAL_LIMITS);
+  const metrics = getLendingMetrics(lending, collateralLimits(lending));
   return (
     <Dialog
       title="Preview account"
@@ -44,167 +62,120 @@ export default function AccountDialog({
       onClose={onClose}
       wide
     >
-      <div className="dialog-body pooled-account">
-        <div className="portfolio-summary">
+      <div className="dialog-body account">
+        <dl className="mini-stats">
           <div>
-            <strong>{receipts.length.toString().padStart(2, '0')}</strong>
-            <span>Sample purchases</span>
+            <dt>Demo USDC</dt>
+            <dd>{formatMicros(lending.walletMicros)}</dd>
           </div>
           <div>
-            <strong>
-              {lending.collateralIds.length.toString().padStart(2, '0')}
-            </strong>
-            <span>Collateral positions</span>
+            <dt>Positions owned</dt>
+            <dd>{holdings.owned.length}</dd>
           </div>
           <div>
-            <strong>
-              {BigInt(lending.shareBalanceRaw) > 0n ? '01' : '00'}
-            </strong>
-            <span>Vault positions</span>
+            <dt>Collateral</dt>
+            <dd>{holdings.collateral.length}</dd>
           </div>
-        </div>
-        <p className="form-hint">
-          Local simulations, not real ownership, custody or funds. Your demo
-          USDC balance is {formatMicros(lending.walletMicros)}.
-        </p>
-        <div
-          className="segmented-control portfolio-tabs"
-          aria-label="Account view"
-        >
-          {(['purchase', 'borrow', 'lend'] as const).map((view) => (
-            <button
-              key={view}
-              className={tab === view ? 'active' : ''}
-              onClick={() => setTab(view)}
-              aria-pressed={tab === view}
-            >
-              {view === 'purchase'
-                ? 'Positions'
-                : view === 'borrow'
-                  ? 'Borrowing'
-                  : 'Vault'}
-            </button>
-          ))}
-        </div>
-        {tab === 'purchase' &&
-          (receipts.length ? (
-            <div className="portfolio-list">
-              {receipts
-                .slice()
-                .reverse()
-                .map((receipt) => {
-                  const asset = ASSETS.find(
-                    (item) => item.id === receipt.assetId,
-                  );
-                  if (!asset) return null;
-                  return (
-                    <article className="portfolio-item" key={receipt.id}>
-                      <div className="portfolio-item-main">
-                        <img
-                          className="row-thumb"
-                          src={asset.artwork}
-                          alt=""
-                          width="52"
-                          height="52"
-                        />
-                        <div>
-                          <strong>{asset.name}</strong>
-                          <span>
-                            {formatDate(receipt.createdAt)} · Preview purchase
-                          </span>
-                        </div>
-                      </div>
-                      <div className="portfolio-item-value">
-                        <strong>{formatAmount(receipt.price)}</strong>
-                        <span className="status-pill">Sample position</span>
-                      </div>
-                      <details className="receipt-details">
-                        <summary>Purchase receipt</summary>
-                        <dl className="details-list">
-                          <div>
-                            <dt>Receipt</dt>
-                            <dd>RW-{receipt.id.slice(0, 8).toUpperCase()}</dd>
-                          </div>
-                          <div>
-                            <dt>Price paid in preview</dt>
-                            <dd>{formatAmount(receipt.price)}</dd>
-                          </div>
-                        </dl>
-                      </details>
-                    </article>
-                  );
-                })}
-            </div>
-          ) : (
-            <div className="empty-state">
-              <h3>No sample purchases yet.</h3>
-              <p>Review a marketplace position to save a sample receipt.</p>
+          <div>
+            <dt>Vault shares</dt>
+            <dd>{formatShares(lending.shareBalanceRaw)}</dd>
+          </div>
+        </dl>
+        <Tabs<AccountTab>
+          idBase="account"
+          label="Account view"
+          active={tab}
+          onChange={setTab}
+          variant="pill"
+          items={[
+            { id: 'positions', label: 'Positions' },
+            { id: 'borrow', label: 'Borrowing' },
+            { id: 'lend', label: 'Vault' },
+          ]}
+        />
+        {tab === 'positions' && (
+          <TabPanel idBase="account" id="positions">
+            <ul className="row-list">
+              {holdings.owned.map((asset) => {
+                const receipt = receipts.find(
+                  (item) => item.assetId === asset.id,
+                );
+                const state = status(asset, holdings);
+                return (
+                  <li className="list-row" key={asset.id}>
+                    <img
+                      className="thumb"
+                      src={asset.artwork}
+                      alt=""
+                      width="40"
+                      height="40"
+                    />
+                    <span className="list-row-main">
+                      <strong>{asset.name}</strong>
+                      <small>
+                        {formatBalance(
+                          asset.underlyingBalance,
+                          asset.underlyingSymbol,
+                        )}{' '}
+                        ·{' '}
+                        {receipt
+                          ? `bought ${formatDate(receipt.createdAt)} for ${formatAmount(receipt.price)}`
+                          : STARTING_POSITION_IDS.includes(asset.id)
+                            ? 'starting demo position'
+                            : 'sample position'}
+                      </small>
+                    </span>
+                    <span className={`pill ${state.tone}`}>{state.label}</span>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="dialog-actions">
               <button
+                type="button"
                 className="button secondary"
                 onClick={() => onExplore('marketplace')}
               >
                 Explore positions <ArrowRight size={16} aria-hidden="true" />
               </button>
             </div>
-          ))}
+          </TabPanel>
+        )}
         {tab === 'borrow' && (
-          <>
-            <div className="pooled-summary pooled-account-metrics">
+          <TabPanel idBase="account" id="borrow">
+            <dl className="mini-stats">
               <div>
-                <span>Borrowed</span>
-                <strong>{formatMicros(lending.debtMicros)}</strong>
-              </div>
-              <div>
-                <span>Credit limit</span>
-                <strong>{formatMicros(metrics.totalCreditMicros)}</strong>
+                <dt>Borrowed</dt>
+                <dd>{formatMicros(lending.debtMicros)}</dd>
               </div>
               <div>
-                <span>Available credit</span>
-                <strong>{formatMicros(metrics.availableCreditMicros)}</strong>
+                <dt>Credit limit</dt>
+                <dd>{formatMicros(metrics.totalCreditMicros)}</dd>
               </div>
-            </div>
-            {lending.collateralIds.length ? (
-              <div className="portfolio-list">
-                {COLLATERAL.filter((asset) =>
-                  lending.collateralIds.includes(asset.id),
-                ).map((asset) => (
-                  <article className="portfolio-item" key={asset.id}>
-                    <div className="portfolio-item-main">
-                      <img
-                        className="row-thumb"
-                        src={asset.artwork}
-                        alt=""
-                        width="52"
-                        height="52"
-                      />
-                      <div>
-                        <strong>{asset.name}</strong>
-                        <span>Demo collateral · {asset.lockTerm} lock</span>
-                      </div>
-                    </div>
-                    <div className="portfolio-item-value">
-                      <strong>
-                        {formatMicros(COLLATERAL_LIMITS[asset.id])}
-                      </strong>
-                      <span>Example credit</span>
-                    </div>
-                  </article>
-                ))}
+              <div>
+                <dt>Available credit</dt>
+                <dd>{formatMicros(metrics.availableCreditMicros)}</dd>
               </div>
-            ) : (
-              <div className="empty-state">
-                <h3>No collateral deposited.</h3>
-                <p>Deposit a sample position before drawing USDC.</p>
+              <div>
+                <dt>Demo {DEFAULT_MARKET.tokenSymbol}</dt>
+                <dd>
+                  {formatBalance(
+                    Number(lending.tokenUnits),
+                    DEFAULT_MARKET.tokenSymbol,
+                  )}
+                </dd>
               </div>
-            )}
-            <div className="pooled-actions">
+            </dl>
+            <div className="dialog-actions">
               <button
+                type="button"
                 className="button secondary"
-                onClick={() => onExplore('lending', 'borrow')}
+                onClick={() => onExplore('borrow')}
               >
                 Manage collateral
               </button>
               <button
+                type="button"
                 className="button primary"
                 disabled={
                   BigInt(lending.debtMicros) === 0n ||
@@ -215,30 +186,31 @@ export default function AccountDialog({
                 Repay in preview
               </button>
             </div>
-          </>
+          </TabPanel>
         )}
         {tab === 'lend' && (
-          <>
-            <div className="pooled-summary pooled-account-metrics">
+          <TabPanel idBase="account" id="lend">
+            <dl className="mini-stats three">
               <div>
-                <span>Supplied value</span>
-                <strong>{formatMicros(metrics.suppliedAssetsMicros)}</strong>
+                <dt>Supplied value</dt>
+                <dd>{formatMicros(metrics.suppliedAssetsMicros)}</dd>
               </div>
               <div>
-                <span>Vault shares</span>
-                <strong>{microsToDecimal(lending.shareBalanceRaw)}</strong>
+                <dt>Vault shares</dt>
+                <dd>{formatShares(lending.shareBalanceRaw)}</dd>
               </div>
               <div>
-                <span>Available withdrawal</span>
-                <strong>{formatMicros(metrics.maxWithdrawMicros)}</strong>
+                <dt>Available withdrawal</dt>
+                <dd>{formatMicros(metrics.maxWithdrawMicros)}</dd>
               </div>
-            </div>
+            </dl>
             <p className="form-hint">
               A share of the illustrative pooled USDC vault. Available
               withdrawals depend on liquid funds; rewards can vary or be zero.
             </p>
-            <div className="pooled-actions">
+            <div className="dialog-actions">
               <button
+                type="button"
                 className="button secondary"
                 disabled={BigInt(metrics.maxWithdrawMicros) === 0n}
                 onClick={() => onAction({ kind: 'withdraw' })}
@@ -246,50 +218,30 @@ export default function AccountDialog({
                 Withdraw in preview
               </button>
               <button
+                type="button"
                 className="button primary"
-                onClick={() => onExplore('lending', 'lend')}
+                onClick={() => onExplore('earn')}
               >
                 Open vault <ArrowRight size={16} aria-hidden="true" />
               </button>
             </div>
-          </>
+          </TabPanel>
         )}
-        {tab !== 'purchase' && lending.activity.length > 0 && (
-          <section
-            className="pooled-activity"
-            aria-labelledby="account-activity-title"
-          >
-            <h3 id="account-activity-title">Recent lending activity</h3>
-            {lending.activity
-              .slice(-5)
-              .reverse()
-              .map((entry) => (
-                <div className="pooled-activity-row" key={entry.id}>
-                  <div>
-                    <strong>{activityLabel[entry.kind]}</strong>
-                    <span>{formatDate(entry.createdAt)}</span>
-                  </div>
-                  <strong>
-                    {entry.kind === 'epoch'
-                      ? `Epoch reward applied`
-                      : BigInt(entry.amountMicros) > 0n
-                        ? formatMicros(entry.amountMicros)
-                        : 'Preview only'}
-                  </strong>
-                </div>
-              ))}
-          </section>
-        )}
+        <p className="form-hint">
+          Local simulations, not real ownership, custody or funds.
+        </p>
       </div>
       <div className="dialog-footer">
         <button
+          type="button"
           className="button ghost"
-          disabled={receipts.length === 0 && lending.activity.length === 0}
+          disabled={!canReset}
           onClick={onReset}
         >
           <RotateCcw size={15} aria-hidden="true" /> Reset preview
         </button>
-        <button className="button secondary" onClick={onClose}>
+        <span className="footer-spacer" />
+        <button type="button" className="button secondary" onClick={onClose}>
           Done
         </button>
       </div>

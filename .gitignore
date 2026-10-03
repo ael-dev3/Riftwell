@@ -17,3 +17,6 @@ server/data/
 *.db
 *.db-*
 backups/
+*.pgdump
+.pgpass
+.firebase/

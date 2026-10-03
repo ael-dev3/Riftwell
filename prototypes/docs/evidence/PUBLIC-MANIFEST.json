@@ -1,5 +1,5 @@
 {
-  "context": "Historical predecessor evidence. Private local paths redacted from logs and prose; original JSON observations retained. Predecessor source/compiler hashes do not identify the renamed current source. Original manifests describe their historical run, not a new release verification. External contract runtime bytecode in RPC records is summarized by keccak256 and byte length rather than redistributed. These publication transforms change some file hashes; hashes below describe this public copy.",
+  "context": "Historical predecessor evidence. Private local paths redacted from logs and prose; original JSON observations retained. Predecessor source/compiler hashes do not identify the renamed current source. Original manifests describe their historical run, not a new release verification. External contract runtime bytecode in RPC records is summarized by keccak256 and byte length rather than redistributed. These publication transforms change some file hashes; hashes below describe this public copy. Current collector sources were migrated to strict TypeScript and checked locally without recollecting or executing remote evidence. Their entries below identify the current source and retain previous publication path/hash metadata; historical observation and run manifests retain their original source identities.",
   "files": [
     {
       "path": "kitten-fork/2026-10-02-anvil-financed-manifest.json",
@@ -72,14 +72,24 @@
       "historical": true
     },
     {
-      "path": "reward-settlement/collect-supplement.mjs",
-      "sha256": "923eb856917994e2133fedc651dc0fc337a76504a8855d1bf3b0d8255ccd377b",
-      "historical": true
+      "path": "reward-settlement/collect-supplement.ts",
+      "sha256": "7ca6907b61a16e1ef8744ddba4c29d36afa93d4453d303fb3da3901cfe85066b",
+      "historical": false,
+      "previousSource": {
+        "path": "reward-settlement/collect-supplement.mjs",
+        "sha256": "923eb856917994e2133fedc651dc0fc337a76504a8855d1bf3b0d8255ccd377b"
+      },
+      "validation": "Strict typecheck; collector not executed or evidence recollected."
     },
     {
-      "path": "reward-settlement/collect.mjs",
-      "sha256": "6bb2963e0db359ff45136fb4be1523b193efe55de295976c5c670da9f84b16a5",
-      "historical": true
+      "path": "reward-settlement/collect.ts",
+      "sha256": "49342ead9ee1189c68b605e4e2921f12192bdf69729ce5331a91ac3d80487933",
+      "historical": false,
+      "previousSource": {
+        "path": "reward-settlement/collect.mjs",
+        "sha256": "6bb2963e0db359ff45136fb4be1523b193efe55de295976c5c670da9f84b16a5"
+      },
+      "validation": "Strict typecheck; collector not executed or evidence recollected."
     },
     {
       "path": "reward-settlement/rpc-requests.json",
@@ -220,6 +230,12 @@
       "path": "rebase/app-voter-abi.json",
       "sha256": "db1241ee63c1f42587d7b5241953d226c07413b68b31209a465346f5f5067407",
       "historical": true
+    },
+    {
+      "path": "reward-settlement/collection-types.ts",
+      "sha256": "c613ba02b534a43f0953311e039499741dbe755d7373a00653e5a7a29cdfa81a",
+      "historical": false,
+      "validation": "Strict evidence parsing boundary; saved-file validation only."
     }
   ]
 }

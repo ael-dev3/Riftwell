@@ -1,0 +1,87 @@
+{
+  "status": "passed",
+  "checkedAt": "2026-10-02T17:16:55.485Z",
+  "browser": "isolated headless Chrome",
+  "scope": "Built connected frontend + real HTTP/SQLite, simulated read-only chain and ephemeral EOA providers; no real funds, wallets or transactions",
+  "checks": [
+    "Liveness and security headers",
+    "Connected mode without demo records",
+    "KittenSwap remains sole selected market",
+    "Accessibility: connected marketplace empty",
+    "Confirmed ownership positions",
+    "Session secret stays HttpOnly",
+    "Accessibility: connected account positions",
+    "Owned-position dialog fits at 320px",
+    "Accessibility: connected account mobile",
+    "Nonexistent NFT rejected",
+    "Accessibility: verified listing form",
+    "Exact listing price retained",
+    "Purchase cannot settle or transfer assets",
+    "Accessibility: purchase blocked review",
+    "Malformed money rejected before mutation",
+    "Accessibility: borrowing request form",
+    "Empty lender ownership state",
+    "Lender cannot change requested principal or duration",
+    "Accessibility: lender offer form",
+    "Borrower receives lender offer with agreed terms",
+    "Borrower cannot cancel another lender offer",
+    "Accessibility: received lending offers",
+    "Offer acceptance remains disabled",
+    "Accessibility: borrower offer review",
+    "Session and listing persist across service restart",
+    "RPC outage never substitutes demo data",
+    "Creator can cancel off-chain intent during RPC outage",
+    "No horizontal overflow at 320px",
+    "No horizontal overflow at 390px",
+    "No horizontal overflow at 768px",
+    "No horizontal overflow at 1440px",
+    "No horizontal overflow at 1920px",
+    "Accessibility: connected mobile marketplace",
+    "Wallet disconnect clears authenticated UI",
+    "Only account reads and personal sign reached test wallet",
+    "No browser runtime exceptions"
+  ],
+  "accessibility": [
+    {
+      "view": "connected marketplace empty",
+      "violations": []
+    },
+    {
+      "view": "connected account positions",
+      "violations": []
+    },
+    {
+      "view": "connected account mobile",
+      "violations": []
+    },
+    {
+      "view": "verified listing form",
+      "violations": []
+    },
+    {
+      "view": "purchase blocked review",
+      "violations": []
+    },
+    {
+      "view": "borrowing request form",
+      "violations": []
+    },
+    {
+      "view": "lender offer form",
+      "violations": []
+    },
+    {
+      "view": "received lending offers",
+      "violations": []
+    },
+    {
+      "view": "borrower offer review",
+      "violations": []
+    },
+    {
+      "view": "connected mobile marketplace",
+      "violations": []
+    }
+  ],
+  "errors": []
+}

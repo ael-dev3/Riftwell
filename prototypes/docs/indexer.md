@@ -65,10 +65,10 @@ This manager must use the same collection and payment token as the market. The j
 
 ## Run one synchronization
 
-From the project directory:
+From the `prototypes` directory, with Node.js 24:
 
 ```sh
-node scripts/indexer.mjs \
+node scripts/indexer.ts \
   --config deployment.local.json \
   --abi build/artifacts.json \
   --state var/market-index-state.json \
@@ -85,13 +85,13 @@ Operational settings are bounded. Header reads run in batches of eight, and one 
 
 ## Interface integration
 
-The production frontend currently uses its own illustrative preview data. This experimental adapter is separate; its JSON is not a live order feed in the application. `web/index-source.js` validates snapshots for future integration.
+This experimental event adapter is separate from the production API; its JSON is not a live order feed in the application. `web/index-source.ts` validates snapshots for future integration. Build browser modules with `npm run build:web`, then serve the emitted `build/web/*.js` modules from a browser host. Node tooling imports TypeScript sources directly.
 
 ## Validation
 
 ```sh
-node --test --test-concurrency=1 test/indexer.test.mjs
-node --test web/model.test.mjs
+node --test --test-concurrency=1 test/indexer.test.ts
+node --test web/model.test.ts
 ```
 
 The indexer tests cover restart persistence, exact event fees, cancellation/sale rollback, seller invalidation followed by cancellation, confirmed catch-up, owner/approval/expiry distinctions, wrong chain/code/anchor, mid-read reorg, omitted listing/cancellation events, decimals mismatch, regressed head, corrupt journals, writer locks and rejection of signing/transaction RPC methods. Tests deploy real compiled market and loan contracts to an in-process EVM. Financed cases exercise mixed IDs, listing, repricing, cancellation, accrued insufficient coverage, partial/full repayment, debt closure in custody, withdrawal, forgiveness, sale, borrower/lender credits and credit withdrawal, reorg/restart recovery, large exact integers, unavailable ownership, corrupted debt/runtime responses and omitted cancellation events. They never broadcast to a public network.

@@ -8,12 +8,16 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "test": "vitest run",
-    "test:ui": "node scripts/browser-qa.mjs",
-    "test:connected": "node scripts/connected-browser-qa.mjs",
-    "format:check": "prettier --check src scripts server/*.mjs server/test server/package.json deploy docs/API.md docs/OPERATIONS.md index.html vite.config.ts tsconfig.json",
-    "check": "npm run test && npm run build",
+    "test:ui": "node scripts/browser-qa.ts",
+    "test:connected": "node scripts/connected-browser-qa.ts",
+    "test:bearer": "node scripts/bearer-browser-qa.ts",
+    "format:check": "prettier --check src scripts server/*.ts server/test server/package.json server/tsconfig.json deploy docs/API.md docs/OPERATIONS.md docs/MARKETPLACE.md index.html vite.config.ts tsconfig.json",
+    "check": "npm run test && npm run typecheck && npm run build",
     "contracts:compile": "npm --prefix prototypes run compile",
-    "contracts:test": "npm --prefix prototypes run test"
+    "contracts:test": "npm --prefix prototypes run test",
+    "typecheck": "tsc -p tsconfig.json && npm --prefix server run typecheck && tsc -p scripts/tsconfig.json",
+    "typecheck:prototypes": "npm --prefix prototypes run typecheck",
+    "typecheck:all": "npm run typecheck && npm run typecheck:prototypes"
   },
   "dependencies": {
     "lucide-react": "1.50.0",
@@ -21,6 +25,7 @@
     "react-dom": "19.3.0"
   },
   "devDependencies": {
+    "@types/node": "24.19.1",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.1",
@@ -30,5 +35,8 @@
     "typescript": "7.0.2",
     "vite": "8.3.2",
     "vitest": "5.0.3"
+  },
+  "engines": {
+    "node": ">=24 <25"
   }
 }
