@@ -447,33 +447,9 @@
 }
 
 .vault-name p {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 4px;
+  margin-top: 3px;
   font-size: 13px;
-  color: var(--text-2);
-}
-
-.badge-inline {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 24px;
-  padding: 0 9px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-2);
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-}
-
-.badge-inline img {
-  width: 14px;
-  height: 14px;
-  background: #101814;
-  border-radius: 50%;
+  color: var(--text-3);
 }
 
 .vault-yield {
@@ -1755,8 +1731,8 @@
 /* The smallest phones still fit four tabs without clipping a label. */
 @media (max-width: 360px) {
   .tablist.band .tab {
-    gap: 6px;
-    padding: 0 7px;
+    gap: 5px;
+    padding: 0 6px;
     font-size: 12.5px;
   }
 }

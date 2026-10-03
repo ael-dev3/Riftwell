@@ -237,7 +237,7 @@
 
 /* The smallest phones show the market's logo alone. */
 @media (max-width: 360px) {
-  .market-selector.static {
+  .context-bar .market-selector.static {
     padding-right: 4px;
   }
 
@@ -528,6 +528,16 @@
 
   .epoch {
     padding-left: 8px;
+  }
+
+  /* A little slack, so the bar fits even beside a desktop scrollbar. */
+  .status-pill {
+    gap: 6px;
+    padding: 0 8px;
+  }
+
+  .market-selector.static {
+    padding-right: 8px;
   }
 
   /* Phones keep the market, the countdown and the preview status in view;
