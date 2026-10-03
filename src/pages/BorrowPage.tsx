@@ -2,6 +2,7 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   Clock3,
+  Landmark,
   Layers3,
   LockKeyhole,
   Merge,
@@ -13,12 +14,11 @@ import {
   Vote,
   Wallet,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import type { Page } from '../app/router';
-import { Notice } from '../components/ui/Bits';
 import { ActivityTable, EmptyState, PageHead } from '../components/page';
-import { Meter, Ring } from '../components/ui/Meter';
-import StatCard from '../components/ui/StatCard';
+import CountUp from '../components/ui/CountUp';
+import { Ring } from '../components/ui/Meter';
 import { TabPanel, Tabs } from '../components/ui/Tabs';
 import {
   collateralLimits,
@@ -59,6 +59,17 @@ type Props = {
 
 const ceilDiv = (a: bigint, b: bigint) => (a + b - 1n) / b;
 
+/** Exact USDC at rest; counts between values when it changes. */
+function Money({ micros }: { micros: bigint }) {
+  return (
+    <CountUp
+      value={roundAmount(micros)}
+      format={(value) => `${usd(value)} USDC`}
+      exact={formatMicros(micros)}
+    />
+  );
+}
+
 function PositionRow({
   asset,
   mode,
@@ -76,7 +87,12 @@ function PositionRow({
 }) {
   const days = lockDaysRemaining(asset.unlockDate, now);
   return (
-    <article className="position-row">
+    <article
+      className="position-row"
+      // A position keeps its identity as it moves between sections, so a
+      // deposit or withdrawal glides it to its new place (see pages.css).
+      style={{ '--vt-name': `position-${asset.id}` } as CSSProperties}
+    >
       <div className="position-main">
         <img
           className="thumb"
@@ -211,9 +227,6 @@ export default function BorrowPage({
   const available = BigInt(metrics.availableCreditMicros);
   const wallet = BigInt(lending.walletMicros);
   const cash = BigInt(lending.poolCashMicros);
-  const outstanding = BigInt(lending.poolOutstandingMicros);
-  const totalAssets = BigInt(metrics.totalAssetsMicros);
-  const supplied = BigInt(metrics.suppliedAssetsMicros);
   const utilization = metrics.utilizationBps / 100;
   const creditUsed = credit > 0n ? Number((debt * 10_000n) / credit) / 100 : 0;
   const sampleReward = holdings.collateral.reduce(
@@ -238,78 +251,6 @@ export default function BorrowPage({
   return (
     <>
       <PageHead compact title={`Borrow against ${market.positionSymbol}`} />
-      <section className="stat-grid" aria-label="Vault overview">
-        <StatCard
-          index={0}
-          label={`${market.name} vault assets`}
-          numeric={roundAmount(totalAssets)}
-          format={usd}
-          value={usd(roundAmount(totalAssets))}
-          unit="USDC"
-          sub="Idle USDC plus outstanding loans"
-          details={{
-            title: 'Vault assets',
-            description:
-              'Illustrative balances in this browser. Other suppliers and borrowers are fixed examples.',
-            rows: [
-              { label: 'Idle USDC', value: formatMicros(cash) },
-              { label: 'Outstanding loans', value: formatMicros(outstanding) },
-              { label: 'Your supplied value', value: formatMicros(supplied) },
-              {
-                label: 'Other suppliers',
-                hint: 'Example',
-                value: formatMicros(totalAssets - supplied),
-              },
-            ],
-          }}
-        />
-        <StatCard
-          index={1}
-          tone="violet"
-          label={`${market.name} borrows`}
-          numeric={roundAmount(outstanding)}
-          format={usd}
-          value={usd(roundAmount(outstanding))}
-          unit="USDC"
-          sub={`${utilization.toFixed(2)}% of vault assets on loan`}
-          details={{
-            title: 'Outstanding loans',
-            rows: [
-              { label: 'Your debt', value: formatMicros(debt) },
-              {
-                label: 'Other borrowers',
-                hint: 'Example',
-                value: formatMicros(outstanding - debt),
-              },
-              { label: 'Utilization', value: `${utilization.toFixed(2)}%` },
-            ],
-            note: 'Higher utilization leaves less idle USDC for new loans and withdrawals.',
-          }}
-        />
-        <StatCard
-          index={2}
-          tone="sky"
-          label="Available liquidity"
-          numeric={roundAmount(cash)}
-          format={usd}
-          value={usd(roundAmount(cash))}
-          unit="USDC"
-          sub={`You can draw ${formatMicros(available)}`}
-          details={{
-            title: 'Borrowing headroom',
-            rows: [
-              { label: 'Idle vault USDC', value: formatMicros(cash) },
-              {
-                label: 'Your remaining credit',
-                value: formatMicros(credit > debt ? credit - debt : 0n),
-              },
-              { label: 'Available to you now', value: formatMicros(available) },
-            ],
-            note: 'Your draw is limited by both your credit and idle vault USDC.',
-          }}
-        />
-      </section>
-
       <section className="workspace-card" aria-label="Borrowing workspace">
         <Tabs<Tab>
           idBase="borrow"
@@ -335,16 +276,13 @@ export default function BorrowPage({
                 </span>
                 <div>
                   <h2 id="credit-title">USDC credit line</h2>
-                  <p>
-                    Pooled {market.name} vault · credit = example reward ×{' '}
-                    {SAMPLE_CREDIT_EPOCHS} epochs
-                  </p>
+                  <p>Credit = example reward × {SAMPLE_CREDIT_EPOCHS} epochs</p>
                 </div>
-                <span
-                  className={`pill ${utilization >= 80 ? 'warning' : 'muted'}`}
-                >
-                  {utilization.toFixed(1)}% utilized
-                </span>
+                {utilization >= 80 && (
+                  <span className="pill warning">
+                    Vault {utilization.toFixed(1)}% utilized
+                  </span>
+                )}
               </header>
               <div className="credit-body">
                 <Ring
@@ -355,21 +293,29 @@ export default function BorrowPage({
                 <dl className="credit-metrics">
                   <div>
                     <dt>Credit limit</dt>
-                    <dd>{formatMicros(credit)}</dd>
+                    <dd>
+                      <Money micros={credit} />
+                    </dd>
                   </div>
                   <div>
                     <dt>Borrowed</dt>
-                    <dd>{formatMicros(debt)}</dd>
+                    <dd>
+                      <Money micros={debt} />
+                    </dd>
                   </div>
                   <div>
                     <dt>Available to borrow</dt>
-                    <dd className="accent-text">{formatMicros(available)}</dd>
+                    <dd className="accent-text">
+                      <Money micros={available} />
+                    </dd>
                   </div>
                   <div>
                     <dt>
                       <Wallet size={13} aria-hidden="true" /> Demo balance
                     </dt>
-                    <dd>{formatMicros(wallet)}</dd>
+                    <dd>
+                      <Money micros={wallet} />
+                    </dd>
                   </div>
                 </dl>
               </div>
@@ -424,12 +370,10 @@ export default function BorrowPage({
                       : 'Deposit a position to open credit. Depositing alone never creates debt.'}
                   </p>
                 )}
-                <Meter
-                  value={creditUsed}
-                  label="Credit used"
-                  tone={creditUsed >= 85 ? 'warning' : 'accent'}
-                  size="thin"
-                />
+                <p className="credit-vault">
+                  <Landmark size={14} aria-hidden="true" /> {formatMicros(cash)}{' '}
+                  idle in the USDC vault · {utilization.toFixed(1)}% utilized
+                </p>
               </div>
             </section>
 
@@ -461,13 +405,8 @@ export default function BorrowPage({
                   ))}
                 </div>
               ) : (
-                <EmptyState
-                  icon={Layers3}
-                  title="Start with a position."
-                  compact
-                >
-                  Deposit a demo position below to open your illustrative credit
-                  limit.
+                <EmptyState icon={Layers3} title="No collateral yet." inline>
+                  Deposit a position from your wallet below to open credit.
                 </EmptyState>
               )}
             </section>
@@ -481,9 +420,7 @@ export default function BorrowPage({
                   <RefreshCcw size={17} aria-hidden="true" /> Reward relayer
                 </h3>
                 <span className="block-tools">
-                  <span className="text-muted">
-                    Automated reward collection · no borrowing
-                  </span>
+                  <span className="text-muted">Rewards without borrowing</span>
                   <button
                     type="button"
                     className="button ghost small"
@@ -511,11 +448,11 @@ export default function BorrowPage({
               ) : (
                 <EmptyState
                   icon={RefreshCcw}
-                  title="No positions in the relayer."
-                  compact
+                  title="Nothing in the relayer."
+                  inline
                 >
-                  Add a wallet position to collect its rewards every epoch
-                  without borrowing. You can take it back at any time.
+                  Add a wallet position to collect its rewards each epoch. You
+                  can take it back at any time.
                 </EmptyState>
               )}
             </section>
@@ -550,10 +487,10 @@ export default function BorrowPage({
                 <EmptyState
                   icon={Wallet}
                   title="Nothing idle in your wallet."
-                  compact
+                  inline
                 >
                   Every position is deposited, in the relayer or listed. Buy
-                  another position in the marketplace to grow your credit.
+                  another in the marketplace to grow your credit.
                 </EmptyState>
               )}
               {holdings.listed.length > 0 && (
@@ -564,12 +501,6 @@ export default function BorrowPage({
                 </p>
               )}
             </section>
-            <Notice>
-              Example credit uses a sample net reward history ×{' '}
-              {SAMPLE_CREDIT_EPOCHS} epochs. Borrowing is also limited by
-              available vault liquidity. This sample policy is not a live
-              valuation.
-            </Notice>
           </TabPanel>
         )}
         {tab === 'vote' && (

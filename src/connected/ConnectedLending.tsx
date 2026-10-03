@@ -13,7 +13,6 @@ import { useMinuteClock } from '../app/clock';
 import Dialog from '../components/Dialog';
 import { EmptyState, PageHead } from '../components/page';
 import { Notice } from '../components/ui/Bits';
-import StatCard from '../components/ui/StatCard';
 import { TabPanel, Tabs } from '../components/ui/Tabs';
 import { epochAt, formatFlip } from '../epoch';
 import type { Market } from '../markets';
@@ -61,28 +60,6 @@ export function ConnectedBorrow({
     <>
       <PageHead compact title={`Borrow against ${market.positionSymbol}`} />
       <LaunchNotice status={status} />
-      <section className="stat-grid null-stats" aria-label="Vault overview">
-        <StatCard
-          index={0}
-          label="Collateral credit limit"
-          value="—"
-          sub="Published at launch"
-        />
-        <StatCard
-          index={1}
-          tone="violet"
-          label="Outstanding debt"
-          value="—"
-          sub="No funded loans"
-        />
-        <StatCard
-          index={2}
-          tone="sky"
-          label="Available to borrow"
-          value="—"
-          sub="Vault not deployed"
-        />
-      </section>
       <section className="workspace-card" aria-label="Borrowing workspace">
         <Tabs<Tab>
           idBase="borrow"
@@ -108,7 +85,7 @@ export function ConnectedBorrow({
                 </span>
                 <div>
                   <h2 id="credit-title">USDC credit line</h2>
-                  <p>Pooled {market.name} vault · terms published at launch</p>
+                  <p>Terms are published at launch</p>
                 </div>
                 <span className="pill muted">Not launched</span>
               </header>

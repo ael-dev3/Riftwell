@@ -129,7 +129,6 @@ export default function SimulatorPage({ market }: { market: Market }) {
   return (
     <>
       <PageHead
-        eyebrow="REPAYMENT SIMULATOR"
         title="See how rewards repay credit"
         lede="Set a weekly reward, a credit policy and stress assumptions. The projection is arithmetic on your inputs, not a loan quote."
         actions={
@@ -328,10 +327,7 @@ export default function SimulatorPage({ market }: { market: Market }) {
                 <dd>{formatMicros(weeklyReward - appliedReward)}</dd>
               </div>
             </dl>
-            <p className="form-hint">
-              First epoch at your assumptions. Final revenue shares are set by
-              the deployed contracts.
-            </p>
+            <p className="form-hint">The first epoch at your assumptions.</p>
           </section>
           {result.principalMicros > 0n ? (
             <AreaChart

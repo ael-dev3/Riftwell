@@ -1,6 +1,8 @@
 import { ArrowRight, CircleUserRound, Info } from 'lucide-react';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useMinuteClock } from './app/clock';
+import { withLocalTransition } from './app/motion';
 import { preloadable, preloadWhenIdle } from './app/preloadable';
 import { useHashRoute, type Page } from './app/router';
 import { useShortcuts } from './app/shortcuts';
@@ -125,16 +127,36 @@ function PreviewApp() {
     store.listings,
     now,
   );
-  const [modal, setModal] = useState<Modal>(null);
+  const [modal, setModalState] = useState<Modal>(null);
   const toast = useToast();
   const searchRef = useRef<HTMLInputElement>(null);
   const accountRef = useRef<HTMLButtonElement>(null);
+
+  // Dialog and ledger changes run as one local view transition: a closing
+  // dialog leaves, the next one morphs in and moved positions glide into
+  // place, while the page itself holds still.
+  const commit = useCallback((update: () => void, after?: () => void) => {
+    withLocalTransition(() => {
+      flushSync(update);
+      after?.();
+    });
+  }, []);
+  const setModal = useCallback(
+    (next: Modal) => commit(() => setModalState(next)),
+    [commit],
+  );
+  // A closed dialog returns focus to its opener; if that is gone, to the
+  // account button rather than the page body.
+  const restoreFocus = () => {
+    if (document.activeElement === document.body) accountRef.current?.focus();
+  };
 
   useEffect(() => {
     document.documentElement.style.setProperty('--accent', market.accentColor);
   }, [market]);
   useEffect(() => preloadWhenIdle(DEFERRED), []);
-  useEffect(() => setModal(null), [route.page]);
+  // Page changes already animate; close any dialog without a second transition.
+  useEffect(() => setModalState(null), [route.page]);
 
   const go = useCallback(
     (page: Page) => navigate({ page, item: null }),
@@ -175,10 +197,7 @@ function PreviewApp() {
   });
 
   function closeModal() {
-    setModal(null);
-    requestAnimationFrame(() => {
-      if (document.activeElement === document.body) accountRef.current?.focus();
-    });
+    commit(() => setModalState(null), restoreFocus);
   }
 
   function applyLendingAction(
@@ -247,9 +266,12 @@ function PreviewApp() {
         case 'how':
           return null;
       }
-      store.setLending(next);
+      store.lendingRef.current = next;
+      commit(() => {
+        store.setLending(next);
+        setModalState(null);
+      }, restoreFocus);
       toast(`${activityLabel[action.kind]} in your local preview.`);
-      closeModal();
       return null;
     } catch (error) {
       return error instanceof LendingError
@@ -299,12 +321,19 @@ function PreviewApp() {
             ? purchaseIntoRelayer(current, asset.id, price, limits)
             : purchase(current, asset.id, price);
       const receipt = receiptFor(asset, destination);
-      store.setLending(next);
-      store.setPortfolio((portfolio) => ({
-        ...portfolio,
-        receipts: [...portfolio.receipts, receipt],
-      }));
-      setModal({ type: 'success', receipts: [receipt], assets: [asset] });
+      store.lendingRef.current = next;
+      commit(() => {
+        store.setLending(next);
+        store.setPortfolio((portfolio) => ({
+          ...portfolio,
+          receipts: [...portfolio.receipts, receipt],
+        }));
+        setModalState({
+          type: 'success',
+          receipts: [receipt],
+          assets: [asset],
+        });
+      });
       toast(
         destination === 'collateral'
           ? `${asset.name} bought and deposited in your preview.`
@@ -332,12 +361,15 @@ function PreviewApp() {
       for (const asset of assets)
         next = purchase(next, asset.id, priceMicros(asset.price).toString());
       const receipts = assets.map((asset) => receiptFor(asset, 'wallet'));
-      store.setLending(next);
-      store.setPortfolio((portfolio) => ({
-        ...portfolio,
-        receipts: [...portfolio.receipts, ...receipts],
-      }));
-      setModal({ type: 'success', receipts, assets: [...assets] });
+      store.lendingRef.current = next;
+      commit(() => {
+        store.setLending(next);
+        store.setPortfolio((portfolio) => ({
+          ...portfolio,
+          receipts: [...portfolio.receipts, ...receipts],
+        }));
+        setModalState({ type: 'success', receipts, assets: [...assets] });
+      });
       toast(`${assets.length} positions bought in your preview.`);
       return null;
     } catch (error) {
@@ -354,19 +386,20 @@ function PreviewApp() {
     buyer?: string;
   }): string | null {
     try {
-      store.setListings(
-        createListing(
-          store.listings,
-          draft,
-          holdings.wallet.map((asset) => asset.id),
-        ),
+      const book = createListing(
+        store.listings,
+        draft,
+        holdings.wallet.map((asset) => asset.id),
       );
+      commit(() => {
+        store.setListings(book);
+        setModalState(null);
+      }, restoreFocus);
       toast(
         draft.buyer
           ? 'Private listing saved in your preview.'
           : 'Listing saved in your preview.',
       );
-      closeModal();
       return null;
     } catch (error) {
       return error instanceof ListingError
@@ -376,8 +409,9 @@ function PreviewApp() {
   }
 
   function cancel(listing: PreviewListing) {
+    let book = store.listings;
     try {
-      store.setListings(cancelListing(store.listings, listing.id));
+      book = cancelListing(store.listings, listing.id);
       toast('Listing cancelled. The position is back in your wallet.', 'info');
     } catch (error) {
       toast(
@@ -387,8 +421,12 @@ function PreviewApp() {
         'warning',
       );
     }
+    // Leave the listing's details first, so they never reappear beneath.
     if (detailItem) closeDetails();
-    closeModal();
+    commit(() => {
+      store.setListings(book);
+      setModalState(null);
+    }, restoreFocus);
   }
 
   function saveVotes(plan: VotePlan) {

@@ -19,8 +19,9 @@ import {
   type MouseEvent,
   type ReactNode,
 } from 'react';
+import { flushSync } from 'react-dom';
 import { useMinuteClock } from '../../app/clock';
-import { scrollBehavior } from '../../app/motion';
+import { scrollBehavior, withLocalTransition } from '../../app/motion';
 import {
   PAGE_LABELS,
   PRIMARY_PAGES,
@@ -266,7 +267,9 @@ function EpochStatus() {
       title={`Flips ${formatFlip(clock.endMs)}`}
     >
       <Clock3 size={15} aria-hidden="true" />
-      <span className="epoch-name">Epoch {clock.period}</span>
+      <span className="epoch-name" aria-hidden="true">
+        Epoch {clock.period}
+      </span>
       <span className="epoch-time" aria-hidden="true">
         {formatCountdown(clock.remainingMs)}
       </span>
@@ -275,12 +278,9 @@ function EpochStatus() {
         label={`Epoch ${clock.period} progress`}
         size="thin"
       />
-      <span className="epoch-flip" aria-hidden="true">
-        Flips {formatFlip(clock.endMs)}
-      </span>
       <span className="sr-only">
-        Next flip in {describeCountdown(clock.remainingMs)}, on{' '}
-        {formatFlip(clock.endMs)}.
+        Epoch {clock.period}. Next flip in{' '}
+        {describeCountdown(clock.remainingMs)}, on {formatFlip(clock.endMs)}.
       </span>
     </div>
   );
@@ -407,7 +407,6 @@ export default function AppShell({
   children,
 }: ShellProps) {
   const [menu, setMenu] = useState(false);
-  const pageLabel = PAGE_LABELS[route.page];
   return (
     <div className="app" data-market={market.id} data-mode={mode}>
       <a
@@ -462,11 +461,7 @@ export default function AppShell({
       </header>
       <div className="context-bar">
         <div className="context-inner">
-          <nav className="crumbs" aria-label="Breadcrumb">
-            <span className="crumb">{pageLabel}</span>
-            <span className="crumb-sep" aria-hidden="true">
-              /
-            </span>
+          <div className="crumbs" role="group" aria-label="Market">
             <span className="chain-chip">
               <span className="chain-dot" aria-hidden="true" />
               {market.chain}
@@ -475,7 +470,7 @@ export default function AppShell({
               /
             </span>
             <MarketSelector market={market} onChange={onMarketChange} />
-          </nav>
+          </div>
           <EpochStatus />
           <button type="button" className="status-pill" onClick={onAbout}>
             <span className="status-dot" aria-hidden="true" />
@@ -573,7 +568,9 @@ export default function AppShell({
           onNavigate={onNavigate}
           onAbout={onAbout}
           onShortcuts={onShortcuts}
-          onClose={() => setMenu(false)}
+          onClose={() =>
+            withLocalTransition(() => flushSync(() => setMenu(false)))
+          }
           mode={mode}
         />
       )}

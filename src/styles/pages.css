@@ -216,6 +216,14 @@
   color: var(--text);
 }
 
+.credit-vault {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+
 .positions-block {
   display: grid;
   gap: 10px;
@@ -238,12 +246,23 @@
   transition:
     border-color var(--t-fast) ease,
     transform var(--t) var(--ease);
-  animation: rise 420ms var(--ease) both;
+  view-transition-class: position-row;
 }
 
 .position-row:hover {
   border-color: var(--line-2);
   background: var(--surface-2);
+}
+
+/* Positions glide between sections during in-page transitions only; a page
+   change cross-fades them with the rest of the page. */
+:root[data-transition='local'] .position-row {
+  view-transition-name: var(--vt-name);
+}
+
+::view-transition-group(*.position-row) {
+  animation-duration: 440ms;
+  animation-timing-function: var(--ease);
 }
 
 .position-main {
@@ -409,103 +428,7 @@
   box-shadow: inset 0 0 0 2px var(--accent-ink);
 }
 
-/* ---------- Promo banner ---------- */
-.promo-banner {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 18px;
-  font-size: 14px;
-  font-weight: 600;
-  background: linear-gradient(
-    90deg,
-    var(--surface),
-    color-mix(in oklab, var(--violet) 11%, var(--surface))
-  );
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  transition: border-color var(--t) ease;
-}
-
-.promo-banner:hover {
-  border-color: var(--line-2);
-}
-
-.promo-icon {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  color: var(--accent-ink);
-  background: var(--accent-soft);
-  border-radius: 10px;
-}
-
-.promo-text {
-  flex: 1;
-}
-
-.promo-arrow {
-  color: var(--text-2);
-  transition: transform var(--t) var(--ease);
-}
-
-.promo-banner:hover .promo-arrow {
-  transform: translateX(4px);
-}
-
 /* ---------- Earn ---------- */
-.earn-hero {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 26px 28px;
-  background:
-    radial-gradient(
-      70% 140% at 0% 0%,
-      color-mix(in oklab, var(--accent) 10%, transparent),
-      transparent 60%
-    ),
-    radial-gradient(
-      60% 120% at 100% 100%,
-      color-mix(in oklab, var(--violet) 10%, transparent),
-      transparent 60%
-    ),
-    var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-xl);
-  animation: rise 520ms var(--ease) both;
-}
-
-.earn-hero h2 {
-  margin: 8px 0 14px;
-  font-size: clamp(22px, 2.6vw, 30px);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-}
-
-.hero-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.hero-chips li {
-  padding: 5px 11px;
-  font-size: 12.5px;
-  font-weight: 620;
-  color: var(--text-2);
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-}
-
 .vault-card {
   animation: rise 560ms var(--ease) 80ms both;
 }
@@ -527,7 +450,9 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 6px;
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--text-2);
 }
 
 .badge-inline {
@@ -622,12 +547,6 @@
   flex-wrap: wrap;
   gap: 8px;
   margin-left: auto;
-}
-
-.earn-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
 }
 
 .vault-details .detail-section {
@@ -809,7 +728,8 @@
   opacity: 0;
 }
 
-.results-count {
+.results-count,
+.table-note {
   font-size: 12.5px;
   color: var(--text-3);
 }
@@ -1122,37 +1042,6 @@
 .mini-toggle button[aria-pressed='true'] {
   color: var(--text);
   background: var(--surface-3);
-}
-
-.history-feed {
-  display: grid;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.history-feed li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 0;
-  font-size: 13.5px;
-  border-bottom: 1px solid var(--line);
-}
-
-.history-feed li:last-child {
-  border-bottom: 0;
-}
-
-.history-feed span {
-  display: grid;
-  gap: 2px;
-}
-
-.history-feed small {
-  font-size: 12px;
-  color: var(--text-3);
 }
 
 /* Position details dialog */
@@ -1473,39 +1362,11 @@
 
 @media (max-width: 900px) {
   .stat-grid {
-    position: relative;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .stat-grid:has([aria-expanded='true']) {
-    z-index: 20;
-  }
-
-  .stat-grid .stat-card,
-  .stat-grid .stat-popover {
-    position: static;
-  }
-
-  /* Narrow cards share one anchored details panel below the strip. */
-  .stat-grid .stat-card {
-    animation: none;
   }
 
   .stat-grid .stat-card::before {
     display: none;
-  }
-
-  .stat-grid .stat-top {
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-
-  .stat-grid .stat-popover > .popover {
-    right: 0;
-    left: 0;
-    width: 100%;
-    min-width: 0;
-    max-width: none;
   }
 
   .stat-grid > :last-child {
@@ -1532,8 +1393,7 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .sim-layout,
-  .earn-grid {
+  .sim-layout {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -1828,14 +1688,6 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .earn-hero {
-    padding: 20px;
-  }
-
-  .earn-hero .button {
-    width: 100%;
-  }
-
   .collection-stats {
     width: 100%;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1846,12 +1698,45 @@
     border-left: 0;
   }
 
-  .collection-actions {
-    width: 100%;
+  /* Units wrap under their figure instead of running into the next column. */
+  .collection-stats dd {
+    white-space: normal;
   }
 
-  .collection-actions .button {
-    flex: 1;
+  /* The listing action shares the collection's row, so listings start
+     higher; the figures follow beneath. */
+  .collection-id {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .collection-stats {
+    order: 1;
+  }
+
+  .collection-actions .label-long {
+    display: none;
+  }
+
+  /* Lock terms scroll sideways in one row rather than wrapping. */
+  .listings-toolbar .chip-row {
+    flex-wrap: nowrap;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .listings-toolbar .chip-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .listings-toolbar .chip-toggle {
+    flex: none;
+  }
+
+  .sweep-range .range {
+    width: 88px;
   }
 
   .vote-table tr {
@@ -1864,6 +1749,15 @@
 
   .skeleton-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* The smallest phones still fit four tabs without clipping a label. */
+@media (max-width: 360px) {
+  .tablist.band .tab {
+    gap: 6px;
+    padding: 0 7px;
+    font-size: 12.5px;
   }
 }
 

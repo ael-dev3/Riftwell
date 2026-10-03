@@ -290,6 +290,35 @@ textarea:focus-visible {
   animation: 320ms var(--ease) both vt-in;
 }
 
+/* In-page transitions (dialogs, moving positions) keep the page still, so
+   only the elements that change animate. */
+:root[data-transition='local']::view-transition-old(root),
+:root[data-transition='local']::view-transition-new(root) {
+  animation: none;
+}
+
+/* The header and context bar stay put while the page beneath them changes. */
+.site-header {
+  view-transition-name: site-header;
+}
+
+.context-bar {
+  view-transition-name: context-bar;
+}
+
+::view-transition-group(site-header),
+::view-transition-group(context-bar),
+::view-transition-new(site-header),
+::view-transition-new(context-bar) {
+  animation: none;
+}
+
+::view-transition-old(site-header),
+::view-transition-old(context-bar) {
+  animation: none;
+  opacity: 0;
+}
+
 @keyframes vt-out {
   to {
     opacity: 0;

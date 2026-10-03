@@ -199,7 +199,6 @@ export default function FaqPage({
   return (
     <>
       <PageHead
-        eyebrow="FREQUENTLY ASKED"
         title="Questions, answered"
         lede="How credit, rewards, the vault and the marketplace fit together."
       />

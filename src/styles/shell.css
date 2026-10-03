@@ -182,10 +182,6 @@
   font-size: 13px;
 }
 
-.crumb {
-  font-weight: 650;
-}
-
 .crumb-sep {
   color: var(--text-3);
 }
@@ -224,9 +220,35 @@
   transition: border-color var(--t-fast) ease;
 }
 
-.market-selector:hover,
+.market-selector:not(.static):hover,
 .market-selector:focus-within {
   border-color: var(--accent-line);
+}
+
+.market-selector.static {
+  padding-right: 11px;
+  border-color: var(--line);
+}
+
+.market-name {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+/* The smallest phones show the market's logo alone. */
+@media (max-width: 360px) {
+  .market-selector.static {
+    padding-right: 4px;
+  }
+
+  .market-selector.static .market-name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
 }
 
 .market-logo {
@@ -296,10 +318,6 @@
 
 .epoch .meter {
   width: 92px;
-}
-
-.epoch-flip {
-  color: var(--text-3);
 }
 
 .status-pill {
@@ -400,20 +418,6 @@
   gap: 10px;
 }
 
-.page-note {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 12.5px;
-  line-height: 1.55;
-  color: var(--text-3);
-}
-
-.page-note svg {
-  flex: none;
-  margin-top: 2px;
-}
-
 /* ---------- Footer ---------- */
 .site-footer {
   margin-top: 12px;
@@ -491,12 +495,6 @@
 }
 
 /* ---------- Responsive shell ---------- */
-@media (max-width: 1100px) {
-  .epoch-flip {
-    display: none;
-  }
-}
-
 @media (max-width: 880px) {
   .primary-nav,
   .resources {
@@ -525,91 +523,23 @@
   }
 
   .context-inner {
-    gap: 12px;
+    gap: 8px;
   }
 
   .epoch {
-    padding-left: 12px;
+    padding-left: 8px;
   }
 
+  /* Phones keep the market, the countdown and the preview status in view;
+     the epoch number stays in the countdown's accessible description. */
   .epoch .meter,
-  .crumb,
-  .crumb + .crumb-sep {
+  .epoch-name,
+  .chain-chip,
+  .chain-chip + .crumb-sep {
     display: none;
   }
 
   .page {
     padding-top: 14px;
-  }
-}
-
-/* ---------- Updates ticker ---------- */
-.ticker {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: 8px;
-  padding-left: 18px;
-  font-size: 12.5px;
-  border-left: 1px solid var(--line);
-}
-
-.ticker-title {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  max-width: 260px;
-  overflow: hidden;
-  font-weight: 600;
-  color: var(--text-2);
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  border-radius: 4px;
-  animation: fade 260ms var(--ease) both;
-}
-
-a.ticker-title:hover {
-  color: var(--text);
-}
-
-.ticker-dots {
-  display: inline-flex;
-}
-
-/* Each dot keeps a full 24px target even though it draws small. */
-.ticker-dot {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-}
-
-.ticker-dot::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  background: var(--line-3);
-  border-radius: 999px;
-  transition:
-    width var(--t) var(--ease),
-    background-color var(--t-fast) ease;
-}
-
-.ticker-dot[aria-pressed='true']::before {
-  width: 14px;
-  background: var(--accent-ink);
-}
-
-/* The ticker and the absolute flip time do not both fit; the countdown stays. */
-@media (min-width: 1281px) {
-  .epoch-flip {
-    display: none;
-  }
-}
-
-@media (max-width: 1280px) {
-  .ticker {
-    display: none;
   }
 }

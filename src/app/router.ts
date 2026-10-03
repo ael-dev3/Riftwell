@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
-import { withViewTransition } from './motion';
+import { withLocalTransition, withViewTransition } from './motion';
 
 export type Page =
   | 'borrow'
@@ -82,7 +82,9 @@ export function useHashRoute(fallback: Page = 'borrow') {
         window.history.replaceState(null, '', routeHash(next));
       // popstate and hashchange can both fire for one traversal.
       if (routeHash(next) === routeHash(route)) return;
-      withViewTransition(() => flushSync(() => setRoute(next)));
+      (next.page === route.page ? withLocalTransition : withViewTransition)(
+        () => flushSync(() => setRoute(next)),
+      );
     };
     window.addEventListener('hashchange', sync);
     window.addEventListener('popstate', sync);
@@ -94,6 +96,8 @@ export function useHashRoute(fallback: Page = 'borrow') {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [route]);
 
+  const current = useRef(route);
+  current.current = route;
   const navigate = useCallback(
     (next: Route, mode: 'push' | 'replace' = 'push') => {
       const hash = routeHash(next);
@@ -101,11 +105,18 @@ export function useHashRoute(fallback: Page = 'borrow') {
         if (mode === 'push') window.history.pushState(null, '', hash);
         else window.history.replaceState(null, '', hash);
       }
-      // Deep-link normalization can navigate from an effect. Defer the
-      // synchronous transition until React has finished that lifecycle.
+      // Deep-link normalization can navigate from an effect, so the
+      // synchronous transition waits until React has finished that
+      // lifecycle. A new page cross-fades in from the top; opening a listing
+      // on the same page keeps the page still and its scroll position. Back
+      // and forward restore scroll natively.
       queueMicrotask(() => {
-        if (window.location.hash === hash)
-          withViewTransition(() => flushSync(() => setRoute(next)));
+        if (window.location.hash !== hash) return;
+        const newPage = next.page !== current.current.page;
+        (newPage ? withViewTransition : withLocalTransition)(() => {
+          flushSync(() => setRoute(next));
+          if (newPage) window.scrollTo({ top: 0, behavior: 'instant' });
+        });
       });
     },
     [],
