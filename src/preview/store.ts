@@ -138,6 +138,30 @@ export function usePreviewStore() {
     }
   }, [portfolio, lending, listings, votes, initial.readIssue]);
 
+  // Another tab saved this preview: adopt its state, so a stale copy here can
+  // never overwrite that tab's changes on the next save.
+  useEffect(() => {
+    const keys = [
+      STORAGE_KEY,
+      LEGACY_STORAGE_KEY,
+      LENDING_STORAGE_KEY,
+      LISTINGS_STORAGE_KEY,
+      VOTE_STORAGE_KEY,
+      MARKETPLACE_STORAGE_KEY,
+    ];
+    const adopt = (event: StorageEvent) => {
+      if (event.key !== null && !keys.includes(event.key)) return;
+      const next = load();
+      setPortfolio(next.portfolio);
+      lendingRef.current = next.lending;
+      setLendingState(next.lending);
+      setListings(next.listings);
+      setVotes(next.votes);
+    };
+    window.addEventListener('storage', adopt);
+    return () => window.removeEventListener('storage', adopt);
+  }, []);
+
   /** Commit a ledger state synchronously so chained actions read the latest. */
   function setLending(next: LendingState) {
     lendingRef.current = next;

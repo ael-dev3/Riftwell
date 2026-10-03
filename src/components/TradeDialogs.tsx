@@ -28,6 +28,7 @@ import {
   marketplaceFee,
   marketplaceProceeds,
   microsToDecimal,
+  normalizeAmountInput,
   parseUSDCMicros,
   priceMicros,
   type Asset,
@@ -195,7 +196,7 @@ export function BuyDialog({ asset, lending, onClose, onBuy }: BuyProps) {
   );
   const [error, setError] = useState('');
   const borrowRef = useRef<HTMLInputElement>(null);
-  const parsed = parseUSDCMicros(borrow);
+  const parsed = parseUSDCMicros(normalizeAmountInput(borrow));
   const borrowMicros =
     destination === 'collateral' && parsed !== null && parsed <= borrowCap
       ? parsed
@@ -214,7 +215,7 @@ export function BuyDialog({ asset, lending, onClose, onBuy }: BuyProps) {
     ) {
       setError(
         parsed === null
-          ? 'Use a plain decimal amount with up to six decimal places.'
+          ? 'Enter a number such as 250 or 250.50, with up to six decimal places and no commas.'
           : `Borrow up to ${formatMicros(borrowCap)} against this purchase.`,
       );
       borrowRef.current?.focus();
@@ -542,13 +543,14 @@ export function SellDialog({
   const [expiryDays, setExpiryDays] = useState<number>(7);
   const [error, setError] = useState('');
   const priceRef = useRef<HTMLInputElement>(null);
-  const micros = parseUSDCMicros(price);
+  const amount = normalizeAmountInput(price);
+  const micros = parseUSDCMicros(amount);
   const fee = micros === null ? 0n : (micros * 5n) / 1000n;
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const issue = selected
-      ? listingPriceError(price)
+      ? listingPriceError(amount)
       : 'Choose a position to list.';
     if (issue) {
       setError(issue);
@@ -567,7 +569,7 @@ export function SellDialog({
     }
     const result = onList({
       assetId,
-      price,
+      price: amount,
       expiryDays,
       ...(visibility === 'private' ? { buyer } : {}),
     });
@@ -641,8 +643,8 @@ export function SellDialog({
                   <p className="form-hint" id="sell-price-hint">
                     {selected
                       ? `Reference value ${formatAmount(selected.referenceValue)} · ${
-                          micros !== null && listingPriceError(price) === null
-                            ? `${formatBps(discountBps({ price: Number(price), referenceValue: selected.referenceValue }))} discount`
+                          micros !== null && listingPriceError(amount) === null
+                            ? `${formatBps(discountBps({ price: Number(amount), referenceValue: selected.referenceValue }))} discount`
                             : 'enter an ask from 1 to 1,000,000 USDC'
                         }`
                       : ''}

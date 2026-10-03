@@ -1,11 +1,14 @@
 import { assetById } from './data';
 import { discountBps, priceMicros, type PurchaseReceipt } from './domain';
 import { EPOCH_SECONDS, epochAt } from './epoch';
+import { SAMPLE_SHIFT_MS } from './sample-time';
 
 // Market history for the preview: a fixed set of SAMPLE sales (fictional
 // positions, dates and prices, never live data) plus the purchases saved in
-// this browser. Every sample reference value uses the same illustrative rate
-// as the listings: 0.1 USDC per KITTEN.
+// this browser. Sample dates move forward with the calendar like the sample
+// positions, so the 7- and 30-day views never run empty. Every sample
+// reference value uses the same illustrative rate as the listings: 0.1 USDC
+// per KITTEN.
 
 export type Sale = {
   id: string;
@@ -102,10 +105,14 @@ export function receiptSales(receipts: readonly PurchaseReceipt[]): Sale[] {
 }
 
 /** Sample and preview sales, newest first. */
-export function marketSales(receipts: readonly PurchaseReceipt[]): Sale[] {
-  return [...SAMPLE_SALES, ...receiptSales(receipts)].sort(
-    (a, b) => b.soldAt - a.soldAt,
-  );
+export function marketSales(
+  receipts: readonly PurchaseReceipt[],
+  shift = SAMPLE_SHIFT_MS,
+): Sale[] {
+  return [
+    ...SAMPLE_SALES.map((sale) => ({ ...sale, soldAt: sale.soldAt + shift })),
+    ...receiptSales(receipts),
+  ].sort((a, b) => b.soldAt - a.soldAt);
 }
 
 const dayStart = (ms: number) => Math.floor(ms / DAY_MS) * DAY_MS;

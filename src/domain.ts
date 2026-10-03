@@ -36,6 +36,29 @@ export function parseUSDCMicros(value: string): bigint | null {
   return BigInt(whole) * USDC_SCALE + BigInt(fraction.padEnd(6, '0'));
 }
 
+/**
+ * Forgive harmless typing differences in amount fields (surrounding spaces,
+ * ".5", "5.") before exact parsing. Stored values stay strictly validated.
+ */
+export function normalizeAmountInput(value: string): string {
+  const text = value.trim();
+  if (/^\.\d+$/.test(text)) return `0${text}`;
+  if (/^\d+\.$/.test(text)) return text.slice(0, -1);
+  return text;
+}
+
+/**
+ * Whole token units of at most nine digits. Commas count only as thousands
+ * separators ("5,000"), so a decimal comma such as "1,5" is rejected rather
+ * than read as 15.
+ */
+export function parseTokenUnits(value: string): bigint | null {
+  const text = value.trim();
+  if (!/^(?:\d+|\d{1,3}(?:,\d{3})+)$/.test(text)) return null;
+  const plain = text.replaceAll(',', '');
+  return /^[1-9][0-9]{0,8}$/.test(plain) ? BigInt(plain) : null;
+}
+
 /** Convert exact micro amounts to a number only at the bounded sample UI boundary. */
 export const roundAmount = (micros: bigint): number =>
   Number(micros) / Number(USDC_SCALE);

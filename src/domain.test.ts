@@ -10,7 +10,9 @@ import {
   marketplaceFee,
   marketplaceProceeds,
   microsToDecimal,
+  normalizeAmountInput,
   parsePortfolio,
+  parseTokenUnits,
   parseUSDCMicros,
 } from './domain';
 
@@ -45,6 +47,29 @@ describe('exact USDC amounts and marketplace fees', () => {
     ])
       expect(parseUSDCMicros(amount)).toBeNull();
     expect(parseUSDCMicros('1.123456')).toBe(1123456n);
+  });
+  it('forgives harmless typing in amount fields, and nothing else', () => {
+    expect(normalizeAmountInput(' 10 ')).toBe('10');
+    expect(normalizeAmountInput('.5')).toBe('0.5');
+    expect(normalizeAmountInput('1.')).toBe('1');
+    expect(parseUSDCMicros(normalizeAmountInput(' .25 '))).toBe(250000n);
+    for (const typed of ['1,000', '1 000', '1e3', '-1', '1.2.3', '.', ''])
+      expect(parseUSDCMicros(normalizeAmountInput(typed))).toBeNull();
+  });
+  it('reads whole token units with real thousands separators only', () => {
+    expect(parseTokenUnits('5000')).toBe(5000n);
+    expect(parseTokenUnits(' 5,000 ')).toBe(5000n);
+    expect(parseTokenUnits('1,234,567')).toBe(1234567n);
+    for (const typed of [
+      '1,5',
+      '12,34',
+      '0',
+      '1.5',
+      '-5',
+      '5,0000',
+      '1234567890',
+    ])
+      expect(parseTokenUnits(typed)).toBeNull();
   });
   it('formats exact values without losing the last micro', () => {
     expect(formatMicros('123456789012345678')).toBe(

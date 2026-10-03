@@ -138,7 +138,7 @@ export function buyerError(buyer: string): string | null {
 export function listingPriceError(price: string): string | null {
   const micros = parseUSDCMicros(price);
   if (micros === null)
-    return 'Use a plain decimal amount with up to six decimal places.';
+    return 'Enter a number such as 250 or 250.50, with up to six decimal places and no commas.';
   if (micros < MIN_LISTING_MICROS || micros > MAX_LISTING_MICROS)
     return 'Enter an ask from 1 to 1,000,000 USDC.';
   return null;

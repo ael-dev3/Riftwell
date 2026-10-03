@@ -14,6 +14,7 @@ import {
   formatBalance,
   formatDate,
   formatMicros,
+  normalizeAmountInput,
   parseUSDCMicros,
   roundAmount,
 } from '../domain';
@@ -87,7 +88,7 @@ export default function SimulatorPage({ market }: { market: Market }) {
   const [borrowPct, setBorrowPct] = useState(DEFAULTS.borrowPct);
   const [share, setShare] = useState(DEFAULTS.share);
   const [change, setChange] = useState(DEFAULTS.change);
-  const rewardMicros = parseUSDCMicros(reward);
+  const rewardMicros = parseUSDCMicros(normalizeAmountInput(reward));
   const rewardValid =
     rewardMicros !== null && rewardMicros <= 1_000_000_000_000n;
   const credit = rewardValid ? rewardMicros * BigInt(epochs) : 0n;

@@ -1,9 +1,12 @@
 import type { Asset, AssetCategory } from './domain';
 import type { CollateralLimits, LendingState } from './lending';
 import { DEFAULT_MARKET } from './markets';
+import { sampleDate } from './sample-time';
 
 // Fictional veKITTEN positions with illustrative KITTEN balances, not live listings.
 // Stable preview IDs preserve existing local receipts and collateral across releases.
+// Unlock dates are written as of 2 October 2026 and move forward with the
+// calendar (see sample-time.ts), so sample locks never expire unnoticed.
 // USDC prices and reference values are illustrative, with no price feed:
 // every reference value uses the same sample rate of 0.1 USDC per KITTEN.
 type Sample = {
@@ -24,6 +27,7 @@ const sample = (entry: Sample, index: number): Asset => ({
   underlyingSymbol: DEFAULT_MARKET.tokenSymbol,
   artwork: `${import.meta.env.BASE_URL}artwork-${index % 6}.svg`,
   referenceValue: entry.underlyingBalance / 10,
+  unlockDate: sampleDate(entry.unlockDate),
   positionId: entry.id.slice(5),
 });
 
