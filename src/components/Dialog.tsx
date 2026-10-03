@@ -8,6 +8,9 @@ type Props = {
   children: ReactNode;
   onClose: () => void;
   wide?: boolean;
+  /** Slide in from the side as a navigation sheet. */
+  sheet?: boolean;
+  className?: string;
 };
 const focusableSelector =
   'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])';
@@ -18,6 +21,8 @@ export default function Dialog({
   children,
   onClose,
   wide = false,
+  sheet = false,
+  className = '',
 }: Props) {
   const headingId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -85,14 +90,14 @@ export default function Dialog({
 
   return createPortal(
     <div
-      className="dialog-backdrop"
+      className={`dialog-backdrop${sheet ? ' sheet' : ''}`}
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
       <div
         ref={panelRef}
-        className={`dialog-panel${wide ? ' wide' : ''}`}
+        className={`dialog-panel${wide ? ' wide' : ''}${sheet ? ' sheet' : ''}${className ? ` ${className}` : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={headingId}

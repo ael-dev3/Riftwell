@@ -11,6 +11,10 @@ Riftwell’s intended lending product uses a shared USDC vault and collateral-ba
 5. Process collateral revenue under the selected strategy. Reward proceeds can reduce debt and pay agreed lender compensation. Manual partial or full repayment is separate from automatic repayment.
 6. Remove collateral only when the remaining portfolio satisfies the configured credit requirements. Individual collateral release rules must come from the actual protocol.
 
+A position can instead be added to a reward relayer: its rewards are collected each epoch and paid to the owner, with no credit line. The owner can route a share of those rewards to repay credit-line debt after collateral rewards have been applied; the rest is paid out. A relayer position cannot back a loan or be listed until it is withdrawn. Any automation charge is configured at launch, and simulated relayer amounts are net of it.
+
+Deposited collateral can grow without new debt. Merging folds a wallet position into a deposited one: the locked balances add up, the later unlock date applies and the wallet position no longer exists on its own. Increasing a lock adds tokens from the wallet without changing the unlock date. Both raise the position’s example reward and credit; debt is unchanged, and a merge cannot be undone.
+
 The seven-day epoch is a reward cycle, not a loan duration. Reward amounts vary. Lower rewards slow repayment; no rewards means no automatic repayment. Any payoff estimate must name its reward and deduction assumptions and must not be presented as a maturity date.
 
 ## Lend

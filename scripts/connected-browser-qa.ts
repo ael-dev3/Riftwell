@@ -43,6 +43,7 @@ async function actor(wallet: HDNodeWallet) {
   assert.ok(browser, 'QA browser must be initialized before creating an actor');
   const context = await browser.newContext({
     viewport: { width: 1440, height: 1000 },
+    reducedMotion: 'reduce',
   });
   await context.exposeBinding(
     'fixtureWalletRequest',
@@ -107,7 +108,7 @@ async function actor(wallet: HDNodeWallet) {
     )
       externalRequests.push(request.url());
   });
-  await page.goto(base, { waitUntil: 'networkidle' });
+  await page.goto(`${base}/#marketplace`, { waitUntil: 'networkidle' });
   return { context, page };
 }
 const dialog = (page: Page) => page.getByRole('dialog');
@@ -140,6 +141,27 @@ async function askMicros(row: Locator) {
     BigInt(fraction.padEnd(6, '0'))
   );
 }
+
+async function go(page: Page, name: string, title: string) {
+  await page
+    .getByRole('navigation', { name: 'Main navigation' })
+    .getByRole('link', { name, exact: true })
+    .click();
+  await page
+    .getByRole('heading', { level: 1, name: title, exact: true })
+    .waitFor();
+}
+const heading = (page: Page, name: string) =>
+  page.getByRole('heading', { level: 1, name, exact: true });
+const fits = (page: Page) =>
+  page.evaluate(
+    () =>
+      document.documentElement.scrollWidth <=
+      document.documentElement.clientWidth,
+  );
+const dashes = async (locator: Locator) =>
+  (await locator.allTextContents()).every((text) => text.trim() === '—');
+
 async function close(page: Page) {
   await page.keyboard.press('Escape');
   await dialog(page).waitFor({ state: 'hidden' });
@@ -149,9 +171,18 @@ async function signin(page: Page) {
   await page
     .getByRole('button', { name: 'Sign in with wallet', exact: true })
     .click();
-  await page
-    .getByRole('heading', { name: 'Your account', exact: true })
-    .waitFor();
+  try {
+    await page
+      .getByRole('heading', { name: 'Your account', exact: true })
+      .waitFor();
+  } catch (error) {
+    await page.screenshot({
+      path: new URL('connected-failure.png', output).pathname,
+    });
+    throw new Error(`Sign-in failed: ${await dialog(page).innerText()}`, {
+      cause: error,
+    });
+  }
   await dialog(page)
     .getByRole('button', { name: 'Refresh account' })
     .waitFor({ state: 'visible' });
@@ -180,7 +211,10 @@ async function audit(page: Page, name: string) {
       document
         .getAnimations()
         .filter(
-          (animation) => animation.effect?.getTiming().iterations !== Infinity,
+          (animation) =>
+            animation.playState === 'running' &&
+            animation.effect?.getTiming().iterations !== Infinity &&
+            Number(animation.effect?.getTiming().duration) <= 1500,
         )
         .map((animation) => animation.finished.catch(() => {})),
     );
@@ -313,7 +347,9 @@ try {
   check(
     'Owned-position dialog fits at 320px',
     await page.evaluate(
-      () => document.documentElement.scrollWidth === innerWidth,
+      () =>
+        document.documentElement.scrollWidth <=
+        document.documentElement.clientWidth,
     ),
   );
   await audit(page, 'connected account mobile');
@@ -520,7 +556,9 @@ try {
   check(
     'Loaded marketplace rows fit at 320px',
     await page.evaluate(
-      () => document.documentElement.scrollWidth === innerWidth,
+      () =>
+        document.documentElement.scrollWidth <=
+        document.documentElement.clientWidth,
     ),
   );
   await audit(page, 'connected loaded marketplace mobile');
@@ -581,7 +619,7 @@ try {
       .isVisible(),
   );
   await dialog(lender.page)
-    .getByRole('button', { name: 'Previous records', exact: true })
+    .getByRole('tab', { name: /^Previous records/ })
     .click();
   check(
     'The original lender retains a cancellation control for their historical unfunded offer',
@@ -838,7 +876,10 @@ try {
     'Owner cancels their reserved Dutch intent without moving assets',
     (await cancelDutchResponse).ok(),
   );
-  await dialog(page).waitFor({ state: 'hidden' });
+  await dialog(page)
+    .getByRole('heading', { name: 'Your account', exact: true })
+    .waitFor();
+  await close(page);
   await marketRow(page, '102').waitFor({ state: 'hidden' });
   await page.getByRole('button', { name: 'History', exact: true }).click();
   await marketRow(page, '102')
@@ -893,22 +934,17 @@ try {
         )
         .get(dutchListing.id)?.status === 'cancelled',
   );
-  await page
-    .getByRole('navigation', { name: 'Main navigation' })
-    .getByRole('button', { name: 'Lending', exact: true })
-    .click();
-  await page
-    .getByRole('heading', { name: 'Let your position work.', exact: true })
-    .waitFor();
+  await go(page, 'Borrow', 'Borrow against veKITTEN');
+  await page.locator('main .wallet-position').first().waitFor();
   check(
     'Borrowing credit, debt and available cash remain unknown before launch',
     (await page
       .getByText('Lending has not launched yet.', { exact: false })
       .isVisible()) &&
-      (await page.locator('main .pooled-summary dd').count()) === 3 &&
-      (await page.locator('main .pooled-summary dd').allTextContents()).every(
-        (text) => text.trim() === '—',
-      ) &&
+      (await page.locator('main .stat-grid .stat-value').count()) === 3 &&
+      (await dashes(page.locator('main .stat-grid .stat-value'))) &&
+      (await page.locator('main .credit-metrics dd').count()) === 4 &&
+      (await dashes(page.locator('main .credit-metrics dd'))) &&
       (await page
         .getByRole('button', { name: 'Borrow USDC', exact: true })
         .isDisabled()) &&
@@ -918,11 +954,19 @@ try {
   );
   check(
     'Wallet ownership is shown without claiming collateral was deposited',
-    (await page.locator('main .pooled-position').count()) === 2 &&
+    (await page.locator('main .wallet-position').count()) === 2 &&
       (await page
         .getByText('In your wallet · not deposited', { exact: true })
         .count()) === 2,
   );
+  check(
+    'The reward relayer waits for the lending launch',
+    (await page.getByRole('heading', { name: 'Reward relayer' }).isVisible()) &&
+      (await page.locator('main').innerText()).includes(
+        'The relayer launches with the lending contracts',
+      ),
+  );
+  await audit(page, 'connected borrow positions');
   await page
     .getByRole('button', { name: 'View collateral', exact: true })
     .first()
@@ -936,17 +980,20 @@ try {
   );
   await audit(page, 'connected collateral review');
   await close(page);
-  await page.getByRole('button', { name: 'Lend', exact: true }).click();
-  await page
-    .getByRole('heading', { name: 'Supply the shared vault.', exact: true })
-    .waitFor();
+  await page.getByRole('tab', { name: 'Vote' }).click();
+  check(
+    'Voting waits for the lending launch',
+    await page
+      .getByRole('heading', { name: 'Voting arrives with the lending launch.' })
+      .isVisible(),
+  );
+  await page.getByRole('tab', { name: 'Positions' }).click();
+  await go(page, 'Earn', 'Earn from collateral revenue');
   check(
     'Connected vault has no fabricated liquidity, shares, withdrawals or APR',
     (await page.getByText('Not launched', { exact: true }).isVisible()) &&
-      (await page.locator('main .pooled-summary dd').count()) === 6 &&
-      (await page.locator('main .pooled-summary dd').allTextContents()).every(
-        (text) => text.trim() === '—',
-      ) &&
+      (await page.locator('main .vault-metrics dd').count()) === 4 &&
+      (await dashes(page.locator('main .vault-metrics dd'))) &&
       (await page
         .getByRole('button', { name: 'Supply USDC', exact: true })
         .isDisabled()) &&
@@ -968,17 +1015,66 @@ try {
   );
   await audit(page, 'connected vault not launched');
   await page.setViewportSize({ width: 320, height: 900 });
-  check(
-    'Connected undeployed vault fits at 320px',
-    await page.evaluate(
-      () => document.documentElement.scrollWidth === innerWidth,
-    ),
-  );
+  check('Connected undeployed vault fits at 320px', await fits(page));
   await audit(page, 'connected vault mobile');
   await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.getByRole('button', { name: 'Settlement off' }).click();
+  await dialog(page)
+    .getByRole('heading', { name: 'Service status', exact: true })
+    .waitFor();
+  check(
+    'Service status states that lending and settlement are off',
+    (await dialog(page).innerText()).includes('Not launched') &&
+      (await dialog(page).innerText()).includes('Disabled'),
+  );
+  await audit(page, 'connected service status');
+  await close(page);
+  await page.goto(`${base}/#faq`, { waitUntil: 'networkidle' });
+  await heading(page, 'Questions, answered').waitFor();
+  await audit(page, 'connected faq');
+  await page.getByRole('button', { name: 'What’s new' }).click();
+  check(
+    'What’s new lists the release notes in connected mode',
+    (await page
+      .getByRole('region', { name: 'What’s new' })
+      .locator('li')
+      .count()) === 4,
+  );
+  await page.keyboard.press('Escape');
+  await page.goto(`${base}/#stats`, { waitUntil: 'networkidle' });
+  await heading(page, 'Statistics').waitFor();
+  check(
+    'Connected statistics show no vault, reward or sales totals before launch',
+    (await page.locator('main .stat-grid .stat-value').count()) === 4 &&
+      (await dashes(page.locator('main .stat-grid .stat-value'))) &&
+      (await page.locator('main').innerText()).includes('1 active listing'),
+  );
+  await audit(page, 'connected statistics');
+  await page.goto(`${base}/#privacy`, { waitUntil: 'networkidle' });
+  await heading(page, 'What Riftwell stores').waitFor();
+  check(
+    'Connected privacy notes describe cookie and memory-only session hosting',
+    (await page.locator('main').innerText()).includes(
+      'HttpOnly session cookie',
+    ) &&
+      (await page.locator('main').innerText()).includes(
+        'only in browser memory',
+      ),
+  );
+  await audit(page, 'connected privacy');
+  await page.goto(`${base}/#brand`, { waitUntil: 'networkidle' });
+  await heading(page, 'Brand kit').waitFor();
+  await audit(page, 'connected brand kit');
+  await page.goto(`${base}/#missing-page`, { waitUntil: 'networkidle' });
+  await heading(page, 'This page slipped through the rift.').waitFor();
+  check(
+    'Unknown connected routes show the not-found page',
+    (await page.evaluate(() => location.hash)) === '#missing-page',
+  );
+  await audit(page, 'connected not found');
   await account(page);
   await dialog(page)
-    .getByRole('button', { name: 'Previous records', exact: true })
+    .getByRole('tab', { name: /^Previous records/ })
     .click();
   check(
     'Legacy records remain clearly separated from pool balances and credit lines',
@@ -1009,7 +1105,7 @@ try {
   await page.reload({ waitUntil: 'networkidle' });
   await account(page);
   await dialog(page)
-    .getByRole('button', { name: 'Listings', exact: true })
+    .getByRole('tab', { name: /^Listings/ })
     .click();
   const persistedDutch = service.app.store
     .prepare<
@@ -1036,7 +1132,7 @@ try {
   await close(page);
   await page
     .getByRole('navigation', { name: 'Main navigation' })
-    .getByRole('button', { name: 'Marketplace', exact: true })
+    .getByRole('link', { name: 'Marketplace', exact: true })
     .click();
   service.setUnavailable(true);
   await page.reload({ waitUntil: 'networkidle' });
@@ -1050,7 +1146,7 @@ try {
   );
   await account(page);
   await dialog(page)
-    .getByRole('button', { name: 'Listings', exact: true })
+    .getByRole('tab', { name: /^Listings/ })
     .click();
   await dialog(page)
     .locator('.portfolio-item')
@@ -1062,10 +1158,11 @@ try {
   await page
     .getByRole('button', { name: 'Confirm cancellation', exact: true })
     .click();
-  await dialog(page).waitFor({ state: 'hidden' });
-  await account(page);
   await dialog(page)
-    .getByRole('button', { name: 'Listings', exact: true })
+    .getByRole('heading', { name: 'Your account', exact: true })
+    .waitFor();
+  await dialog(page)
+    .getByRole('tab', { name: /^Listings/ })
     .click();
   await dialog(page)
     .locator('.portfolio-item')
@@ -1083,7 +1180,7 @@ try {
       .get('101')?.status === 'cancelled',
   );
   await dialog(page)
-    .getByRole('button', { name: 'Previous records', exact: true })
+    .getByRole('tab', { name: /^Previous records/ })
     .click();
   await dialog(page)
     .locator('.portfolio-item')
@@ -1096,7 +1193,7 @@ try {
     .getByRole('button', { name: 'Keep record', exact: true })
     .click();
   await dialog(page)
-    .getByRole('button', { name: 'Previous records', exact: true })
+    .getByRole('tab', { name: /^Previous records/ })
     .click();
   check(
     'Declining cancellation keeps the legacy request active',
@@ -1116,10 +1213,11 @@ try {
   await dialog(page)
     .getByRole('button', { name: 'Confirm cancellation', exact: true })
     .click();
-  await dialog(page).waitFor({ state: 'hidden' });
-  await account(page);
   await dialog(page)
-    .getByRole('button', { name: 'Previous records', exact: true })
+    .getByRole('heading', { name: 'Your account', exact: true })
+    .waitFor();
+  await dialog(page)
+    .getByRole('tab', { name: /^Previous records/ })
     .click();
   await dialog(page).getByText('cancelled', { exact: true }).waitFor();
   check(
@@ -1140,14 +1238,23 @@ try {
   await page.reload({ waitUntil: 'networkidle' });
   await page
     .getByRole('navigation', { name: 'Main navigation' })
-    .getByRole('button', { name: 'Marketplace', exact: true })
+    .getByRole('link', { name: 'Marketplace', exact: true })
     .click();
   for (const width of [320, 390, 768, 1440, 1920]) {
     await page.setViewportSize({ width, height: 900 });
+    await page.waitForFunction(
+      () =>
+        document.documentElement.scrollWidth <=
+        document.documentElement.clientWidth,
+      undefined,
+      { timeout: 3000 },
+    );
     check(
       `No horizontal overflow at ${width}px`,
       await page.evaluate(
-        () => document.documentElement.scrollWidth === innerWidth,
+        () =>
+          document.documentElement.scrollWidth <=
+          document.documentElement.clientWidth,
       ),
     );
   }
@@ -1178,7 +1285,7 @@ try {
   );
   await account(page);
   await dialog(page)
-    .getByRole('button', { name: 'Previous records', exact: true })
+    .getByRole('tab', { name: /^Previous records/ })
     .click();
   check(
     'Cancelled legacy history persists without becoming a pool position',
@@ -1242,7 +1349,7 @@ try {
         status,
         checkedAt: new Date().toISOString(),
         browser: 'isolated headless Chrome',
-        suiteVersion: 'listing-table-v2-pooled-lending-v1',
+        suiteVersion: 'redesign-integrated-authoritative-marketplace-v3',
         scope:
           'Built connected frontend + real HTTP/SQLite, simulated read-only chain and ephemeral EOA providers; no real funds, wallets or transactions',
         checks,

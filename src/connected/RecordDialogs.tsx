@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Info } from 'lucide-react';
 import Dialog from '../components/Dialog';
+import { Breakdown, Notice } from '../components/ui/Bits';
 import { api, type Listing, type Position, type Session } from './api';
 import {
   dateLabel,
@@ -41,15 +41,6 @@ export function PositionSummary({ position }: { position: Position }) {
         <dd>{dateLabel(position.observedAt)}</dd>
       </div>
     </dl>
-  );
-}
-
-function Notice({ children }: { children: string }) {
-  return (
-    <div className="notice">
-      <Info size={17} aria-hidden="true" />
-      <p>{children}</p>
-    </div>
   );
 }
 
@@ -303,7 +294,7 @@ export function RecordForm({
                     setError('');
                   }}
                 />
-                <span>USDC</span>
+                <span className="amount-unit">USDC</span>
               </div>
             </div>
             <div className="form-field">
@@ -318,7 +309,7 @@ export function RecordForm({
               >
                 {[1, 7, 30].map((days) => (
                   <option key={days} value={days}>
-                    {days} days
+                    {days} {days === 1 ? 'day' : 'days'}
                   </option>
                 ))}
               </select>
@@ -384,15 +375,15 @@ export function RecordForm({
             </p>
           </details>
           {micros && (
-            <div className="cost-breakdown">
-              <div className="breakdown-row">
-                <span>
-                  Seller fee at settlement
-                  <small>One-time 0.5% · nothing charged now</small>
-                </span>
-                <span>{usdc(feeMicros(micros))}</span>
-              </div>
-            </div>
+            <Breakdown
+              rows={[
+                {
+                  label: 'Seller fee at settlement',
+                  hint: 'One-time 0.5% · nothing charged now',
+                  value: usdc(feeMicros(micros)),
+                },
+              ]}
+            />
           )}
           <p className="form-error" role="alert" ref={errorRef} tabIndex={-1}>
             {error}
@@ -714,7 +705,7 @@ export function CancellationDialog({
       onClose={onClose}
     >
       <div className="dialog-body">
-        <p>
+        <p className="panel-text">
           The record will be marked cancelled on the server. Its history remains
           in your account. No funds or NFTs move.
         </p>

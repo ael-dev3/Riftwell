@@ -36,7 +36,12 @@ export type LendingActivityKind =
   | 'remove-collateral'
   | 'borrow'
   | 'repay'
-  | 'epoch';
+  | 'epoch'
+  | 'purchase'
+  | 'relayer-deposit'
+  | 'relayer-withdraw'
+  | 'merge'
+  | 'increase-lock';
 export type LendingActivityFixture = {
   id: string;
   kind: LendingActivityKind;
@@ -188,6 +193,11 @@ function activity(value: unknown): boolean {
       'borrow',
       'repay',
       'epoch',
+      'purchase',
+      'relayer-deposit',
+      'relayer-withdraw',
+      'merge',
+      'increase-lock',
     ].includes(String(value.kind)) &&
     fields(
       value,

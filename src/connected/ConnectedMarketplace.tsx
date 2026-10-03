@@ -1,5 +1,6 @@
 import { Check, Plus, RefreshCw, Search, X } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type RefObject } from 'react';
+import { PageHead } from '../components/page';
 import type { Market } from '../markets';
 import type { Account, Listing } from './api';
 import {
@@ -33,6 +34,7 @@ export type ConnectedMarketplaceProps = {
   onSweep: (listings: Listing[]) => void;
   onEdit: (listing: Listing) => void;
   onCancel: (listing: Listing) => void;
+  searchRef?: RefObject<HTMLInputElement | null>;
 };
 
 type Tab = 'all' | 'mine' | 'history';
@@ -95,6 +97,7 @@ export default function ConnectedMarketplace({
   onSweep,
   onEdit,
   onCancel,
+  searchRef,
 }: ConnectedMarketplaceProps) {
   const [tab, setTab] = useState<Tab>('all');
   const [query, setQuery] = useState('');
@@ -273,367 +276,404 @@ export default function ConnectedMarketplace({
 
   return (
     <>
-      <div className="section-heading market-table-heading">
-        <div>
-          <p className="section-eyebrow">{market.name} · USDC</p>
-          <h1 className="section-title">{market.positionSymbol} marketplace</h1>
-        </div>
-        <button className="button primary" onClick={onList}>
-          <Plus size={16} aria-hidden="true" /> List yours
-        </button>
-      </div>
-      <div className="market-table-nav">
-        <div className="segmented-control" aria-label="Marketplace view">
-          {(['all', 'mine', 'history'] as const).map((value) => (
-            <button
-              key={value}
-              className={tab === value ? 'active' : ''}
-              aria-pressed={tab === value}
-              onClick={() => {
-                setTab(value);
-                setSelected([]);
-              }}
-            >
-              {value === 'all'
-                ? 'All listings'
-                : value === 'mine'
-                  ? 'My listings'
-                  : 'History'}
-            </button>
-          ))}
-        </div>
-        <button className="inline-link" disabled={busy} onClick={onRefresh}>
-          <RefreshCw size={14} aria-hidden="true" /> Refresh
-        </button>
-      </div>
-      <div className="market-toolbar">
-        <div className="search-field">
-          <Search size={16} aria-hidden="true" />
-          <label className="sr-only" htmlFor="connected-market-search">
-            Search loaded listings by token ID or seller
-          </label>
-          <input
-            id="connected-market-search"
-            type="search"
-            placeholder="Token ID or seller"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-          {query && (
-            <button
-              className="clear-search"
-              aria-label="Clear search"
-              onClick={() => setQuery('')}
-            >
-              <X size={14} aria-hidden="true" />
-            </button>
-          )}
-        </div>
-        <div className="filter-group">
-          <label className="sr-only" htmlFor="connected-market-sort">
-            Sort loaded listings
-          </label>
-          <select
-            id="connected-market-sort"
-            className="filter-control"
-            value={order}
-            onChange={(event) => setOrder(event.target.value as Order)}
-          >
-            <option value="newest">Updated: newest first</option>
-            <option value="price-asc">Ask: low to high</option>
-            <option value="price-desc">Ask: high to low</option>
-            <option value="unit-asc">Unit price: low to high</option>
-          </select>
-        </div>
-        <span className="results-count" role="status">
-          {rows.length} loaded {rows.length === 1 ? 'record' : 'records'}
-        </span>
-      </div>
-      {(tab === 'all' && error) || (tab === 'mine' && signedIn && ownError) ? (
-        <div className="empty-state" role="alert">
-          <h3>Listings unavailable.</h3>
-          <p>{tab === 'mine' ? ownError : error}</p>
+      <PageHead
+        eyebrow={`${market.name} · USDC`}
+        title={`${market.positionSymbol} marketplace`}
+        titleId="connected-market-title"
+        lede="Browse verified positions, or list one from your wallet."
+        actions={
+          <button type="button" className="button primary" onClick={onList}>
+            <Plus size={16} aria-hidden="true" /> List yours
+          </button>
+        }
+      />
+      <section
+        className="workspace-card panel connected-marketplace"
+        aria-labelledby="connected-market-title"
+      >
+        <div className="market-table-nav">
+          <div className="chip-row" role="group" aria-label="Marketplace view">
+            {(['all', 'mine', 'history'] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                className="chip-toggle"
+                aria-pressed={tab === value}
+                onClick={() => {
+                  setTab(value);
+                  setSelected([]);
+                }}
+              >
+                {value === 'all'
+                  ? 'All listings'
+                  : value === 'mine'
+                    ? 'My listings'
+                    : 'History'}
+              </button>
+            ))}
+          </div>
           <button
-            className="button secondary"
+            type="button"
+            className="button ghost small"
             disabled={busy}
             onClick={onRefresh}
           >
-            Retry
+            <RefreshCw size={14} aria-hidden="true" /> Refresh
           </button>
         </div>
-      ) : tab !== 'all' && !signedIn ? (
-        <div className="empty-state">
-          <h3>
-            Sign in to view {tab === 'mine' ? 'your listings' : 'your history'}.
-          </h3>
-          <button className="button secondary" onClick={onAccount}>
-            Sign in
-          </button>
+        <div className="market-toolbar">
+          <div className="search-field">
+            <Search size={16} aria-hidden="true" />
+            <label className="sr-only" htmlFor="connected-market-search">
+              Search loaded listings by token ID or seller
+            </label>
+            <input
+              id="connected-market-search"
+              ref={searchRef}
+              type="search"
+              placeholder="Token ID or seller"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+            {query && (
+              <button
+                className="clear-search"
+                type="button"
+                aria-label="Clear search"
+                onClick={() => setQuery('')}
+              >
+                <X size={14} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+          <div className="filter-group">
+            <label className="sr-only" htmlFor="connected-market-sort">
+              Sort loaded listings
+            </label>
+            <select
+              id="connected-market-sort"
+              className="input-control"
+              value={order}
+              onChange={(event) => setOrder(event.target.value as Order)}
+            >
+              <option value="newest">Updated: newest first</option>
+              <option value="price-asc">Ask: low to high</option>
+              <option value="price-desc">Ask: high to low</option>
+              <option value="unit-asc">Unit price: low to high</option>
+            </select>
+          </div>
+          <span className="results-count" role="status">
+            {rows.length} loaded {rows.length === 1 ? 'record' : 'records'}
+          </span>
         </div>
-      ) : busy && !rows.length ? (
-        <div className="empty-state" role="status">
-          <h3>Loading listings…</h3>
-        </div>
-      ) : tab === 'history' && !account ? (
-        <div className="empty-state">
-          <h3>Account unavailable.</h3>
-          <button className="button secondary" onClick={onRefresh}>
-            Retry
-          </button>
-        </div>
-      ) : rows.length ? (
-        <div
-          className="market-table-wrap"
-          role="region"
-          aria-label={
-            tab === 'all'
-              ? 'Marketplace listings'
-              : tab === 'mine'
-                ? 'Your active listings'
-                : 'Your listing history'
-          }
-          tabIndex={0}
-        >
-          <table
-            className={`market-table${tab === 'history' ? ' market-history-table' : ''}`}
-            aria-busy={busy}
-          >
-            <caption className="sr-only">
-              {tab === 'all'
-                ? 'Loaded active listings'
+        {(tab === 'all' && error) ||
+        (tab === 'mine' && signedIn && ownError) ? (
+          <div className="empty" role="alert">
+            <h3>Listings unavailable.</h3>
+            <p>{tab === 'mine' ? ownError : error}</p>
+            <button
+              className="button secondary"
+              disabled={busy}
+              onClick={onRefresh}
+            >
+              Retry
+            </button>
+          </div>
+        ) : tab !== 'all' && !signedIn ? (
+          <div className="empty">
+            <h3>
+              Sign in to view{' '}
+              {tab === 'mine' ? 'your listings' : 'your history'}.
+            </h3>
+            <button className="button secondary" onClick={onAccount}>
+              Sign in
+            </button>
+          </div>
+        ) : busy && !rows.length ? (
+          <div className="empty" role="status">
+            <h3>Loading listings…</h3>
+          </div>
+        ) : tab === 'history' && !account ? (
+          <div className="empty">
+            <h3>Account unavailable.</h3>
+            <button className="button secondary" onClick={onRefresh}>
+              Retry
+            </button>
+          </div>
+        ) : rows.length ? (
+          <div
+            className="market-table-wrap table-scroll"
+            role="region"
+            aria-label={
+              tab === 'all'
+                ? 'Marketplace listings'
                 : tab === 'mine'
                   ? 'Your active listings'
-                  : 'Your past listings'}{' '}
-              in USDC. Unit prices are rounded down to twelve decimal places.
-              Search and sorting apply to loaded records.
-            </caption>
-            <thead>
-              <tr>
-                {tab === 'all' && (
-                  <th scope="col" className="market-select-cell">
-                    <input
-                      type="checkbox"
-                      aria-label="Select up to 20 available listings"
-                      checked={allSelected}
-                      disabled={
-                        !selectable.length || loading || identityPending
-                      }
-                      onChange={(event) =>
-                        setSelected(
-                          event.target.checked
-                            ? selectable
-                                .filter((listing) =>
-                                  activeAt(listing, Date.now()),
-                                )
-                                .map(({ id, revision }) => ({ id, revision }))
-                            : [],
-                        )
-                      }
-                    />
-                  </th>
-                )}
-                <th scope="col">Token ID</th>
-                <th scope="col">Seller</th>
-                <th scope="col">Locked {market.tokenSymbol}</th>
-                <th scope="col">Unlocks</th>
-                <th scope="col">Ask · USDC</th>
-                <th scope="col">USDC / {market.tokenSymbol}</th>
-                {tab === 'history' && <th scope="col">Updated</th>}
-                <th scope="col">
-                  <span className="sr-only">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((listing) => {
-                const mine = own(listing);
-                const eligible = canBuy(listing, address);
-                const active = activeAt(listing, now);
-                const checked = selections.some(
-                  (item) => item.id === listing.id,
-                );
-                return (
-                  <tr key={listing.id}>
-                    {tab === 'all' && (
-                      <td className="market-select-cell">
-                        <input
-                          type="checkbox"
-                          aria-label={`Select ${market.positionSymbol} #${listing.tokenId}`}
-                          checked={checked}
-                          disabled={
-                            !eligible ||
-                            !active ||
-                            loading ||
-                            identityPending ||
-                            (!checked && selections.length >= MAX_SELECTED)
-                          }
-                          onChange={(event) =>
-                            toggle(listing, event.target.checked)
-                          }
-                        />
-                      </td>
-                    )}
-                    <td>
-                      <span className="market-token-link">
-                        #{listing.tokenId}
-                      </span>
-                      <span className="market-row-secondary">
-                        {listing.kind === 'dutch' ? 'Dutch' : 'Fixed'}
-                        {listing.recipient !== null ? ' · Reserved' : ''}
-                        {mine ? ' · Yours' : ''}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="mobile-label">Seller</span>
-                      <span title={listing.owner}>
-                        {shortAddress(listing.owner)}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="mobile-label">
-                        Locked {market.tokenSymbol}
-                      </span>
-                      {decimalAmount(listing.position.lockedAmountRaw, 18)}
-                    </td>
-                    <td>
-                      <span className="mobile-label">Unlocks</span>
-                      {dateLabel(listing.position.lockedUntil)}
-                      {Date.parse(listing.position.lockedUntil) <= now && (
-                        <span className="market-row-secondary">Lock ended</span>
-                      )}
-                    </td>
-                    <td>
-                      <span className="mobile-label">Ask</span>
-                      <strong>{usdc(listingAskMicros(listing, now))}</strong>
-                      <span className="market-row-secondary">
-                        Listing ends {dateLabel(listing.expiresAt)}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="mobile-label">
-                        USDC / {market.tokenSymbol}
-                      </span>
-                      {unitPrice(listing, now)}
-                    </td>
-                    {tab === 'history' && (
-                      <td>
-                        <span className="mobile-label">Updated</span>
-                        {dateLabel(listing.updatedAt)}
-                      </td>
-                    )}
-                    <td className="market-row-actions">
-                      {tab === 'history' ? (
-                        <span className="status-pill muted">
-                          {statusAt(listing, now)}
-                        </span>
-                      ) : mine ? (
-                        <>
-                          <button
-                            className="button secondary small"
-                            disabled={!active || accountLoading}
-                            onClick={() =>
-                              activeAt(listing, Date.now()) && onEdit(listing)
-                            }
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="inline-link"
-                            disabled={!active}
-                            onClick={() =>
-                              activeAt(listing, Date.now()) && onCancel(listing)
-                            }
-                          >
-                            Cancel
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          className="button secondary small"
-                          disabled={
-                            !active || !eligible || loading || identityPending
-                          }
-                          onClick={() => review(listing)}
-                        >
-                          Buy
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="empty-state">
-          <Search size={24} aria-hidden="true" />
-          <h3>
-            {query
-              ? 'No matching listings.'
-              : tab === 'mine'
-                ? 'No active listings.'
-                : tab === 'history'
-                  ? 'No past listings.'
-                  : 'No active listings.'}
-          </h3>
-          {query ? (
-            <button className="button secondary" onClick={clearFilters}>
-              Clear filters
-            </button>
-          ) : tab === 'mine' ? (
-            <button className="button secondary" onClick={onList}>
-              List yours
-            </button>
-          ) : null}
-        </div>
-      )}
-      {((tab === 'all' && !error && hasMore) ||
-        (tab === 'mine' && signedIn && !ownError && ownHasMore)) && (
-        <button
-          className="button secondary load-more"
-          disabled={busy}
-          onClick={tab === 'mine' ? onOwnMore : onMore}
-        >
-          {busy ? 'Loading…' : 'Load more listings'}
-        </button>
-      )}
-      {tab === 'mine' && signedIn && (
-        <p className="form-hint">
-          These are your saved off-chain listings. Position details reflect
-          their last observed block. Edits require fresh ownership verification;
-          cancellation remains available during chain outages.
-        </p>
-      )}
-      {tab === 'history' && account?.historyTruncated && (
-        <p className="form-hint">
-          History is limited to 500 records per category. Earlier records are
-          retained.
-        </p>
-      )}
-      {tab === 'all' && selections.length > 0 && (
-        <div className="market-sweep-bar">
-          <div>
-            <span>
-              <Check size={15} aria-hidden="true" /> {selections.length}{' '}
-              selected
-            </span>
-            <strong>{usdc(totalMicros.toString())}</strong>
-          </div>
-          <div>
-            <button className="inline-link" onClick={() => setSelected([])}>
-              Clear
-            </button>
-            <button
-              className="button primary"
-              disabled={loading || identityPending}
-              onClick={sweep}
+                  : 'Your listing history'
+            }
+            tabIndex={0}
+          >
+            <table
+              className={`market-table data-table listings-table${tab !== 'all' ? ' no-selection' : ''}${tab === 'history' ? ' market-history-table' : ''}`}
+              aria-busy={busy}
             >
-              Review sweep
-            </button>
+              <caption className="sr-only">
+                {tab === 'all'
+                  ? 'Loaded active listings'
+                  : tab === 'mine'
+                    ? 'Your active listings'
+                    : 'Your past listings'}{' '}
+                in USDC. Unit prices are rounded down to twelve decimal places.
+                Search and sorting apply to loaded records.
+              </caption>
+              <thead>
+                <tr>
+                  {tab === 'all' && (
+                    <th scope="col" className="market-select-cell select-col">
+                      <input
+                        type="checkbox"
+                        aria-label="Select up to 20 available listings"
+                        checked={allSelected}
+                        disabled={
+                          !selectable.length || loading || identityPending
+                        }
+                        onChange={(event) =>
+                          setSelected(
+                            event.target.checked
+                              ? selectable
+                                  .filter((listing) =>
+                                    activeAt(listing, Date.now()),
+                                  )
+                                  .map(({ id, revision }) => ({ id, revision }))
+                              : [],
+                          )
+                        }
+                      />
+                    </th>
+                  )}
+                  <th scope="col">Token ID</th>
+                  <th scope="col">Seller</th>
+                  <th scope="col" className="numeric">
+                    Locked {market.tokenSymbol}
+                  </th>
+                  <th scope="col" className="numeric">
+                    Unlocks
+                  </th>
+                  <th scope="col" className="numeric">
+                    Ask · USDC
+                  </th>
+                  <th scope="col" className="numeric">
+                    USDC / {market.tokenSymbol}
+                  </th>
+                  {tab === 'history' && (
+                    <th scope="col" className="numeric">
+                      Updated
+                    </th>
+                  )}
+                  <th scope="col">
+                    <span className="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((listing) => {
+                  const mine = own(listing);
+                  const eligible = canBuy(listing, address);
+                  const active = activeAt(listing, now);
+                  const checked = selections.some(
+                    (item) => item.id === listing.id,
+                  );
+                  return (
+                    <tr key={listing.id} className={checked ? 'selected' : ''}>
+                      {tab === 'all' && (
+                        <td className="market-select-cell select-col">
+                          <input
+                            type="checkbox"
+                            aria-label={`Select ${market.positionSymbol} #${listing.tokenId}`}
+                            checked={checked}
+                            disabled={
+                              !eligible ||
+                              !active ||
+                              loading ||
+                              identityPending ||
+                              (!checked && selections.length >= MAX_SELECTED)
+                            }
+                            onChange={(event) =>
+                              toggle(listing, event.target.checked)
+                            }
+                          />
+                        </td>
+                      )}
+                      <td data-label="Position">
+                        <span className="market-token-link asset-title">
+                          #{listing.tokenId}
+                        </span>
+                        <span className="market-row-secondary cell-sub">
+                          {listing.kind === 'dutch' ? 'Dutch' : 'Fixed'}
+                          {listing.recipient !== null ? ' · Reserved' : ''}
+                          {mine ? ' · Yours' : ''}
+                        </span>
+                      </td>
+                      <td data-label="Seller">
+                        <span title={listing.owner}>
+                          {shortAddress(listing.owner)}
+                        </span>
+                      </td>
+                      <td
+                        data-label={`Locked ${market.tokenSymbol}`}
+                        className="numeric"
+                      >
+                        {decimalAmount(listing.position.lockedAmountRaw, 18)}
+                      </td>
+                      <td data-label="Unlocks" className="numeric">
+                        {dateLabel(listing.position.lockedUntil)}
+                        {Date.parse(listing.position.lockedUntil) <= now && (
+                          <span className="market-row-secondary cell-sub">
+                            Lock ended
+                          </span>
+                        )}
+                      </td>
+                      <td data-label="Ask" className="numeric">
+                        <strong>{usdc(listingAskMicros(listing, now))}</strong>
+                        <span className="market-row-secondary cell-sub">
+                          Listing ends {dateLabel(listing.expiresAt)}
+                        </span>
+                      </td>
+                      <td
+                        data-label={`USDC / ${market.tokenSymbol}`}
+                        className="numeric"
+                      >
+                        {unitPrice(listing, now)}
+                      </td>
+                      {tab === 'history' && (
+                        <td data-label="Updated" className="numeric">
+                          {dateLabel(listing.updatedAt)}
+                        </td>
+                      )}
+                      <td className="market-row-actions action-cell numeric">
+                        <div className="row-actions">
+                          {tab === 'history' ? (
+                            <span className="pill muted">
+                              {statusAt(listing, now)}
+                            </span>
+                          ) : mine ? (
+                            <>
+                              <button
+                                className="button secondary small"
+                                disabled={!active || accountLoading}
+                                onClick={() =>
+                                  activeAt(listing, Date.now()) &&
+                                  onEdit(listing)
+                                }
+                              >
+                                Edit
+                              </button>
+                              <button
+                                className="button ghost small"
+                                disabled={!active}
+                                onClick={() =>
+                                  activeAt(listing, Date.now()) &&
+                                  onCancel(listing)
+                                }
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              className="button secondary small"
+                              disabled={
+                                !active ||
+                                !eligible ||
+                                loading ||
+                                identityPending
+                              }
+                              onClick={() => review(listing)}
+                            >
+                              Buy
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="empty">
+            <Search size={24} aria-hidden="true" />
+            <h3>
+              {query
+                ? 'No matching listings.'
+                : tab === 'mine'
+                  ? 'No active listings.'
+                  : tab === 'history'
+                    ? 'No past listings.'
+                    : 'No active listings.'}
+            </h3>
+            {query ? (
+              <button className="button secondary" onClick={clearFilters}>
+                Clear filters
+              </button>
+            ) : tab === 'mine' ? (
+              <button className="button secondary" onClick={onList}>
+                List yours
+              </button>
+            ) : null}
+          </div>
+        )}
+        {((tab === 'all' && !error && hasMore) ||
+          (tab === 'mine' && signedIn && !ownError && ownHasMore)) && (
+          <button
+            className="button secondary load-more"
+            disabled={busy}
+            onClick={tab === 'mine' ? onOwnMore : onMore}
+          >
+            {busy ? 'Loading…' : 'Load more listings'}
+          </button>
+        )}
+        {tab === 'mine' && signedIn && (
+          <p className="form-hint">
+            These are your saved off-chain listings. Position details reflect
+            their last observed block. Edits require fresh ownership
+            verification; cancellation remains available during chain outages.
+          </p>
+        )}
+        {tab === 'history' && account?.historyTruncated && (
+          <p className="form-hint">
+            History is limited to 500 records per category. Earlier records are
+            retained.
+          </p>
+        )}
+        {tab === 'all' && selections.length > 0 && (
+          <div className="market-sweep-bar sweep-bar">
+            <div>
+              <span>
+                <Check size={15} aria-hidden="true" /> {selections.length}{' '}
+                selected
+              </span>
+              <strong>{usdc(totalMicros.toString())}</strong>
+            </div>
+            <div className="sweep-actions">
+              <button
+                className="button ghost small"
+                onClick={() => setSelected([])}
+              >
+                Clear
+              </button>
+              <button
+                className="button primary"
+                disabled={loading || identityPending}
+                onClick={sweep}
+              >
+                Review sweep
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
     </>
   );
 }

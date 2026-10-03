@@ -74,7 +74,13 @@ describe('marketplace listings and ownership', () => {
   it('lists only unlisted owned positions, then reviews revisions before editing or cancellation', () => {
     let state = seed();
     expect(() =>
-      listAsset(state, ASSETS[0].id, fixed(), ALL_MARKET_ASSETS, NOW),
+      listAsset(
+        state,
+        fixtureAt(ASSETS, 0).id,
+        fixed(),
+        ALL_MARKET_ASSETS,
+        NOW,
+      ),
     ).toThrowError(expect.objectContaining({ code: 'NOT_OWNER' }));
     state = listAsset(
       state,
@@ -172,7 +178,7 @@ describe('marketplace listings and ownership', () => {
 describe('Dutch price curve', () => {
   const listing: PreviewListing = {
     id: 'dutch',
-    assetId: ASSETS[0].id,
+    assetId: fixtureAt(ASSETS, 0).id,
     seller: '0x000000000000000000000000000000000000b001',
     kind: 'dutch',
     startPriceMicros: '10000000000',
@@ -383,7 +389,7 @@ describe('marketplace persistence and migration', () => {
     const prior = [
       {
         id: 'old',
-        assetId: ASSETS[0].id,
+        assetId: fixtureAt(ASSETS, 0).id,
         createdAt: new Date(NOW).toISOString(),
         kind: 'purchase' as const,
         price: 4200,
@@ -396,7 +402,9 @@ describe('marketplace persistence and migration', () => {
       ALL_MARKET_ASSETS,
       NOW,
     );
-    expect(migrated.ownerByAsset[ASSETS[0].id]).toBe(PREVIEW_ADDRESS);
+    expect(migrated.ownerByAsset[fixtureAt(ASSETS, 0).id]).toBe(
+      PREVIEW_ADDRESS,
+    );
     expect(fixtureAt(migrated.listings, 0).status).toBe('sold');
     expect(migrated.balanceMicros).toBe('25000000000');
     expect(migrated.history.at(-1)?.kind).toBe('migrate');
@@ -408,14 +416,21 @@ describe('marketplace persistence and migration', () => {
 
 describe('unit price precision', () => {
   it('orders ratios exactly even when both would round to zero at six decimals', () => {
-    expect(compareUnitPrice('1', ASSETS[0], '1', ASSETS[5])).toBe(1);
-    expect(compareUnitPrice('2', ASSETS[0], '4', ASSETS[5])).toBe(0);
+    expect(
+      compareUnitPrice('1', fixtureAt(ASSETS, 0), '1', fixtureAt(ASSETS, 5)),
+    ).toBe(1);
+    expect(
+      compareUnitPrice('2', fixtureAt(ASSETS, 0), '4', fixtureAt(ASSETS, 5)),
+    ).toBe(0);
   });
   it('shows tiny positive unit prices with twelve decimals or an explicit lower bound', () => {
-    expect(displayUnitPrice('1', ASSETS[5])).toBe('0.00000000001');
-    expect(displayUnitPrice('4200000000', ASSETS[0])).toBe('0.084');
+    expect(displayUnitPrice('1', fixtureAt(ASSETS, 5))).toBe('0.00000000001');
+    expect(displayUnitPrice('4200000000', fixtureAt(ASSETS, 0))).toBe('0.084');
     expect(
-      displayUnitPrice('1', { ...ASSETS[5], underlyingBalance: 2000000 }),
+      displayUnitPrice('1', {
+        ...fixtureAt(ASSETS, 5),
+        underlyingBalance: 2000000,
+      }),
     ).toBe('<0.000000000001');
   });
 });

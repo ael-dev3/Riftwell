@@ -2,16 +2,16 @@
 
 [Live preview → riftwell-ael.web.app](https://riftwell-ael.web.app)
 
-Collateral credit lines, pooled USDC lending and a focused marketplace, starting with KittenSwap on HyperEVM. Dark surfaces, a light-green accent and a quiet portal theme.
+Collateral credit lines, a pooled USDC vault and a focused marketplace for veKITTEN positions, starting with KittenSwap on HyperEVM. Borrow, Earn and Marketplace views in dark or light, with a light-green accent and a quiet portal theme.
 
-![Riftwell marketplace](docs/qa/marketplace-desktop.png)
+![Riftwell marketplace](docs/qa/market-desktop.jpg)
 
 ## Application
 
 Two build modes share the interface:
 
-- **Preview:** Firebase Hosting serves a listings table with sample NFTs, fixed-price and Dutch listings, seller management, purchase and sweep reviews, and a separate pooled lending simulation. All preview balances and ownership are local examples.
-- **Connected:** the service supports wallet sign-in, confirmed veKITTEN ownership reads and persistent marketplace listings. It can run as a combined Node/SQLite application or a Deno/PostgreSQL API behind Firebase Hosting. The lending view reports its undeployed status without inventing liquidity, credit or yield.
+- **Preview:** Firebase Hosting serves a labelled local simulation. Borrow against demo positions, merge and grow locks, explore reward routing and vote plans, supply vault USDC, and browse, buy or list sample NFTs. Your example portfolio stays in your browser.
+- **Connected:** the service supports wallet sign-in, confirmed veKITTEN ownership reads and persistent off-chain marketplace listings. It runs as a Node/SQLite application or a Deno/PostgreSQL API behind Firebase Hosting. Borrow and Earn show their undeployed status without inventing liquidity, credit or yield.
 
 Marketplace listings are off-chain expressions of interest. Funded purchases and lending are unavailable until compatible contracts are separately released. No application route requests token approvals, transfers NFTs or sends transactions. Earlier unfunded lending requests/offers are retained only for history and cancellation.
 

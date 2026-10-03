@@ -74,7 +74,7 @@ const preview = spawn(
     dist,
   ],
   {
-    stdio: 'ignore',
+    stdio: ['ignore', 'ignore', 'pipe'],
     env: {
       ...process.env,
       TEST_DATABASE_URL: undefined,
@@ -82,6 +82,10 @@ const preview = spawn(
     },
   },
 );
+let previewDiagnostics = '';
+preview.stderr?.on('data', (chunk: Buffer) => {
+  previewDiagnostics += chunk.toString();
+});
 try {
   await mkdir(output, { recursive: true });
   await admin.unsafe(`CREATE SCHEMA "${schema}"`);
@@ -193,7 +197,10 @@ try {
     } catch {
       /* Preview is starting. */
     }
-    if (attempt === 99) throw new Error('Frontend preview failed to start');
+    if (attempt === 99)
+      throw new Error(
+        `Frontend preview failed to start: ${previewDiagnostics.slice(-2000)}`,
+      );
     await new Promise((done) => setTimeout(done, 100));
   }
   browser = await chromium.launch({ channel: 'chrome', headless: true });
@@ -298,7 +305,7 @@ try {
       )
     );
   };
-  await page.goto(frontend, { waitUntil: 'networkidle' });
+  await page.goto(`${frontend}/#marketplace`, { waitUntil: 'networkidle' });
   check(
     'Built frontend loads in connected mode on a different origin from its API',
     new URL(frontend).origin !== new URL(backend).origin &&
@@ -366,8 +373,9 @@ try {
         )
       )?.status === 'cancelled',
   );
-  await page.getByRole('dialog').waitFor({ state: 'hidden' });
-  await page.locator('.account-button').click();
+  await page
+    .getByRole('heading', { name: 'Your account', exact: true })
+    .waitFor();
   await page.getByRole('button', { name: 'Sign out', exact: true }).waitFor();
   const logout = response('POST', '/api/v1/auth/logout');
   await page.getByRole('button', { name: 'Sign out', exact: true }).click();
